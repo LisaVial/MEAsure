@@ -1,5 +1,5 @@
 from PyQt5.QtWidgets import QWidget, QGridLayout, QPushButton, QApplication
-from mea_data_viewer import MeaDataViewer
+from plot_widget import PlotWidget
 
 button_style = """
 QPushButton {
@@ -30,5 +30,6 @@ class MeaGrid(QWidget):
                 self.grid_layout.addWidget(button, row, col)
 
     def on_button_pressed(self, id):
+        plot_widget = PlotWidget(id)
         print("Button with id:", id)
 

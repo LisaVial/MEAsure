@@ -1,32 +1,16 @@
 import os
 import sys
 import PyQt5.QtCore as QtCore
-import PyQt5.QtGui as QtGui
 import PyQt5.QtWidgets as QtWidgets
-from IPython import embed
 from data_list_view import DataListView
 from funcs import text_parser
-from matplotlib.backends.backend_qt5agg import FigureCanvas, NavigationToolbar2QT as NavigationToolbar
-from matplotlib.figure import Figure
 from mea_grid import MeaGrid
 from mea_data_viewer import MeaDataViewer
-#
-#
-# class MplCanvas(FigureCanvas):
-#     def __init__(self, parent=None, width=5, height=4, dpi=100):
-#         fig = Figure(figsize=(width, height), dpi=dpi)
-#         self.axes = fig.add_subplot(111)
-#         super(MplCanvas, self).__init__(fig)
 
 
 class MainWindow(QtWidgets.QMainWindow):
     def __init__(self, parent=None):
         super().__init__(parent)
-        #
-        # self._main = QtWidgets.QWidget()
-        # self.setCentralWidget(self._main)
-        # layout = QtWidgets.QVBoxLayout(self._main)
-
         self.file_list_view = DataListView(self)
 
         self.data_file_list_dock_widget = QtWidgets.QDockWidget(self)
@@ -38,23 +22,6 @@ class MainWindow(QtWidgets.QMainWindow):
         self.data_file_list_dock_widget.setObjectName("folder-selection")
         self.addDockWidget(QtCore.Qt.LeftDockWidgetArea, self.data_file_list_dock_widget)
 
-        self.mea_grid = MeaGrid(self)
-        self.setCentralWidget(self.mea_grid)
-
-
-
-
-
-        # self.canvas = MplCanvas(self, width=5, height=4, dpi=100)
-        # layout.addWidget(self.canvas)
-        # self.addToolBar(NavigationToolbar(self.canvas, self))
-        #
-        # self.canvas.axes.plot([0, 0], [0, 0], '-')
-        # ax = self.canvas.axes
-        # ax.spines['right'].set_visible(False)
-        # ax.spines['top'].set_visible(False)
-        # ax.get_xaxis().tick_bottom()
-        # ax.get_yaxis().tick_left()
 
     @QtCore.pyqtSlot()
     def on_close_button_pressed(self):
@@ -67,20 +34,9 @@ class MainWindow(QtWidgets.QMainWindow):
     def on_file_double_clicked(self, item):
         absolute_path = os.path.join(self.file_list_view.current_folder, item.text())
         data_viewer = MeaDataViewer(absolute_path)
+        self.mea_grid = MeaGrid(self)
+        self.setCentralWidget(self.mea_grid)
 
-    @QtCore.pyqtSlot()
-    def update_plot(self, absolute_path):
-        time, voltage = text_parser(absolute_path)
-        self.canvas.axes.cla()
-        self.canvas.axes.plot(time, voltage)
-        self.canvas.axes.set_xlabel('time [s]')
-        self.canvas.axes.set_ylabel('voltage ['+r'$\mu$'+'V]')
-        ax = self.canvas.axes
-        ax.spines['right'].set_visible(False)
-        ax.spines['top'].set_visible(False)
-        ax.get_xaxis().tick_bottom()
-        ax.get_yaxis().tick_left()
-        self.canvas.draw()
 
     # the following lines create an exception hook
     # which allows to output Python exceptions while PyQt is running
