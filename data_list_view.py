@@ -48,7 +48,7 @@ class DataListView(QtWidgets.QWidget):
         found_files = []
         for root, sub_folders, files in os.walk(self.current_folder):
             for file in files:
-                if file.endswith(".txt"):
+                if file.endswith(".txt") or file.endswith(".h5"):
                     absolute_path = os.path.join(root, file)
                     relative_path = os.path.relpath(absolute_path, self.current_folder)
                     found_files.append(relative_path)
