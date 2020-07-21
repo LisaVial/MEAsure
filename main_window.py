@@ -24,14 +24,6 @@ class MainWindow(QtWidgets.QMainWindow):
         self.data_file_list_dock_widget.setObjectName("folder-selection")
         self.addDockWidget(QtCore.Qt.LeftDockWidgetArea, self.data_file_list_dock_widget)
 
-        self.rasterButton = QtWidgets.QPushButton(self.centralwidget)
-        self.rasterButton.setText("Raster Plot")
-
-        self.buttonLayout = QtWidgets.QHBoxLayout()
-        self.buttonLayout.setAlignment(QtCore.Qt.AlignBottom)
-        self.buttonLayout.addWidget(self.rasterButton)
-
-        self.rasterButton.clicked.connect(self.initialize_raster_plot)
 
     @QtCore.pyqtSlot()
     def on_close_button_pressed(self):
@@ -47,9 +39,6 @@ class MainWindow(QtWidgets.QMainWindow):
         self.mea_grid = MeaGrid(self)
         self.setCentralWidget(self.mea_grid)
 
-    @QtCore.pyqtSlot()
-    def initialize_raster_plot(self):
-        pass
 
     # the following lines create an exception hook
     # which allows to output Python exceptions while PyQt is running

@@ -1,6 +1,7 @@
 import PyQt5.QtCore as QtCore
 import PyQt5.QtWidgets as QtWidgets
 import os.path
+import funcs as f
 
 
 class DataListView(QtWidgets.QWidget):
@@ -25,6 +26,12 @@ class DataListView(QtWidgets.QWidget):
         folder_path_layout.addWidget(self.select_folder_button)
         main_layout.addLayout(folder_path_layout)
         main_layout.addWidget(self.file_list)
+        self.rasterButton = QtWidgets.QPushButton(self)
+        self.rasterButton.setText("Raster Plot")
+
+        main_layout.addWidget(self.rasterButton)
+
+        self.rasterButton.clicked.connect(self.initialize_raster_plot)
 
     # function, that executes folder selection, once the according button was pressed
     @QtCore.pyqtSlot()
@@ -54,4 +61,8 @@ class DataListView(QtWidgets.QWidget):
                     found_files.append(relative_path)
         return found_files
 
+    @QtCore.pyqtSlot()
+    def initialize_raster_plot(self):
+        self.spike_mat = f.spike_detection(file)
+        pass
 
