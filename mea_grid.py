@@ -30,6 +30,6 @@ class MeaGrid(QWidget):
                 self.grid_layout.addWidget(button, row, col)
 
     def on_button_pressed(self, id):
-        plot_widget = PlotWidget(id)
+        # plot_widget = PlotWidget(id)
         print("Button with id:", id)
 
