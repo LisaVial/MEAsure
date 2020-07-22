@@ -10,7 +10,7 @@ from mea_data_viewer import MeaDataViewer
 
 
 class MainWindow(QtWidgets.QMainWindow):
-    def __init__(self, parent=None):
+    def __init__(self, title, parent=None):
         super().__init__(parent)
         self.file_list_view = DataListView(self)
         self.centralwidget = QtWidgets.QWidget(self)
@@ -40,23 +40,4 @@ class MainWindow(QtWidgets.QMainWindow):
         self.setCentralWidget(self.mea_grid)
 
 
-    # the following lines create an exception hook
-    # which allows to output Python exceptions while PyQt is running
-    # taken from: https://stackoverflow.com/a/43039363/8928024
-    sys._excepthook = sys.excepthook
 
-    def my_exception_hook(exctype, value, traceback):
-        print(exctype, value, traceback)
-        sys._excepthook(exctype, value, traceback)
-        sys.exit(1)
-
-    sys.excepthook = my_exception_hook
-    # end of exception hook creation
-
-
-application = QtWidgets.QApplication(sys.argv)
-mainWindow = MainWindow()
-mainWindow.show()
-
-application.setActiveWindow(mainWindow)
-sys.exit(application.exec())
