@@ -6,14 +6,12 @@ from spike_detection_thread import SpikeDetectionThread
 from mea_data_viewer import MeaDataViewer
 
 class DataListView(QtWidgets.QWidget):
-    def __init__(self, parent, absolute_path):
+    def __init__(self, parent):
         super().__init__(parent)
 
         # setting up labels for GUI portrayal
         self.selected_folder_label = QtWidgets.QLabel("")
         self.current_folder = ""
-
-        self.file = MeaDataViewer.open_mea_file(absolute_path)
 
         # implementation of button to set folder directory
         self.select_folder_button = QtWidgets.QPushButton("...")

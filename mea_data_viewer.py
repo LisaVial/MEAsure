@@ -5,6 +5,7 @@ import McsPy.McsData
 class MeaDataViewer:
     def __init__(self, path):
         self.file_path = path
+        print(self.file_path)
         self.file = self.open_mea_file()
 
     def open_mea_file(self):

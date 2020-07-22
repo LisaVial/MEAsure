@@ -6,7 +6,6 @@ import PyQt5.QtWidgets as QtWidgets
 
 from data_list_view import DataListView
 from mea_grid import MeaGrid
-from mea_data_viewer import MeaDataViewer
 from settings import Settings, load_settings_from_file
 
 
@@ -18,7 +17,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.setWindowTitle(title)
 
-        self.file_list_view = DataListView(self, '')
+        self.file_list_view = DataListView(self)
         self.centralwidget = QtWidgets.QWidget(self)
 
         self.data_file_list_dock_widget = QtWidgets.QDockWidget(self)
