@@ -1,25 +1,26 @@
 from PyQt5 import QtCore, QtWidgets
+import sys
 import time
 
-from raster_plot import RasterPlot
+from plot_widget import PlotWidget
+import funcs as f
 
 
-class PlotCreationThread(QtCore.QThread):
+class SpikeDetectionThread(QtCore.QThread):
     total = QtCore.pyqtSignal(object)
     update = QtCore.pyqtSignal()
 
-    def __init__(self, n, plot_widget, figure, spike_mat):
-        super().__init__(plot_widget)
-        self.plot_widget = plot_widget
-        self.figure = figure
-        self.spike_mat = spike_mat
+    def __init__(self, parent, n, file):
+        super(SpikeDetectionThread, self).__init__(parent)
         self.n = n
+        self.file = file
+        self.plot_widget = PlotWidget
 
     def run(self):
         self.total.emit(self.n)
         i = 0
-        self.raster_plot.plot(self.figure, self.spike_mat)
-        self.plot_widget.refresh_canvas()
+        spike_mat = f.spike_detection(self.file)
+        self.plot_widget.start_plotting(spike_mat)
         while i < self.n:
             if time.time() % 1 == 0:
                 i += 1
@@ -32,7 +33,7 @@ class Progress(QtWidgets.QProgressBar):
         super(Progress, self).__init__(parent)
         self.setValue(0)
 
-        self.thread = PlotCreationThread(self, 3)
+        self.thread = SpikeDetectionThread(self, 3)
 
         self.thread.total.connect(self.setMaximum)
         self.thread.update.connect(self.update)

@@ -1,16 +1,19 @@
 import PyQt5.QtCore as QtCore
 import PyQt5.QtWidgets as QtWidgets
 import os.path
-import funcs as f
 
+from spike_detection_thread import SpikeDetectionThread
+from mea_data_viewer import MeaDataViewer
 
 class DataListView(QtWidgets.QWidget):
-    def __init__(self, parent):
+    def __init__(self, parent, absolute_path):
         super().__init__(parent)
 
         # setting up labels for GUI portrayal
         self.selected_folder_label = QtWidgets.QLabel("")
         self.current_folder = ""
+
+        self.file = MeaDataViewer.open_mea_file(absolute_path)
 
         # implementation of button to set folder directory
         self.select_folder_button = QtWidgets.QPushButton("...")
@@ -26,12 +29,12 @@ class DataListView(QtWidgets.QWidget):
         folder_path_layout.addWidget(self.select_folder_button)
         main_layout.addLayout(folder_path_layout)
         main_layout.addWidget(self.file_list)
-        self.rasterButton = QtWidgets.QPushButton(self)
-        self.rasterButton.setText("Raster Plot")
+        self.spike_detection_button = QtWidgets.QPushButton(self)
+        self.spike_detection_button.setText("Spike Detection")
 
-        main_layout.addWidget(self.rasterButton)
+        main_layout.addWidget(self.spike_detection_button)
 
-        self.rasterButton.clicked.connect(self.initialize_raster_plot)
+        self.spike_detection_button.clicked.connect(self.initialize_spike_detection)
 
     # function, that executes folder selection, once the according button was pressed
     @QtCore.pyqtSlot()
@@ -62,7 +65,9 @@ class DataListView(QtWidgets.QWidget):
         return found_files
 
     @QtCore.pyqtSlot()
-    def initialize_raster_plot(self):
-        self.spike_mat = f.spike_detection(file)
-        pass
+    def initialize_spike_detection(self, file):
+        file = self.file
+        spike_detection_thread = SpikeDetectionThread(self, file)
+
+
 

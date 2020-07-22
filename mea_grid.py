@@ -13,10 +13,13 @@ QPushButton:hover {
 }
 """
 
+
 class MeaGrid(QWidget):
-    def __init__(self, parent = None):
+    def __init__(self, parent=None):
         super().__init__(parent)
         self.grid_layout = QGridLayout(self)
+        self.grid_layout.setSpacing(2)
+        self.grid_layout.setVerticalSpacing(0)
         for col, c in enumerate(range(65, 83)):
             for row, n in enumerate(range(1, 17)):
                 if col in [0, 17] and row in [0, 15]:

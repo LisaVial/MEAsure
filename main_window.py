@@ -18,7 +18,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.setWindowTitle(title)
 
-        self.file_list_view = DataListView(self)
+        self.file_list_view = DataListView(self, '')
         self.centralwidget = QtWidgets.QWidget(self)
 
         self.data_file_list_dock_widget = QtWidgets.QDockWidget(self)
@@ -55,9 +55,8 @@ class MainWindow(QtWidgets.QMainWindow):
     @QtCore.pyqtSlot(QtWidgets.QListWidgetItem)
     def on_file_double_clicked(self, item):
         absolute_path = os.path.join(self.file_list_view.current_folder, item.text())
-        data_viewer = MeaDataViewer(absolute_path)
-        self.mea_grid = MeaGrid(self)
-        self.setCentralWidget(self.mea_grid)
+        mea_grid = MeaGrid(self)
+        self.setCentralWidget(mea_grid)
 
     def save_settings(self):
         settings = Settings()
