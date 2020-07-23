@@ -2,8 +2,6 @@ import PyQt5.QtCore as QtCore
 import PyQt5.QtWidgets as QtWidgets
 import os.path
 
-from spike_detection_thread import SpikeDetectionThread
-from mea_data_viewer import MeaDataViewer
 
 class DataListView(QtWidgets.QWidget):
     def __init__(self, parent):
@@ -27,12 +25,6 @@ class DataListView(QtWidgets.QWidget):
         folder_path_layout.addWidget(self.select_folder_button)
         main_layout.addLayout(folder_path_layout)
         main_layout.addWidget(self.file_list)
-        self.spike_detection_button = QtWidgets.QPushButton(self)
-        self.spike_detection_button.setText("Spike Detection")
-
-        main_layout.addWidget(self.spike_detection_button)
-
-        self.spike_detection_button.clicked.connect(self.initialize_spike_detection)
 
     # function, that executes folder selection, once the according button was pressed
     @QtCore.pyqtSlot()
@@ -56,16 +48,11 @@ class DataListView(QtWidgets.QWidget):
         found_files = []
         for root, sub_folders, files in os.walk(self.current_folder):
             for file in files:
-                if file.endswith(".txt") or file.endswith(".h5"):
+                if file.endswith(".h5"):
                     absolute_path = os.path.join(root, file)
                     relative_path = os.path.relpath(absolute_path, self.current_folder)
                     found_files.append(relative_path)
         return found_files
-
-    @QtCore.pyqtSlot()
-    def initialize_spike_detection(self, file):
-        file = self.file
-        spike_detection_thread = SpikeDetectionThread(self, file)
 
 
 

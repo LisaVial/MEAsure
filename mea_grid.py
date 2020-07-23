@@ -1,15 +1,14 @@
-from PyQt5.QtWidgets import QWidget, QGridLayout, QPushButton, QApplication
-from plot_widget import PlotWidget
+from PyQt5.QtWidgets import QWidget, QGridLayout, QPushButton
 
 button_style = """
 QPushButton {
-    background-color: #8ab3e8;
+    background-color: #FFFFFF;
     border-radius: 13;
     border: 0.5px solid black
 }
 
 QPushButton:hover {
-    background-color: #FFFFFF;
+    background-color: #8ab3e8;
 }
 """
 

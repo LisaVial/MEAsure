@@ -1,11 +1,12 @@
 import os
-import sys
 
 import PyQt5.QtCore as QtCore
 import PyQt5.QtWidgets as QtWidgets
 
 from data_list_view import DataListView
-from mea_grid import MeaGrid
+
+from mea_data_reader import MeaDataReader
+from mea_file_tab_widget import MeaFileTabWidget
 from settings import Settings, load_settings_from_file
 
 
@@ -16,6 +17,7 @@ class MainWindow(QtWidgets.QMainWindow):
         super().__init__(parent)
 
         self.setWindowTitle(title)
+        self.mea_reader = MeaDataReader()
 
         self.file_list_view = DataListView(self)
         self.centralwidget = QtWidgets.QWidget(self)
@@ -28,6 +30,9 @@ class MainWindow(QtWidgets.QMainWindow):
         self.data_file_list_dock_widget.setWindowTitle("Folder selection")
         self.data_file_list_dock_widget.setObjectName("folder-selection")
         self.addDockWidget(QtCore.Qt.LeftDockWidgetArea, self.data_file_list_dock_widget)
+
+        self.mea_tab_widget = MeaFileTabWidget(self)
+        self.setCentralWidget(self.mea_tab_widget)
 
         self.load_settings()
 
@@ -42,7 +47,6 @@ class MainWindow(QtWidgets.QMainWindow):
             self.restoreGeometry(QtCore.QByteArray.fromBase64(settings.main_window_geometry))
             self.restoreState(QtCore.QByteArray.fromBase64(settings.main_window_state))
 
-
     @QtCore.pyqtSlot()
     def on_close_button_pressed(self):
         self.accept()
@@ -54,8 +58,8 @@ class MainWindow(QtWidgets.QMainWindow):
     @QtCore.pyqtSlot(QtWidgets.QListWidgetItem)
     def on_file_double_clicked(self, item):
         absolute_path = os.path.join(self.file_list_view.current_folder, item.text())
-        mea_grid = MeaGrid(self)
-        self.setCentralWidget(mea_grid)
+        self.mea_tab_widget.show_mea_file_view(absolute_path)
+
 
     def save_settings(self):
         settings = Settings()
