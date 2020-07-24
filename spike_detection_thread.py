@@ -30,9 +30,9 @@ class SpikeDetectionThread(QtCore.QThread):
             noise_mad = np.median(np.absolute(signal)) / 0.6745
             spike_threshold = -5 * noise_mad
             fs = int(electrode_stream.channel_infos[channel_id].sampling_frequency.magnitude)
-            if i == 0:
-                time = np.arange(duration) * (1 / fs)
-                spike_mat.append(['time [s]', time])
+            # if i == 0:
+            #     time = np.arange(duration) * (1 / fs)
+            #     spike_mat.append(['time [s]', time])
             crossings = funcs.detect_threshold_crossings(signal, fs, spike_threshold, 0.003)  # dead time of 3 ms
             spks = funcs.align_to_minimum(signal, fs, crossings, 0.002)  # search range 2 ms
             timestamps = spks / fs

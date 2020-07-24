@@ -1,6 +1,8 @@
 from PyQt5 import QtWidgets, QtCore
 import os
 import h5py
+import csv
+from IPython import embed
 
 from mea_data_reader import MeaDataReader
 from mea_grid import MeaGrid
@@ -64,14 +66,21 @@ class MeaFileView(QtWidgets.QWidget):
         self.figure = self.plot_widget.figure
         main_layout.addWidget(self.plot_widget)
 
+    def save_spikemat(self, spikemat, filepath):
+        with open(filepath, 'w') as f:
+            writer = csv.writer(f)
+            writer.writerows(spikemat)
+
+    def open_spikemat(self, filepath):
+        with open(filepath, 'r') as read_obj:
+            csv_reader = csv.reader(read_obj)
+            spike_mat = list(csv_reader)
+        return spike_mat
+
     def check_for_spike_times_csv(self, mea_file):
         spiketimes_csv = mea_file[:-3] + '_spiketimes.csv'
         if os.path.exists(spiketimes_csv):
-            with h5py.File(spiketimes_csv, "r") as file:
-                spike_mat = []
-                for key in file.keys():
-                    dataset = file[key]
-                    spike_mat.append([key, dataset[:]])
+            spike_mat = self.open_spikemat(spiketimes_csv)
 
             answer = QtWidgets.QMessageBox.information(self, 'spiketimes already found', 'Detect spikes again?',
                                               QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No,
@@ -83,7 +92,6 @@ class MeaFileView(QtWidgets.QWidget):
                 return spike_mat
         else:
             return None
-
 
     @QtCore.pyqtSlot()
     def initialize_spike_detection(self):
@@ -112,11 +120,7 @@ class MeaFileView(QtWidgets.QWidget):
         if self.spike_mat is None:
             spiketimes_csv = self.mea_file[:-3] + '_spiketimes.csv'
             if os.path.exists(spiketimes_csv):
-                with h5py.File(spiketimes_csv, "r") as file:
-                    self.spike_mat = []
-                    for key in file.keys():
-                        dataset = file[key]
-                        self.spike_mat.append([key, dataset[:]])
+                self.spike_mat = self.open_spikemat(spiketimes_csv)
             else:
                 QtWidgets.QMessageBox.information(self, 'no spiketimes found', 'Please click spike detection button')
         if self.spike_mat is not None:
@@ -128,7 +132,7 @@ class MeaFileView(QtWidgets.QWidget):
             self.plot_creation_thread.progress_made.connect(self.on_progress_made)
             self.plot_creation_thread.operation_changed.connect(self.on_operation_changed)
 
-            debug_mode = False  # set to 'True' in order to debug plot creation with embed
+            debug_mode = True  # set to 'True' in order to debug plot creation with embed
             if debug_mode:
                 # synchronous plotting (runs in main thread and thus allows debugging)
                 self.plot_creation_thread.run()
@@ -136,7 +140,6 @@ class MeaFileView(QtWidgets.QWidget):
                 # asynchronous plotting (default):
                 self.plot_creation_thread.start()  # start will start thread (and run),
                 # but main thread will continue immediately
-
 
     def save_check_box_clicked(self):
         self.label_save_check_box.setText('Saving spikes to .csv file at the end of spike detection')
@@ -165,10 +168,7 @@ class MeaFileView(QtWidgets.QWidget):
         # take filepath and filename, to get name of mea file and save it to the same directory
         file_name = mea_file[:-3]
         spike_filename = file_name + '_spiketimes.csv'
-        with h5py.File(spike_filename, "w") as file:
-            for row in spike_mat:
-                dataset = file.create_dataset(row[0], (len(row[1]),), dtype='f')
-                dataset[:] = row[1]
+        self.save_spikemat(spike_mat, file_name)
         self.label_save_check_box.setText('spike times saved in: ' + spike_filename)
 
 
