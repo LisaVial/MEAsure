@@ -1,5 +1,7 @@
 from IPython import embed
 import numpy as np
+import matplotlib.cm as cm
+import string
 
 
 class RasterPlot:
@@ -10,6 +12,7 @@ class RasterPlot:
 
     def plot(self, fig, spike_mat):
         ax = fig.add_subplot(111)
+        yticklabels = []
         # time = None
         # time_row_index = -1
         # yticklabels = [row[0] for row in spike_mat]
@@ -30,19 +33,45 @@ class RasterPlot:
         #             yticklabels.append(spike_mat[idx][0])
         #         else:
         #             color = '#596163'
-        for i in range(len(spike_mat)):
-            if i % 2 == 0:
-                color = 'k'
-                # yticklabels.append(spike_mat[idx][0])
-            else:
-                color = '#596163'
-            ax.scatter(spike_mat[i][1:], np.ones(len(spike_mat[i][1:])) * i, marker='|', color=color)
 
+
+        for i in range(len(spike_mat)):
+            if len(spike_mat[i]) < 2:
+                continue
+            if i % 4 == 0:
+                label = ''.join(spike_mat[i])
+                yticklabels.append(label)
+            if i % 3 == 2:
+                ax.scatter(spike_mat[i], np.ones(len(spike_mat[i])) * i/4, marker='|', c=np.arange(len(spike_mat[i])),
+                           cmap="PuBuGn")
         ax.spines['right'].set_visible(False)
         ax.spines['top'].set_visible(False)
-        # ax.set_yticklabels(yticklabels)
-        for label in ax.yaxis.get_ticklabels()[::2]:
-            label.set_visible(False)
+        ytick_range = range((int(len(spike_mat)/4)))
+        ax.set_yticks(ytick_range)
+        labels = [item.get_text() for item in ax.get_yticklabels()]
+        empty_string_labels = [''] * len(labels)
+        for idx in range(len(empty_string_labels)):
+            if idx % 12 == 0:
+                empty_string_labels[idx] = empty_string_labels[idx].replace('', yticklabels[idx])
+        ax.set_yticklabels(yticklabels)
+        ax.set_yticklabels(empty_string_labels)
+        ax.set_ylabel('MEA channels')
+
+        #     if idx % 2 == 0:
+        #         label.set_visible(False)
+        #     if idx % 3 == 0:
+        #         label.set_visible(False)
+        #     if idx % 4 == 0:
+        #         label.set_visible(False)
+        #     if idx % 5 == 0:
+        #         label.set_visible(False)
+        # PCM = ax.get_children()[2]  # get the mappable, the 1st and the 2nd are the x and y axes
+        # cbar = plt.colorbar(PCM, ax=ax)
+        # cbar.set_label('mea electrodes')
+        xlims = ax.get_xlim()
+        ax.set_xticks([xlims[0], xlims[1]/2, xlims[1]])
+        ax.set_xticklabels(['0', '150', '300'])
+        ax.set_xlabel('time [s]')
         ax.get_xaxis().tick_bottom()
         ax.get_yaxis().tick_left()
         ax.tick_params(labelsize=10, direction='out')

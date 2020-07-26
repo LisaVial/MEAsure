@@ -36,7 +36,8 @@ class SpikeDetectionThread(QtCore.QThread):
             crossings = funcs.detect_threshold_crossings(signal, fs, spike_threshold, 0.003)  # dead time of 3 ms
             spks = funcs.align_to_minimum(signal, fs, crossings, 0.002)  # search range 2 ms
             timestamps = spks / fs
-            spike_mat.append([channel_label, timestamps])
+            spike_mat.append(channel_label)
+            spike_mat.append(timestamps)
 
             progress = round(((i + 1) / len(ids)) * 100.0, 2)
             self.progress_made.emit(progress)

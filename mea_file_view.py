@@ -161,14 +161,14 @@ class MeaFileView(QtWidgets.QWidget):
         self.spike_detection_thread = None
         self.spike_detection_button.setEnabled(True)
         if self.save_check_box.isChecked():
-            self.save_spike_mat(self.spike_mat, self.mea_file)
+            self.save_spike_mat(self.spike_mat, self.mea_file + '_spiketimes.csv')
 
     def save_spike_mat(self, spike_mat, mea_file):
         self.label_save_check_box.setText('saving spike times...')
         # take filepath and filename, to get name of mea file and save it to the same directory
         file_name = mea_file[:-3]
         spike_filename = file_name + '_spiketimes.csv'
-        self.save_spikemat(spike_mat, file_name)
+        self.save_spikemat(spike_mat, spike_filename)
         self.label_save_check_box.setText('spike times saved in: ' + spike_filename)
 
 
