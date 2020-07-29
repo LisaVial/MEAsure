@@ -8,6 +8,7 @@ from mea_data_reader import MeaDataReader
 from mea_grid import MeaGrid
 from spike_detection_thread import SpikeDetectionThread
 from plot_creation_thread import PlotCreationThread
+from filter_thread import FilterThread
 from plot_widget import PlotWidget
 
 
@@ -21,6 +22,7 @@ class MeaFileView(QtWidgets.QWidget):
         self.mea_grid = MeaGrid(self)
         self.mea_grid.setFixedSize(600, 600)
 
+        self.filter_thread = None
         self.spike_detection_thread = None
         self.plot_creation_thread = None
 
@@ -222,6 +224,18 @@ class MeaFileView(QtWidgets.QWidget):
         self.spike_detection_button.setEnabled(True)
         if self.save_check_box.isChecked():
             self.save_spike_mat(self.spike_mat, self.mea_file + '_spiketimes.csv')
+
+    @QtCore.pyqtSlot()
+    def on_filter_thread_finished(self):
+        self.progress_label.setText("Finished :)")
+        # ToDo: Figure out way to save filtered traces to .h5
+        # if self.spike_detection_thread.spike_mat:
+        #     self.spike_mat = self.spike_detection_thread.spike_mat.copy()
+        self.filter_thread = None
+        self.filter_button.setEnabled(True)
+        # if self.save_filtered_box.isChecked():
+            # ToDo: implement saving to .h5 again
+            # self.save_spike_mat(self.spike_mat, self.mea_file + '_spiketimes.csv')
 
     def save_spike_mat(self, spike_mat, mea_file):
         self.label_save_check_box.setText('saving spike times...')

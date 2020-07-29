@@ -1,7 +1,7 @@
 from PyQt5 import QtCore
 import numpy as np
 import funcs
-
+import math
 
 from mea_data_reader import MeaDataReader
 
@@ -17,6 +17,23 @@ class SpikeDetectionThread(QtCore.QThread):
         self.plot_widget = plot_widget
         self.spike_mat = None
 
+    def get_signal(self, electrode_stream, channel_id, chunk_size=30000):
+        min_index = 0
+        max_index = electrode_stream.channel_data.shape[1]
+        length = (max_index - min_index)
+        signal = np.empty(shape=(length,))  # create empty numpy ndarray with shape already set
+
+        current_start_index = min_index
+
+        while current_start_index < length:
+            current_end_index = min(current_start_index + chunk_size - 1, max_index)
+            result_pair = electrode_stream.get_channel_in_range(channel_id, current_start_index, current_end_index)
+            chunk = result_pair[0]
+            signal[current_start_index:(current_start_index + len(result_pair[0]))] = chunk
+            current_start_index = current_end_index + 1
+
+        return signal
+
     def spike_detection(self, file):
         spike_mat = []
         electrode_stream = file.recordings[0].analog_streams[0]
@@ -24,7 +41,8 @@ class SpikeDetectionThread(QtCore.QThread):
         ids = [c.channel_id for c in electrode_stream.channel_infos.values()]
         for i in range(len(ids)): #range(len(ids)):
             channel_id = ids[i]
-            signal = electrode_stream.get_channel_in_range(channel_id, 0, electrode_stream.channel_data.shape[1])[0]
+            #signal = electrode_stream.get_channel_in_range(channel_id, 0, electrode_stream.channel_data.shape[1])[0]
+            signal = self.get_signal(electrode_stream, channel_id)
             channel_info = electrode_stream.channel_infos[channel_id]
             channel_label = channel_info.label
             noise_mad = np.median(np.absolute(signal)) / 0.6745

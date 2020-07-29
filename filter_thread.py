@@ -4,6 +4,7 @@ import funcs
 
 from mea_data_reader import MeaDataReader
 
+
 class FilterThread(QtCore.QThread):
     operation_changed = QtCore.pyqtSignal(str)
     progress_made = QtCore.pyqtSignal(float)
