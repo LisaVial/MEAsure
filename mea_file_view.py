@@ -27,6 +27,14 @@ class MeaFileView(QtWidgets.QWidget):
         main_layout = QtWidgets.QHBoxLayout(self)
         main_layout.setAlignment(QtCore.Qt.AlignTop | QtCore.Qt.AlignLeft)
 
+        self.filter_button = QtWidgets.QPushButton(self)
+        self.filter_button.setText("Filter recordings")
+
+        self.save_filtered_box = QtWidgets.QCheckBox("save filtered traces")
+        self.label_save_filtered_box = QtWidgets.QLabel("don't save filteres traces")
+
+        self.save_filtered_box.stateChanged.connect(self.save_filtered_box_clicked)
+
         self.spike_detection_button = QtWidgets.QPushButton(self)
         self.spike_detection_button.setText("Spike Detection")
 
@@ -38,6 +46,9 @@ class MeaFileView(QtWidgets.QWidget):
 
         self.save_check_box.stateChanged.connect(self.save_check_box_clicked)
 
+        grid_buttons_and_progress_bar_layout.addWidget(self.save_filtered_box)
+        grid_buttons_and_progress_bar_layout.addWidget(self.label_save_filtered_box)
+        grid_buttons_and_progress_bar_layout.addWidget(self.filter_button)
         grid_buttons_and_progress_bar_layout.addWidget(self.save_check_box)
         grid_buttons_and_progress_bar_layout.addWidget(self.label_save_check_box)
         grid_buttons_and_progress_bar_layout.addWidget(self.spike_detection_button)
@@ -59,12 +70,40 @@ class MeaFileView(QtWidgets.QWidget):
         grid_buttons_and_progress_bar_layout.addWidget(self.progress_bar)
         main_layout.addLayout(grid_buttons_and_progress_bar_layout)
 
+        self.filter_button.clicked.connect(self.initialize_filtering)
         self.spike_detection_button.clicked.connect(self.initialize_spike_detection)
         self.raster_plot_button.clicked.connect(self.initialize_plotting)
 
         self.plot_widget = PlotWidget(self)
         self.figure = self.plot_widget.figure
+        self.previous_button = QtWidgets.QPushButton(self)
+        self.previous_button.setText("<")
+        self.previous_button.pressed.connect(self.on_previous_button_pressed)
+
+        self.next_button = QtWidgets.QPushButton(self)
+        self.next_button.setText(">")
+        self.next_button.pressed.connect(self.on_next_button_pressed)
+
+        buttons_layout = QtWidgets.QHBoxLayout()
+        buttons_layout.addWidget(self.previous_button)
+        buttons_layout.addWidget(self.next_button)
         main_layout.addWidget(self.plot_widget)
+        main_layout.addWidget(self.previous_button)
+        main_layout.addWidget(self.next_button)
+
+    @QtCore.pyqtSlot()
+    def on_previous_button_pressed(self):
+        self.index -= 1
+        self.previous_button.setEnabled(self.index > 0)
+        self.next_button.setEnabled(self.index < self.max_index - 1)
+        self.show_plot(self.index)
+
+    @QtCore.pyqtSlot()
+    def on_next_button_pressed(self):
+        self.index += 1
+        self.previous_button.setEnabled(self.index > 0)
+        self.next_button.setEnabled(self.index < self.max_index - 1)
+        self.show_plot(self.index)
 
     def save_spikemat(self, spikemat, filepath):
         with open(filepath, 'w') as f:
@@ -92,6 +131,24 @@ class MeaFileView(QtWidgets.QWidget):
                 return spike_mat
         else:
             return None
+
+    @QtCore.pyqtSlot()
+    def initialize_filtering(self):
+        self.progress_bar.setValue(0)
+        self.progress_label.setText("")
+        self.filter_button.setEnabled(False)
+        self.filter_thread = FilterThread(self, self.plot_widget, self.mea_file)
+        self.filter_thread.finished.connect(self.on_filter_thread_finished)
+        self.filter_thread.progress_made.connect(self.on_progress_made)
+        self.filter_thread.operation_changed.connect(self.on_operation_changed)
+        debug_mode = False  # set to 'True' in order to debug plot creation with embed
+        if debug_mode:
+            # synchronous plotting (runs in main thread and thus allows debugging)
+            self.filter_thread.run()
+        else:
+            # asynchronous plotting (default):
+            self.filter_thread.start()  # start will start thread (and run),
+            # but main thread will continue immediately
 
     @QtCore.pyqtSlot()
     def initialize_spike_detection(self):
@@ -143,6 +200,9 @@ class MeaFileView(QtWidgets.QWidget):
 
     def save_check_box_clicked(self):
         self.label_save_check_box.setText('Saving spikes to .csv file at the end of spike detection')
+
+    def save_filtered_box_clicked(self):
+        self.label_save_filtered_box.setText('Saving filtered traces to .h5 file at the end of filtering')
 
     @QtCore.pyqtSlot(str)
     def on_operation_changed(self, operation):

@@ -34,7 +34,6 @@ class RasterPlot:
         #         else:
         #             color = '#596163'
 
-
         for i in range(len(spike_mat)):
             if len(spike_mat[i]) < 2:
                 continue
