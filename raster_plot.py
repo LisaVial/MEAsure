@@ -13,27 +13,6 @@ class RasterPlot:
     def plot(self, fig, spike_mat):
         ax = fig.add_subplot(111)
         yticklabels = []
-        # time = None
-        # time_row_index = -1
-        # yticklabels = [row[0] for row in spike_mat]
-        # labels_fill = [(label[0] + str(0) + label[1], idx) if len(label) == 2 else (label, idx) for idx, label
-        #                in enumerate(yticklabels)]
-        # labels_sort = sorted(labels_fill, key=lambda label: label[0].lower())
-        # indices = [item[1] for item in labels_sort]
-        # time_row_index = [index for index, row in enumerate(spike_mat) if row[0].startswith('time')]
-        # # embed()
-        #
-        # for i, idx in enumerate(indices):
-        #     if idx != time_row_index[0]:
-        #         print(spike_mat[idx][0] + ': \n')
-        #         row = spike_mat[idx][1]
-        #         print(row)
-        #         if i % 2 == 0:
-        #             color = 'k'
-        #             yticklabels.append(spike_mat[idx][0])
-        #         else:
-        #             color = '#596163'
-
 
         for i in range(len(spike_mat)):
             if len(spike_mat[i]) < 2:
@@ -57,19 +36,9 @@ class RasterPlot:
         ax.set_yticklabels(empty_string_labels)
         ax.set_ylabel('MEA channels')
 
-        #     if idx % 2 == 0:
-        #         label.set_visible(False)
-        #     if idx % 3 == 0:
-        #         label.set_visible(False)
-        #     if idx % 4 == 0:
-        #         label.set_visible(False)
-        #     if idx % 5 == 0:
-        #         label.set_visible(False)
-        # PCM = ax.get_children()[2]  # get the mappable, the 1st and the 2nd are the x and y axes
-        # cbar = plt.colorbar(PCM, ax=ax)
-        # cbar.set_label('mea electrodes')
         xlims = ax.get_xlim()
-        ax.set_xticks([xlims[0], xlims[1]/2, xlims[1]])
+        ax.set_xticks([0, xlims[1]/2, xlims[1]])
+        ax.set_xlim([0, xlims[1]])
         ax.set_xticklabels(['0', '150', '300'])
         ax.set_xlabel('time [s]')
         ax.get_xaxis().tick_bottom()
