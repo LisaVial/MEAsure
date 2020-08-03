@@ -19,6 +19,7 @@ class PlotWidget(QtWidgets.QWidget):
         self.canvas = FigureCanvas(self.figure)
 
         self.toolbar = NavigationToolbar(self.canvas, self)
+        # self.graph_widget = pg.PlotWidget()
 
         main_layout = QtWidgets.QVBoxLayout(self)
         main_layout.setAlignment(QtCore.Qt.AlignTop | QtCore.Qt.AlignLeft)
