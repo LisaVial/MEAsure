@@ -5,6 +5,7 @@ import math
 from IPython import embed
 
 from mea_data_reader import MeaDataReader
+from live_plot import LivePlotter
 
 
 class SpikeDetectionThread(QtCore.QThread):
@@ -17,27 +18,28 @@ class SpikeDetectionThread(QtCore.QThread):
         self.mea_file = mea_file
         self.plot_widget = plot_widget
 
-        self.x_vals = [0]
-        self.y_vals = [0]
-        self.data_line = self.plot_widget.plot(self.x_vals, self.y_vals, pen='#006E7D')
-
-        self.timer = QtCore.QTimer()
-        self.timer.setInterval(50)
-        self.timer.start()
+        # self.x_vals = [0]
+        # self.y_vals = [0]
+        # self.data_line = self.plot_widget.plot(self.x_vals, self.y_vals, pen='#006E7D')
+        #
+        # self.timer = QtCore.QTimer()
+        # self.timer.setInterval(50)
+        # self.timer.start()
 
         self.spike_mat = None
         self.signal = None
         self.spike_threshold = None
         self.current_timestamps = None
         self.time = None
-        self.timer.timeout.connect(self.update_plot_data(self.time, self.signal))
+        # self.timer.timeout.connect(self.update_plot_data(self.time, self.signal))
+        self.live_plotter = None
 
-    def update_plot_data(self, time, signal):
-        while self.time is None or self.signal is None:
-            continue
-        self.x_vals.append(time)
-        self.y_vals.append(signal)
-        self.data_line.setData(self.x_vals, self.y_vals)
+    # def update_plot_data(self, time, signal):
+    #     while self.time is None or self.signal is None:
+    #         continue
+    #     self.x_vals.append(time)
+    #     self.y_vals.append(signal)
+    #     self.data_line.setData(self.x_vals, self.y_vals)
 
     def get_signal(self, electrode_stream, channel_id, chunk_size=10000):
         min_index = 0
@@ -53,8 +55,7 @@ class SpikeDetectionThread(QtCore.QThread):
             chunk = result_pair[0]
             signal[current_start_index:(current_start_index + len(result_pair[0]))] = chunk
             time = electrode_stream.get_channel_sample_timestamps(channel_id, current_start_index,
-                                                                       current_end_index)
-            self.update_plot_data(time[0], signal)
+                                                                  current_end_index)
             current_start_index = current_end_index + 1
         return signal
 
@@ -78,6 +79,8 @@ class SpikeDetectionThread(QtCore.QThread):
             # dead time of 3 ms
             spks = funcs.align_to_minimum(self.signal, fs, crossings, 0.002)  # search range 2 ms
             self.current_timestamps = spks / fs
+            self.live_plotter = LivePlotter(self.plot_widget.figure, self.signal, self.spike_threshold,
+                                            self.current_timestamps)
             spike_mat.append(channel_label)
             spike_mat.append(self.current_timestamps)
 
