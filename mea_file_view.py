@@ -150,14 +150,14 @@ class MeaFileView(QtWidgets.QWidget):
     # def save_check_box_clicked(self):
     #     self.label_save_check_box.setText('Saving spikes to .csv file at the end of spike detection')
 
-    # @QtCore.pyqtSlot(str)
-    # def on_operation_changed(self, operation):
-    #     self.operation_label.setText(operation)
-    #
-    # @QtCore.pyqtSlot(float)
-    # def on_progress_made(self, progress):
-    #     self.progress_bar.setValue(int(progress))
-    #     self.progress_label.setText(str(progress) + "%")
+    @QtCore.pyqtSlot(str)
+    def on_operation_changed(self, operation):
+        self.operation_label.setText(operation)
+
+    @QtCore.pyqtSlot(float)
+    def on_progress_made(self, progress):
+        self.progress_bar.setValue(int(progress))
+        self.progress_label.setText(str(progress) + "%")
     #
     # @QtCore.pyqtSlot()
     # def on_spike_detection_thread_finished(self):
