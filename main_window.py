@@ -60,7 +60,6 @@ class MainWindow(QtWidgets.QMainWindow):
         absolute_path = os.path.join(self.file_list_view.current_folder, item.text())
         self.mea_tab_widget.show_mea_file_view(absolute_path)
 
-
     def save_settings(self):
         settings = Settings()
         settings.last_folder = self.file_list_view.current_folder
