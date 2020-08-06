@@ -79,8 +79,8 @@ class SpikeDetectionThread(QtCore.QThread):
             # dead time of 3 ms
             spks = funcs.align_to_minimum(self.signal, fs, crossings, 0.002)  # search range 2 ms
             self.current_timestamps = spks / fs
-            self.live_plotter = LivePlotter(self.plot_widget.figure, self.signal, self.spike_threshold,
-                                            self.current_timestamps)
+            # self.live_plotter = LivePlotter(self.plot_widget.figure, self.signal, self.spike_threshold,
+            #                                 self.current_timestamps)
             spike_mat.append(channel_label)
             spike_mat.append(self.current_timestamps)
 

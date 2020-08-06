@@ -1,13 +1,12 @@
 from PyQt5 import QtWidgets, QtCore
 import os
 import csv
-# from pyqtgraph import PlotWidget
-# import pyqtgraph as pg
 
 from plot_widget import PlotWidget
 from mea_data_reader import MeaDataReader
 from mea_grid import MeaGrid
-from spike_detection_window import SpikeDetectionWindow
+
+from spike_detection_dialog import SpikeDetectionDialog
 from plot_creation_thread import PlotCreationThread
 
 
@@ -16,33 +15,24 @@ class MeaFileView(QtWidgets.QWidget):
         super().__init__(parent)
         self.reader = MeaDataReader()
         self.mea_file = mea_file
-        self.spike_mat = None
+
+        self.plot_creation_thread = None
 
         self.mea_grid = MeaGrid(self)
         self.mea_grid.setFixedSize(600, 600)
-
-        self.spike_detection_thread = None
-        self.plot_creation_thread = None
 
         main_layout = QtWidgets.QHBoxLayout(self)
         main_layout.setAlignment(QtCore.Qt.AlignTop | QtCore.Qt.AlignLeft)
 
         self.spike_detection_window_button = QtWidgets.QPushButton(self)
-        self.spike_detection_window_button.setText("Spike Detection")
+        self.spike_detection_window_button.setText("Open spike detection")
+        self.spike_detection_window_button.clicked.connect(self.open_sd_window)
 
         grid_buttons_and_progress_bar_layout = QtWidgets.QVBoxLayout(self)
         grid_buttons_and_progress_bar_layout.setAlignment(QtCore.Qt.AlignTop | QtCore.Qt.AlignLeft)
         grid_buttons_and_progress_bar_layout.addWidget(self.mea_grid)
 
         grid_buttons_and_progress_bar_layout.addWidget(self.spike_detection_window_button)
-        # self.save_check_box = QtWidgets.QCheckBox("save spike times")
-        # self.label_save_check_box = QtWidgets.QLabel("don't save spike times")
-
-        # self.save_check_box.stateChanged.connect(self.save_check_box_clicked)
-
-        # grid_buttons_and_progress_bar_layout.addWidget(self.save_check_box)
-        # grid_buttons_and_progress_bar_layout.addWidget(self.label_save_check_box)
-        # grid_buttons_and_progress_bar_layout.addWidget(self.spike_detection_button)
 
         self.raster_plot_button = QtWidgets.QPushButton(self)
         self.raster_plot_button.setText("Raster Plot")
@@ -60,7 +50,6 @@ class MeaFileView(QtWidgets.QWidget):
         self.progress_bar.setTextVisible(True)
         grid_buttons_and_progress_bar_layout.addWidget(self.progress_bar)
         main_layout.addLayout(grid_buttons_and_progress_bar_layout)
-        self.spike_detection_window_button.clicked.connect(self.open_sd_window)
         self.raster_plot_button.clicked.connect(self.initialize_plotting)
 
         self.plot_widget = PlotWidget(self)
@@ -70,38 +59,18 @@ class MeaFileView(QtWidgets.QWidget):
 
         main_layout.addWidget(self.plot_widget)
 
-    def save_spikemat(self, spikemat, filepath):
-        with open(filepath, 'w') as f:
-            writer = csv.writer(f)
-            writer.writerows(spikemat)
+    # def save_spikemat(self, spikemat, filepath):
+    #     with open(filepath, 'w') as f:
+    #         writer = csv.writer(f)
+    #         writer.writerows(spikemat)
+    #
 
-    def open_spikemat(self, filepath):
-        with open(filepath, 'r') as read_obj:
-            csv_reader = csv.reader(read_obj)
-            spike_mat = list(csv_reader)
-        return spike_mat
-
-    def check_for_spike_times_csv(self, mea_file):
-        spiketimes_csv = mea_file[:-3] + '_spiketimes.csv'
-        if os.path.exists(spiketimes_csv):
-            spike_mat = self.open_spikemat(spiketimes_csv)
-
-            answer = QtWidgets.QMessageBox.information(self, 'spiketimes already found', 'Detect spikes again?',
-                                              QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No,
-                                              QtWidgets.QMessageBox.No)
-
-            if answer == QtWidgets.QMessageBox.Yes:
-                return None
-            else:
-                return spike_mat
-        else:
-            return None
 
     @QtCore.pyqtSlot()
     def open_sd_window(self):
-        self.spike_mat = self.check_for_spike_times_csv(self.mea_file)
-        SpikeDetectionWindow(self.mea_file, self.spike_mat)
-
+        # self.spike_mat = self.check_for_spike_times_csv(self.mea_file)
+        spike_detection_window = SpikeDetectionDialog(None, self.mea_file)
+        spike_detection_window.exec_()
         # if self.spike_mat is None:
         #     self.progress_bar.setValue(0)
         #     self.progress_label.setText("")
