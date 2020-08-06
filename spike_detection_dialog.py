@@ -35,8 +35,8 @@ class SpikeDetectionDialog(QtWidgets.QDialog):
         # save check box is connected to a function that saves spike_mat as .csv file
         self.save_check_box = QtWidgets.QCheckBox("Save spiketimes")
         self.label_save_check_box = QtWidgets.QLabel("Don't save spiketimes")
-        self.label_save_check_box.show()
         main_layout.addWidget(self.save_check_box)
+        main_layout.addWidget(self.label_save_check_box)
         self.save_check_box.stateChanged.connect(self.save_check_box_clicked)
 
         # spike_detection_start_button is connected to a function that initializes spike detection thread

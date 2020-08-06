@@ -18,28 +18,12 @@ class SpikeDetectionThread(QtCore.QThread):
         self.mea_file = mea_file
         self.plot_widget = plot_widget
 
-        # self.x_vals = [0]
-        # self.y_vals = [0]
-        # self.data_line = self.plot_widget.plot(self.x_vals, self.y_vals, pen='#006E7D')
-        #
-        # self.timer = QtCore.QTimer()
-        # self.timer.setInterval(50)
-        # self.timer.start()
-
         self.spike_mat = None
         self.signal = None
         self.spike_threshold = None
         self.current_timestamps = None
         self.time = None
-        # self.timer.timeout.connect(self.update_plot_data(self.time, self.signal))
         self.live_plotter = None
-
-    # def update_plot_data(self, time, signal):
-    #     while self.time is None or self.signal is None:
-    #         continue
-    #     self.x_vals.append(time)
-    #     self.y_vals.append(signal)
-    #     self.data_line.setData(self.x_vals, self.y_vals)
 
     def get_signal(self, electrode_stream, channel_id, chunk_size=10000):
         min_index = 0
@@ -63,12 +47,16 @@ class SpikeDetectionThread(QtCore.QThread):
         spike_mat = []
         electrode_stream = file.recordings[0].analog_streams[0]
         ids = [c.channel_id for c in electrode_stream.channel_infos.values()]
-        for i in range(len(ids)): #range(len(ids)):
-            channel_id = ids[i]
-            #signal = electrode_stream.get_channel_in_range(channel_id, 0, electrode_stream.channel_data.shape[1])[0]
+        # the next to lines ensure, that the for loop analyzes channels in the 'right order', but reversed
+        labels = [electrode_stream.channel_infos[id].info['Label'] for id in ids]
+        same_len_labels = [str(label[0]) + '0' + str(label[1]) if len(label) < 3 else label for label in labels]
+        for idx, ch_id in enumerate(reversed(np.argsort(same_len_labels))): #range(len(ids)):
+            channel_id = ids[idx]
+            # in case the whole channel data should be loaded at once, uncomment next line
+            # signal = electrode_stream.get_channel_in_range(channel_id, 0, electrode_stream.channel_data.shape[1])[0]
             self.signal = self.get_signal(electrode_stream, channel_id)
-            channel_info = electrode_stream.channel_infos[channel_id]
-            channel_label = channel_info.label
+            # channel_info = electrode_stream.channel_infos[channel_id]
+            channel_label = ch_id
             noise_mad = np.median(np.absolute(self.signal)) / 0.6745
             self.spike_threshold = -5 * noise_mad
             fs = int(electrode_stream.channel_infos[channel_id].sampling_frequency.magnitude)
@@ -84,7 +72,7 @@ class SpikeDetectionThread(QtCore.QThread):
             spike_mat.append(channel_label)
             spike_mat.append(self.current_timestamps)
 
-            progress = round(((i + 1) / len(ids)) * 100.0, 2)
+            progress = round(((idx + 1) / len(same_len_labels)) * 100.0, 2)
             self.progress_made.emit(progress)
 
             return spike_mat
