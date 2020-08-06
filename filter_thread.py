@@ -46,7 +46,6 @@ class FilterThread(QtCore.QThread):
         return y
 
     def filtering(self, file):
-        global filtered
         filter_mat = []
         electrode_stream = file.recordings[0].analog_streams[0]
         ids = [c.channel_id for c in electrode_stream.channel_infos.values()]
@@ -65,14 +64,16 @@ class FilterThread(QtCore.QThread):
                 filtered = self.butter_div_filters(signal, self.cut_1, fs, 'high')
             elif self.filter_mode == 2:
                 filtered = self.butter_bandpass_filter(signal, self.cut_1, self.cut_2, fs)
-            elif self.filter_mode == 3:
-                filtered = self.butter_bandpass_filter(signal, self.cut_1, self.cut_2, fs)
+            # elif self.filter_mode == 3:
+            #     filtered = self.butter_bandpass_filter(signal, self.cut_1, self.cut_2, fs)
+
+            filter_mat.append(channel_label)
             filter_mat.append(filtered)
 
             progress = round(((idx + 1) / len(same_len_labels)) * 100.0, 2)
             self.progress_made.emit(progress)
 
-            return filter_mat
+        return filter_mat
 
     def run(self):
         reader = MeaDataReader()

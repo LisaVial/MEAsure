@@ -33,7 +33,7 @@ class FilterDialog(QtWidgets.QDialog):
         self.filter_combo_box.setFixedSize(self.width, 25)
         self.filter_combo_box.addItem('Lowpass Filter')
         self.filter_combo_box.addItem('Highpass Filter')
-        self.filter_combo_box.addItem('Notch Filter')
+        # self.filter_combo_box.addItem('Notch Filter')
         self.filter_combo_box.addItem('Bandpass Filter')
         self.filter_combo_box.setEditable(True)
         self.filter_combo_box.lineEdit().setReadOnly(True)
@@ -77,7 +77,7 @@ class FilterDialog(QtWidgets.QDialog):
 
     def filter_type_changed(self, index):
         self.filter_combo_box.setCurrentIndex(index)
-        if index == 3:
+        if index == 2:
             self.textbox_label.setText('Lower cutoff frequency [Hz]')
             self.second_cutoff_textbox.setVisible(True)
             self.second_textbox_label.setVisible(True)
@@ -89,7 +89,7 @@ class FilterDialog(QtWidgets.QDialog):
         filter_mode = self.filter_combo_box.currentIndex()
         cutoff_1 = float(self.single_cutoff_textbox.text())
         cutoff_2 = None
-        if self.filter_combo_box.currentIndex() == 3:
+        if self.filter_combo_box.currentIndex() == 2:
             cutoff_2 = float(self.second_cutoff_textbox.text())
         if self.filter_mat is None:
             self.progress_bar.setValue(0)
@@ -121,7 +121,6 @@ class FilterDialog(QtWidgets.QDialog):
     def save_filter_mat(self, filter_mat, filename):
         hf = h5py.File(filename, 'w')
         hf.create_dataset('filter', data=filter_mat)
-        hf.close()
         self.label_save_filtered_box.setText('Filtered traces saved in: ' + filename)
 
     def open_filter_file(self, filepath):
