@@ -53,7 +53,7 @@ class FilterDialog(QtWidgets.QDialog):
         self.second_textbox_label.setVisible(False)
 
         self.save_filtered_box = QtWidgets.QCheckBox('Save filtered traces')
-        self.label_save_filtered_box = QtWidgets.QLabel('Dont save filtered traces')
+        self.label_save_filtered_box = QtWidgets.QLabel('Don\'t save filtered traces')
         main_layout.addWidget(self.save_filtered_box)
         main_layout.addWidget(self.label_save_filtered_box)
         self.save_filtered_box.stateChanged.connect(self.save_filtered_box_clicked)
@@ -119,8 +119,9 @@ class FilterDialog(QtWidgets.QDialog):
             self.save_filter_mat(self.filter_mat, self.mea_file[:-3] + '_filtered.h5')
 
     def save_filter_mat(self, filter_mat, filename):
-        hf = h5py.File(filename, 'w')
-        hf.create_dataset('filter', data=filter_mat)
+        print(filename)
+        with h5py.File(filename, 'w') as hf:
+            hf.create_dataset('filter', data=filter_mat)
         self.label_save_filtered_box.setText('Filtered traces saved in: ' + filename)
 
     def open_filter_file(self, filepath):
