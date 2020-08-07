@@ -1,5 +1,6 @@
 import McsPy
 import McsPy.McsData
+import h5py
 
 
 class MeaDataReader:
@@ -7,5 +8,6 @@ class MeaDataReader:
         pass
 
     def open_mea_file(self, path):
+        # file = h5py.File(path, 'r')
         file = McsPy.McsData.RawData(path)
         return file

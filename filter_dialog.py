@@ -115,6 +115,7 @@ class FilterDialog(QtWidgets.QDialog):
             self.filter_mat = self.filtering_thread.filtered_mat.copy()
         self.filtering_thread = None
         self.filter_start_button.setEnabled(True)
+        print(self.mea_file[:-3] + '_filtered.h5')
         if self.save_filtered_box.isChecked():
             self.save_filter_mat(self.filter_mat, self.mea_file[:-3] + '_filtered.h5')
 
@@ -133,14 +134,16 @@ class FilterDialog(QtWidgets.QDialog):
     def check_for_filtered_traces(self):
         # scan path of current file, if the desired .h5 file exists
         filtered = self.mea_file[:-3] + '_filtered.h5'
+        print(filtered)
         if os.path.exists(filtered):
             # if this file already exists, set it as filter_mat
             filter_mat = self.open_filter_file(filtered)
             # show user an answer that informs him/her about the file and asks, if the user wants to filter channels
             # again anyways
-            answer = QtWidgets.QMessageBox.information(self, 'Filtered channels already found', 'Filter channels again?',
-                                              QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No,
-                                              QtWidgets.QMessageBox.No)
+            answer = QtWidgets.QMessageBox.information(self, 'Filtered channels already found',
+                                                       'Filter channels again?',
+                                                       QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No,
+                                                       QtWidgets.QMessageBox.No)
             # depending on the answer of the user, set the found file as filter_mat or set filter_mat to none
             if answer == QtWidgets.QMessageBox.Yes:
                 return None
@@ -150,7 +153,7 @@ class FilterDialog(QtWidgets.QDialog):
         else:
             return None
 
-    # this function changes the label of the progress bar to inform the user what happens in the backgound
+    # this function changes the label of the progress bar to inform the user what happens in the background
     @QtCore.pyqtSlot(str)
     def on_operation_changed(self, operation):
         self.operation_label.setText(operation)

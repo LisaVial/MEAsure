@@ -46,6 +46,7 @@ class FilterThread(QtCore.QThread):
         return y
 
     def filtering(self, file):
+        print('file dir: ', file)
         filter_mat = []
         electrode_stream = file.recordings[0].analog_streams[0]
         ids = [c.channel_id for c in electrode_stream.channel_infos.values()]
