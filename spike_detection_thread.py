@@ -75,7 +75,7 @@ class SpikeDetectionThread(QtCore.QThread):
             progress = round(((idx + 1) / len(same_len_labels)) * 100.0, 2)
             self.progress_made.emit(progress)
 
-            return spike_mat
+        return spike_mat
 
     def run(self):
         reader = MeaDataReader()

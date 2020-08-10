@@ -46,14 +46,13 @@ class FilterThread(QtCore.QThread):
         return y
 
     def filtering(self, file):
-        print('file dir: ', file)
         filter_mat = []
         electrode_stream = file.recordings[0].analog_streams[0]
         ids = [c.channel_id for c in electrode_stream.channel_infos.values()]
         # the next to lines ensure, that the for loop analyzes channels in the 'right order', but reversed
         labels = [electrode_stream.channel_infos[id].info['Label'] for id in ids]
         same_len_labels = [str(label[0]) + '0' + str(label[1]) if len(label) < 3 else label for label in labels]
-        for idx, ch_id in enumerate(reversed(np.argsort(same_len_labels))): #range(len(ids)):
+        for idx, ch_id in enumerate(reversed(np.argsort(same_len_labels[:2]))):    # only first two channels for testing
             channel_id = ids[idx]
             # in this case, the whole channel should be loaded, since the filter should be applied at once
             signal = electrode_stream.get_channel_in_range(channel_id, 0, electrode_stream.channel_data.shape[1])[0]
@@ -68,12 +67,13 @@ class FilterThread(QtCore.QThread):
             # elif self.filter_mode == 3:
             #     filtered = self.butter_bandpass_filter(signal, self.cut_1, self.cut_2, fs)
 
-            filter_mat.append(channel_label)
+            # filter_mat.append(channel_label)
             filter_mat.append(filtered)
 
-            progress = round(((idx + 1) / len(same_len_labels)) * 100.0, 2)
+            progress = round(((idx + 1) / len(same_len_labels[:2])) * 100.0, 2)  # change idx of same_len_labels at the
+            # end of testing
             self.progress_made.emit(progress)
-
+        print(filter_mat)
         return filter_mat
 
     def run(self):

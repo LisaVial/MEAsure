@@ -1,4 +1,4 @@
-from PyQt5 import QtCore, QtWidgets, QtGui
+from PyQt5 import QtCore, QtWidgets
 import csv
 import os
 
@@ -34,7 +34,7 @@ class SpikeDetectionDialog(QtWidgets.QDialog):
         # implementation of widgets in the spike_detection_dialog
         # save check box is connected to a function that saves spike_mat as .csv file
         self.save_check_box = QtWidgets.QCheckBox("Save spiketimes")
-        self.label_save_check_box = QtWidgets.QLabel("Don't save spiketimes")
+        self.label_save_check_box = QtWidgets.QLabel("Don\'t save spiketimes")
         main_layout.addWidget(self.save_check_box)
         main_layout.addWidget(self.label_save_check_box)
         self.save_check_box.stateChanged.connect(self.save_check_box_clicked)
@@ -57,8 +57,6 @@ class SpikeDetectionDialog(QtWidgets.QDialog):
         self.progress_bar.setMaximum(100)
         self.progress_bar.setTextVisible(True)
         main_layout.addWidget(self.progress_bar)
-
-        self.spike_mat = None
 
     @QtCore.pyqtSlot()
     def initialize_spike_detection(self):
@@ -126,7 +124,12 @@ class SpikeDetectionDialog(QtWidgets.QDialog):
         self.spike_detection_thread = None
         self.spike_detection_button.setEnabled(True)
         if self.save_check_box.isChecked():
-            self.save_spike_mat(self.spike_mat, self.mea_file + '_spiketimes.csv')
+            self.save_spike_mat(self.spike_mat, self.mea_file[:-3] + '_spiketimes.csv')
+
+    def save_spikemat(self, spikemat, filepath):
+        with open(filepath, 'w') as f:
+            writer = csv.writer(f)
+            writer.writerows(spikemat)
 
     # function to save the found spiketimes stored in spike_mat as .csv file
     def save_spike_mat(self, spike_mat, mea_file):

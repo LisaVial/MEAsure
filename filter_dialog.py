@@ -1,6 +1,7 @@
 from PyQt5 import QtCore, QtWidgets
 import h5py
 import os
+from IPython import embed
 
 from filter_thread import FilterThread
 
@@ -23,7 +24,6 @@ class FilterDialog(QtWidgets.QDialog):
         self.resize(self.width, self.height)
 
         self.filtering_thread = None
-        self.filter_mat = None
 
         main_layout = QtWidgets.QVBoxLayout(self)
         main_layout.setAlignment(QtCore.Qt.AlignTop | QtCore.Qt.AlignCenter)
@@ -31,12 +31,14 @@ class FilterDialog(QtWidgets.QDialog):
 
         self.filter_combo_box = QtWidgets.QComboBox(self)
         self.filter_combo_box.setFixedSize(self.width, 25)
+
         self.filter_combo_box.addItem('Lowpass Filter')
         self.filter_combo_box.addItem('Highpass Filter')
-        # self.filter_combo_box.addItem('Notch Filter')
         self.filter_combo_box.addItem('Bandpass Filter')
+
         self.filter_combo_box.setEditable(True)
         self.filter_combo_box.lineEdit().setReadOnly(True)
+
         self.filter_combo_box.lineEdit().setAlignment(QtCore.Qt.AlignCenter)
         self.filter_combo_box.currentIndexChanged.connect(self.filter_type_changed)
         main_layout.addWidget(self.filter_combo_box)
@@ -45,6 +47,7 @@ class FilterDialog(QtWidgets.QDialog):
         self.textbox_label = QtWidgets.QLabel('Cutoff frequency [Hz]')
         main_layout.addWidget(self.single_cutoff_textbox)
         main_layout.addWidget(self.textbox_label)
+
         self.second_cutoff_textbox = QtWidgets.QLineEdit(self)
         self.second_textbox_label = QtWidgets.QLabel('Upper cutoff frequency [Hz]')
         main_layout.addWidget(self.second_cutoff_textbox)
@@ -75,23 +78,13 @@ class FilterDialog(QtWidgets.QDialog):
         self.progress_bar.setTextVisible(True)
         main_layout.addWidget(self.progress_bar)
 
-    def filter_type_changed(self, index):
-        self.filter_combo_box.setCurrentIndex(index)
-        if index == 2:
-            self.textbox_label.setText('Lower cutoff frequency [Hz]')
-            self.second_cutoff_textbox.setVisible(True)
-            self.second_textbox_label.setVisible(True)
-
-    def save_filtered_box_clicked(self):
-        self.label_save_filtered_box.setText('Saving filtered traces to .h5 file at end of filtering')
-
     def initialize_filtering(self):
         filter_mode = self.filter_combo_box.currentIndex()
         cutoff_1 = float(self.single_cutoff_textbox.text())
         cutoff_2 = None
         if self.filter_combo_box.currentIndex() == 2:
             cutoff_2 = float(self.second_cutoff_textbox.text())
-        if self.filter_mat is None:
+        if self.filtered_mat is None:
             self.progress_bar.setValue(0)
             self.progress_label.setText('')
             self.operation_label.setText('Filtering')
@@ -109,20 +102,22 @@ class FilterDialog(QtWidgets.QDialog):
                 self.filtering_thread.start()  # start will start thread (and run),
                 # but main thread will continue immediately
 
-    def on_filter_thread_finished(self):
-        self.progress_label.setText('Finished :)')
-        if self.filtering_thread.filtered_mat:
-            self.filter_mat = self.filtering_thread.filtered_mat.copy()
-        self.filtering_thread = None
-        self.filter_start_button.setEnabled(True)
-        print(self.mea_file[:-3] + '_filtered.h5')
-        if self.save_filtered_box.isChecked():
-            self.save_filter_mat(self.filter_mat, self.mea_file[:-3] + '_filtered.h5')
+    def filter_type_changed(self, index):
+        self.filter_combo_box.setCurrentIndex(index)
+        if index == 2:
+            self.textbox_label.setText('Lower cutoff frequency [Hz]')
+            self.second_cutoff_textbox.setVisible(True)
+            self.second_textbox_label.setVisible(True)
+
+    def save_filtered_box_clicked(self):
+        self.label_save_filtered_box.setText('Saving filtered traces to .h5 file at end of filtering')
 
     def save_filter_mat(self, filter_mat, filename):
-        print(filename)
+        self.label_save_filtered_box.setText('Saving filtered traces...')
         with h5py.File(filename, 'w') as hf:
-            hf.create_dataset('filter', data=filter_mat)
+            for row in filter_mat:
+                dset = hf.create_dataset(row[0], (len(row[1]),), dtype='f')
+                dset[:] = row[1]
         self.label_save_filtered_box.setText('Filtered traces saved in: ' + filename)
 
     def open_filter_file(self, filepath):
@@ -133,7 +128,7 @@ class FilterDialog(QtWidgets.QDialog):
 
     def check_for_filtered_traces(self):
         # scan path of current file, if the desired .h5 file exists
-        filtered = self.mea_file[:-3] + '_filtered.h5'
+        filtered = self.mea_file[:-3] + '_filtered_test.h5'
         print(filtered)
         if os.path.exists(filtered):
             # if this file already exists, set it as filter_mat
@@ -163,3 +158,15 @@ class FilterDialog(QtWidgets.QDialog):
     def on_progress_made(self, progress):
         self.progress_bar.setValue(int(progress))
         self.progress_label.setText(str(progress) + "%")
+
+    def on_filter_thread_finished(self):
+        self.progress_label.setText('Finished :)')
+        if self.filtering_thread.filtered_mat:
+            print('copying new filter mat...')
+            self.filtered_mat = self.filtering_thread.filtered_mat.copy()
+        embed()
+        self.filtering_thread = None
+        self.filter_start_button.setEnabled(True)
+        print(self.mea_file[:-3] + '_filtered.h5')
+        if self.save_filtered_box.isChecked():
+            self.save_filter_mat(self.filter_mat, self.mea_file[:-3] + '_filtered.h5')
