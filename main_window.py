@@ -17,7 +17,7 @@ class MainWindow(QtWidgets.QMainWindow):
         super().__init__(parent)
 
         self.setWindowTitle(title)
-        self.mea_reader = MeaDataReader()
+        self.mea_reader = None
 
         self.file_list_view = DataListView(self)
         self.centralwidget = QtWidgets.QWidget(self)
@@ -58,6 +58,7 @@ class MainWindow(QtWidgets.QMainWindow):
     @QtCore.pyqtSlot(QtWidgets.QListWidgetItem)
     def on_file_double_clicked(self, item):
         absolute_path = os.path.join(self.file_list_view.current_folder, item.text())
+        self.mea_reader = MeaDataReader(absolute_path)
         self.mea_tab_widget.show_mea_file_view(absolute_path)
 
     def save_settings(self):

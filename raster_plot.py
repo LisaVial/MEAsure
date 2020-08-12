@@ -52,7 +52,6 @@ class RasterPlot:
         for idx in range(len(empty_string_labels)):
             if idx % 12 == 0:
                 empty_string_labels[idx] = empty_string_labels[idx].replace('', yticklabels[idx])
-        ax.set_yticklabels(yticklabels)
         ax.set_yticklabels(empty_string_labels)
         ax.set_ylabel('MEA channels')
 

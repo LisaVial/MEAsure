@@ -9,15 +9,17 @@ from mea_grid import MeaGrid
 from spike_detection_dialog import SpikeDetectionDialog
 from filter_dialog import FilterDialog
 from plot_creation_thread import PlotCreationThread
+from csd_plot_creation_thread import CsdPlotCreationThread
 
 
 class MeaFileView(QtWidgets.QWidget):
     def __init__(self, parent, mea_file):
         super().__init__(parent)
-        self.reader = MeaDataReader()
+        self.reader = MeaDataReader(mea_file)
         self.mea_file = mea_file
 
         self.plot_creation_thread = None
+        self.csd_plot_creation_thread = None
 
         self.mea_grid = MeaGrid(self)
         self.mea_grid.setFixedSize(600, 600)
@@ -28,6 +30,12 @@ class MeaFileView(QtWidgets.QWidget):
         grid_buttons_and_progress_bar_layout = QtWidgets.QVBoxLayout(self)
         grid_buttons_and_progress_bar_layout.setAlignment(QtCore.Qt.AlignTop | QtCore.Qt.AlignLeft)
         grid_buttons_and_progress_bar_layout.addWidget(self.mea_grid)
+
+        self.csd_plot_button = QtWidgets.QPushButton(self)
+        self.csd_plot_button.setText('Show unfiltered channels (CSD plot)')
+        self.csd_plot_button.clicked.connect(self.initialize_csd_plotting)
+
+        grid_buttons_and_progress_bar_layout.addWidget(self.csd_plot_button)
 
         self.filter_dialog_button = QtWidgets.QPushButton(self)
         self.filter_dialog_button.setText('Open filtering dialog')
@@ -41,6 +49,7 @@ class MeaFileView(QtWidgets.QWidget):
 
         self.raster_plot_button = QtWidgets.QPushButton(self)
         self.raster_plot_button.setText("Raster Plot")
+        self.raster_plot_button.clicked.connect(self.initialize_plotting)
 
         grid_buttons_and_progress_bar_layout.addWidget(self.raster_plot_button)
 
@@ -55,7 +64,6 @@ class MeaFileView(QtWidgets.QWidget):
         self.progress_bar.setTextVisible(True)
         grid_buttons_and_progress_bar_layout.addWidget(self.progress_bar)
         main_layout.addLayout(grid_buttons_and_progress_bar_layout)
-        self.raster_plot_button.clicked.connect(self.initialize_plotting)
 
         self.plot_widget = PlotWidget(self)
 
@@ -72,6 +80,26 @@ class MeaFileView(QtWidgets.QWidget):
     def open_filter_dialog(self):
         filter_dialog = FilterDialog(None, self.plot_widget, self.mea_file)
         filter_dialog.exec_()
+
+    @QtCore.pyqtSlot()
+    def initialize_csd_plotting(self):
+        reader = MeaDataReader(self.mea_file)
+        self.progress_bar.setValue(0)
+        self.progress_label.setText("")
+        self.raster_plot_button.setEnabled(False)
+        self.csd_plot_creation_thread = CsdPlotCreationThread(self.plot_widget, reader)
+        self.csd_plot_creation_thread.finished.connect(self.on_plot_creation_thread_finished)
+        self.csd_plot_creation_thread.progress_made.connect(self.on_progress_made)
+        self.csd_plot_creation_thread.operation_changed.connect(self.on_operation_changed)
+
+        debug_mode = False  # set to 'True' in order to debug plot creation with embed
+        if debug_mode:
+            # synchronous plotting (runs in main thread and thus allows debugging)
+            self.csd_plot_creation_thread.run()
+        else:
+            # asynchronous plotting (default):
+            self.csd_plot_creation_thread.start()  # start will start thread (and run),
+            # but main thread will continue immediately
 
     @QtCore.pyqtSlot()
     def initialize_plotting(self):
@@ -112,8 +140,10 @@ class MeaFileView(QtWidgets.QWidget):
     def on_plot_creation_thread_finished(self):
         self.progress_label.setText("Finished :)")
         self.plot_creation_thread = None
+        self.csd_plot_creation_thread = None
         self.plot_widget.toolbar.show()
         # self.plot_manager.add_plot(self)
         self.raster_plot_button.setEnabled(True)
+        self.csd_plot_button.setEnabled(True)
         self.plot_widget.refresh_canvas()
 

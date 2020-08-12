@@ -92,8 +92,9 @@ class FilterDialog(QtWidgets.QDialog):
             self.filtering_thread = FilterThread(self, self.plot_widget, self.mea_file, filter_mode, cutoff_1, cutoff_2)
             self.filtering_thread.progress_made.connect(self.on_progress_made)
             self.filtering_thread.operation_changed.connect(self.on_operation_changed)
+            self.filtering_thread.finished.connect(self.on_filter_thread_finished)
 
-            debug_mode = False  # set to 'True' in order to debug plot creation with embed
+            debug_mode = False  # set to 'True' in order to debug with embed
             if debug_mode:
                 # synchronous plotting (runs in main thread and thus allows debugging)
                 self.filtering_thread.run()
@@ -115,9 +116,7 @@ class FilterDialog(QtWidgets.QDialog):
     def save_filter_mat(self, filter_mat, filename):
         self.label_save_filtered_box.setText('Saving filtered traces...')
         with h5py.File(filename, 'w') as hf:
-            for row in filter_mat:
-                dset = hf.create_dataset(row[0], (len(row[1]),), dtype='f')
-                dset[:] = row[1]
+            dset = hf.create_dataset('filter', data=filter_mat, dtype='f')
         self.label_save_filtered_box.setText('Filtered traces saved in: ' + filename)
 
     def open_filter_file(self, filepath):
@@ -164,9 +163,8 @@ class FilterDialog(QtWidgets.QDialog):
         if self.filtering_thread.filtered_mat:
             print('copying new filter mat...')
             self.filtered_mat = self.filtering_thread.filtered_mat.copy()
-        embed()
         self.filtering_thread = None
         self.filter_start_button.setEnabled(True)
         print(self.mea_file[:-3] + '_filtered.h5')
         if self.save_filtered_box.isChecked():
-            self.save_filter_mat(self.filter_mat, self.mea_file[:-3] + '_filtered.h5')
+            self.save_filter_mat(self.filtered_mat, self.mea_file[:-3] + '_filtered.h5')

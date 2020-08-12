@@ -45,11 +45,6 @@ class SpikeDetectionThread(QtCore.QThread):
 
     def spike_detection(self, file):
         spike_mat = []
-        electrode_stream = file.recordings[0].analog_streams[0]
-        ids = [c.channel_id for c in electrode_stream.channel_infos.values()]
-        # the next to lines ensure, that the for loop analyzes channels in the 'right order', but reversed
-        labels = [electrode_stream.channel_infos[id].info['Label'] for id in ids]
-        same_len_labels = [str(label[0]) + '0' + str(label[1]) if len(label) < 3 else label for label in labels]
         for idx, ch_id in enumerate(reversed(np.argsort(same_len_labels))): #range(len(ids)):
             channel_id = ids[idx]
             # in case the whole channel data should be loaded at once, uncomment next line
