@@ -182,17 +182,21 @@ class FilterDialog(QtWidgets.QDialog):
 
     @QtCore.pyqtSlot(list)
     def on_data_updated(self, data):
-        signal, filterd = data[0], data[1]
+        signal, filterd, label = data[0], data[1], data[2]
+        ay = self.plot_widget.getAxis('left')
+        ticks = [0]
+        ay.setTicks([[(v, label) for v in ticks]])
 
         self.signal.append(signal)
 
-        self.time_s.append(list(range(0, len(self.signal[-1]))))
+        self.time_s.append(list(np.arange(0, len(self.signal[-1])*(312/self.fs), (312/self.fs))))
+        print(len(self.signal[-1]), (312/self.fs))
         # embed()
         self.unfiltered.setData(self.time_s[-1], self.signal[-1])
 
         self.filter.append(filterd)
 
-        self.time_f.append(list(range(0, len(self.filter[-1]))))
+        self.time_f.append(list(np.arange(0, len(self.filter[-1])*(312/self.fs), (312/self.fs))))
         self.filtered.setData(self.time_f[-1], self.filter[-1])
 
 

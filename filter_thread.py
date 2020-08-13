@@ -52,7 +52,7 @@ class FilterThread(QtCore.QThread):
         reader = mea_data_reader
         signals = reader.voltage_traces
         ids = reader.channel_indices
-        # the next to lines ensure, that the for loop analyzes channels in the 'right order', but reversed
+        labels = reader.labels
         fs = reader.sampling_frequency
 
         for idx, ch_id in enumerate(ids):    # only first two channels for testing
@@ -66,7 +66,7 @@ class FilterThread(QtCore.QThread):
                 filtered = self.butter_bandpass_filter(signal, self.cut_1, self.cut_2, fs)
             filter_mat.append(filtered)
 
-            data = [list(signal[::1250]+idx*1000), list(filtered[::1250]+idx*1000)]
+            data = [list(signal[::312]), list(filtered[::312]), str(labels[idx])]
             self.data_updated.emit(data)
 
             progress = round(((idx + 1) / len(ids)) * 100.0, 2)  # change idx of same_len_labels at the
