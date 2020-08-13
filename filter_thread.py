@@ -1,6 +1,7 @@
 from PyQt5 import QtCore
 import numpy as np
 from scipy.signal import lfilter, butter
+import pyqtgraph as pg
 
 from mea_data_reader import MeaDataReader
 
@@ -8,18 +9,18 @@ from mea_data_reader import MeaDataReader
 class FilterThread(QtCore.QThread):
     operation_changed = QtCore.pyqtSignal(str)
     progress_made = QtCore.pyqtSignal(float)
+    data_updated = QtCore.pyqtSignal(list)
     finished = QtCore.pyqtSignal()
 
-    def __init__(self, parent, plot_widget, mea_file, filter_mode, cutoff_1, cutoff_2):
+    def __init__(self, parent, reader, filter_mode, cutoff_1, cutoff_2):
         super().__init__(parent)
-        self.mea_file = mea_file
-        self.plot_widget = plot_widget
+        self.reader = reader
+
         self.filter_mode = filter_mode
         self.cut_1 = cutoff_1
         self.cut_2 = cutoff_2
 
         self.filtered_mat = None
-        self.reader = None
 
     def butter_bandpass(self, lowcut, highcut, fs, order=2):
         nyq = 0.5 * fs
@@ -53,6 +54,7 @@ class FilterThread(QtCore.QThread):
         ids = reader.channel_indices
         # the next to lines ensure, that the for loop analyzes channels in the 'right order', but reversed
         fs = reader.sampling_frequency
+
         for idx, ch_id in enumerate(ids):    # only first two channels for testing
             # in this case, the whole channel should be loaded, since the filter should be applied at once
             signal = signals[ch_id]
@@ -64,13 +66,15 @@ class FilterThread(QtCore.QThread):
                 filtered = self.butter_bandpass_filter(signal, self.cut_1, self.cut_2, fs)
             filter_mat.append(filtered)
 
+            data = [list(signal[::1250]+idx*1000), list(filtered[::1250]+idx*1000)]
+            self.data_updated.emit(data)
+
             progress = round(((idx + 1) / len(ids)) * 100.0, 2)  # change idx of same_len_labels at the
             # end of testing
             self.progress_made.emit(progress)
         return filter_mat
 
     def run(self):
-        self.reader = MeaDataReader(self.mea_file)
         # file = reader.open_mea_file(self.mea_file)
         self.operation_changed.emit('Filtering traces')
         self.filtered_mat = self.filtering(self.reader)

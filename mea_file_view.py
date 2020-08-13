@@ -78,7 +78,7 @@ class MeaFileView(QtWidgets.QWidget):
 
     @QtCore.pyqtSlot()
     def open_filter_dialog(self):
-        filter_dialog = FilterDialog(None, self.plot_widget, self.mea_file)
+        filter_dialog = FilterDialog(None, self.reader)
         filter_dialog.exec_()
 
     @QtCore.pyqtSlot()

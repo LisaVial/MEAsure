@@ -2,15 +2,16 @@ from PyQt5 import QtCore, QtWidgets
 import h5py
 import os
 from IPython import embed
+import pyqtgraph as pg
+import numpy as np
 
 from filter_thread import FilterThread
 
 
 class FilterDialog(QtWidgets.QDialog):
-    def __init__(self, parent, plot_widget, mea_file):
+    def __init__(self, parent,  reader):
         super().__init__(parent)
-        self.plot_widget = plot_widget
-        self.mea_file = mea_file
+        self.reader = reader
         self.filtered_mat = None
 
         title = 'Filtering'
@@ -25,9 +26,12 @@ class FilterDialog(QtWidgets.QDialog):
 
         self.filtering_thread = None
 
-        main_layout = QtWidgets.QVBoxLayout(self)
+        main_layout = QtWidgets.QHBoxLayout(self)
         main_layout.setAlignment(QtCore.Qt.AlignTop | QtCore.Qt.AlignCenter)
         self.setWindowTitle(title)
+
+        filter_settings_layout = QtWidgets.QVBoxLayout(self)
+        filter_settings_layout.setAlignment(QtCore.Qt.AlignTop | QtCore.Qt.AlignCenter)
 
         self.filter_combo_box = QtWidgets.QComboBox(self)
         self.filter_combo_box.setFixedSize(self.width, 25)
@@ -41,42 +45,70 @@ class FilterDialog(QtWidgets.QDialog):
 
         self.filter_combo_box.lineEdit().setAlignment(QtCore.Qt.AlignCenter)
         self.filter_combo_box.currentIndexChanged.connect(self.filter_type_changed)
-        main_layout.addWidget(self.filter_combo_box)
+        filter_settings_layout.addWidget(self.filter_combo_box)
 
         self.single_cutoff_textbox = QtWidgets.QLineEdit(self)
+        self.single_cutoff_textbox.setAlignment(QtCore.Qt.AlignCenter)
+        self.single_cutoff_textbox.setFixedSize(self.width, 25)
         self.textbox_label = QtWidgets.QLabel('Cutoff frequency [Hz]')
-        main_layout.addWidget(self.single_cutoff_textbox)
-        main_layout.addWidget(self.textbox_label)
+        filter_settings_layout.addWidget(self.single_cutoff_textbox)
+        filter_settings_layout.addWidget(self.textbox_label)
 
         self.second_cutoff_textbox = QtWidgets.QLineEdit(self)
+        self.second_cutoff_textbox.setAlignment(QtCore.Qt.AlignCenter)
+        self.second_cutoff_textbox.setFixedSize(self.width, 25)
         self.second_textbox_label = QtWidgets.QLabel('Upper cutoff frequency [Hz]')
-        main_layout.addWidget(self.second_cutoff_textbox)
-        main_layout.addWidget(self.second_textbox_label)
+        filter_settings_layout.addWidget(self.second_cutoff_textbox)
+        filter_settings_layout.addWidget(self.second_textbox_label)
         self.second_cutoff_textbox.setVisible(False)
         self.second_textbox_label.setVisible(False)
 
         self.save_filtered_box = QtWidgets.QCheckBox('Save filtered traces')
         self.label_save_filtered_box = QtWidgets.QLabel('Don\'t save filtered traces')
-        main_layout.addWidget(self.save_filtered_box)
-        main_layout.addWidget(self.label_save_filtered_box)
+        filter_settings_layout.addWidget(self.save_filtered_box)
+        filter_settings_layout.addWidget(self.label_save_filtered_box)
         self.save_filtered_box.stateChanged.connect(self.save_filtered_box_clicked)
 
         self.filter_start_button = QtWidgets.QPushButton(self)
+        self.filter_start_button.setFixedSize(self.width, 25)
         self.filter_start_button.setText('Start filtering')
         self.filter_start_button.clicked.connect(self.initialize_filtering)
-        main_layout.addWidget(self.filter_start_button)
+        filter_settings_layout.addWidget(self.filter_start_button)
 
         self.operation_label = QtWidgets.QLabel(self)
         self.operation_label.setText('Nothing happens so far')
-        main_layout.addWidget(self.operation_label)
+        filter_settings_layout.addWidget(self.operation_label)
         self.progress_label = QtWidgets.QLabel(self)
-        main_layout.addWidget(self.progress_label)
+        filter_settings_layout.addWidget(self.progress_label)
 
         self.progress_bar = QtWidgets.QProgressBar(self)
         self.progress_bar.setMinimum(0)
         self.progress_bar.setMaximum(100)
         self.progress_bar.setTextVisible(True)
-        main_layout.addWidget(self.progress_bar)
+        filter_settings_layout.addWidget(self.progress_bar)
+
+        main_layout.addLayout(filter_settings_layout)
+
+        self.plot_widget = pg.PlotWidget()
+        self.plot_widget.setBackground('w')
+        styles = {'color': 'k', 'font-size': '10px'}
+        self.plot_widget.setLabel('left', 'channel', **styles)
+        self.plot_widget.setLabel('bottom', 'time [s]', **styles)
+        main_layout.addWidget(self.plot_widget)
+
+        self.signal = [[0, 0, 0, 0]]
+        self.filter = [[0, 0, 0, 0]]
+        self.time_s = [[0, 0, 0, 0]]
+        self.time_f = [[0, 0, 0, 0]]
+
+        pen_1 = pg.mkPen(color='#006e7d')
+        self.fs = self.reader.sampling_frequency
+
+        self.unfiltered = self.plot_widget.plot(self.time_s[-1], self.signal[-1], pen=pen_1, name='unfiltered')
+
+        pen_2 = pg.mkPen(color='#a7c9ba')
+        self.filtered = self.plot_widget.plot(self.time_f[-1], self.filter[-1], pen=pen_2, name='filtered')
+        self.plot_widget.addLegend()
 
     def initialize_filtering(self):
         filter_mode = self.filter_combo_box.currentIndex()
@@ -89,9 +121,10 @@ class FilterDialog(QtWidgets.QDialog):
             self.progress_label.setText('')
             self.operation_label.setText('Filtering')
             self.filter_start_button.setEnabled(False)
-            self.filtering_thread = FilterThread(self, self.plot_widget, self.mea_file, filter_mode, cutoff_1, cutoff_2)
+            self.filtering_thread = FilterThread(self, self.reader, filter_mode, cutoff_1, cutoff_2)
             self.filtering_thread.progress_made.connect(self.on_progress_made)
             self.filtering_thread.operation_changed.connect(self.on_operation_changed)
+            self.filtering_thread.data_updated.connect(self.on_data_updated)
             self.filtering_thread.finished.connect(self.on_filter_thread_finished)
 
             debug_mode = False  # set to 'True' in order to debug with embed
@@ -146,6 +179,22 @@ class FilterDialog(QtWidgets.QDialog):
         # in case there is no filter file found, the filter_mat stays none
         else:
             return None
+
+    @QtCore.pyqtSlot(list)
+    def on_data_updated(self, data):
+        signal, filterd = data[0], data[1]
+
+        self.signal.append(signal)
+
+        self.time_s.append(list(range(0, len(self.signal[-1]))))
+        # embed()
+        self.unfiltered.setData(self.time_s[-1], self.signal[-1])
+
+        self.filter.append(filterd)
+
+        self.time_f.append(list(range(0, len(self.filter[-1]))))
+        self.filtered.setData(self.time_f[-1], self.filter[-1])
+
 
     # this function changes the label of the progress bar to inform the user what happens in the background
     @QtCore.pyqtSlot(str)
