@@ -67,7 +67,6 @@ class FilterThread(QtCore.QThread):
             progress = round(((idx + 1) / len(ids)) * 100.0, 2)  # change idx of same_len_labels at the
             # end of testing
             self.progress_made.emit(progress)
-        print(filter_mat)
         return filter_mat
 
     def run(self):

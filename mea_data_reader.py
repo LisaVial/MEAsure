@@ -7,11 +7,17 @@ from IPython import embed
 
 class MeaDataReader:
     def __init__(self, path):
-        self.file, self.voltage_traces, self.sampling_frequency = self.open_mea_file(path)
-        self.channel_indices, self.labels = self.get_channel_indices(self.file)
+        if 'filtered' in path:
+            self.file, self.voltage_traces = self.open_mea_file(path)
+        else:
+            self.file, self.voltage_traces, self.sampling_frequency = self.open_mea_file(path)
+            self.channel_indices, self.labels = self.get_channel_indices(self.file)
 
     def open_mea_file(self, path):
         file = h5py.File(path, 'r')
+        if 'filtered' in path:
+            voltage_traces = file['filter']
+            return file, voltage_traces
         voltage_traces = file['Data']['Recording_0']['AnalogStream']['Stream_0']['ChannelData']
         sampling_frequency = 1000000/file['Data']['Recording_0']['AnalogStream']['Stream_0']['InfoChannel']['Tick'][0]
         # infos of the recording:
