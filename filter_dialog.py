@@ -13,6 +13,7 @@ class FilterDialog(QtWidgets.QDialog):
         super().__init__(parent)
         self.reader = reader
         self.filtered_mat = None
+        # embed()
 
         title = 'Filtering'
 
@@ -146,10 +147,19 @@ class FilterDialog(QtWidgets.QDialog):
     def save_filtered_box_clicked(self):
         self.label_save_filtered_box.setText('Saving filtered traces to .h5 file at end of filtering')
 
-    def save_filter_mat(self, filter_mat, filename):
-        self.label_save_filtered_box.setText('Saving filtered traces...')
-        with h5py.File(filename, 'w') as hf:
-            dset = hf.create_dataset('filter', data=filter_mat, dtype='f')
+    def save_filter_mat(self, filter_mat, reader, filename):
+        self.label_save_filtered_box.setText('Saving analysis h5 file...')
+        if reader.voltage_traces and reader.sampling_frequency and reader.channel_indices and reader.labels and \
+                reader.indices:
+            with h5py.File(filename, 'w') as hf:
+                dset_1 = hf.create_dataset('indices', data=reader.indices, dtype='int')
+                dset_2 = hf.create_dataset('raw traces', data=reader.voltage_traces, dtype='f')
+                dt = h5py.special_dtype(vlen=str)
+                labels = np.array(reader.labels, dtype=dt)
+                dset_3 = hf.create_dataset('channel labels', data=labels, dtype=dt)
+                dset_4 = hf.create_dataset('channel ids', data=reader.channel_indices, dtype='int')
+                dset_5 = hf.create_dataset('sampling frequency', data=reader.sampling_frequency, dtype='f')
+                dset_6 = hf.create_dataset('filter', data=filter_mat, dtype='f')
         self.label_save_filtered_box.setText('Filtered traces saved in: ' + filename)
 
     def open_filter_file(self, filepath):
@@ -218,6 +228,6 @@ class FilterDialog(QtWidgets.QDialog):
             self.filtered_mat = self.filtering_thread.filtered_mat.copy()
         self.filtering_thread = None
         self.filter_start_button.setEnabled(True)
-        print(self.mea_file[:-3] + '_filtered.h5')
         if self.save_filtered_box.isChecked():
-            self.save_filter_mat(self.filtered_mat, self.mea_file[:-3] + '_filtered.h5')
+            mea_file = self.reader.file.filename
+            self.save_filter_mat(self.filtered_mat, self.reader, mea_file[:-3] + '_analysis.h5')

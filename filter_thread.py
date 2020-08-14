@@ -55,7 +55,7 @@ class FilterThread(QtCore.QThread):
         labels = reader.labels
         fs = reader.sampling_frequency
 
-        for idx, ch_id in enumerate(ids):    # only first two channels for testing
+        for idx, ch_id in enumerate(ids):
             # in this case, the whole channel should be loaded, since the filter should be applied at once
             signal = signals[ch_id]
             if self.filter_mode == 0:

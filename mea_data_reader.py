@@ -11,7 +11,7 @@ class MeaDataReader:
             self.file, self.voltage_traces = self.open_mea_file(path)
         else:
             self.file, self.voltage_traces, self.sampling_frequency = self.open_mea_file(path)
-            self.channel_indices, self.labels = self.get_channel_indices(self.file)
+            self.channel_indices, self.labels, self.indices = self.get_channel_indices(self.file)
 
     def open_mea_file(self, path):
         file = h5py.File(path, 'r')
@@ -39,4 +39,4 @@ class MeaDataReader:
                   self.file['Data']['Recording_0']['AnalogStream']['Stream_0']['InfoChannel']]
         same_len_labels = [str(label[0]) + '0' + str(label[1]) if len(label) < 3 else label for label in labels]
         ordered_indices = list(np.argsort(same_len_labels))
-        return list(np.asarray(ids)[ordered_indices]), list(np.asarray(labels)[ordered_indices])
+        return list(np.asarray(ids)[ordered_indices]), list(np.asarray(labels)[ordered_indices]), list(ordered_indices)
