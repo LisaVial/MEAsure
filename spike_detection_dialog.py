@@ -1,17 +1,22 @@
 from PyQt5 import QtCore, QtWidgets
-import csv
 import os
+import pyqtgraph as pg
+import numpy as np
+import h5py
 
 from spike_detection_thread import SpikeDetectionThread
 
 
 class SpikeDetectionDialog(QtWidgets.QDialog):
-    def __init__(self, parent, mea_file):
+    def __init__(self, parent, reader):
         super().__init__(parent)
 
         # set variables that come from MEA file reader as class variables
-        self.mea_file = mea_file
+        self.reader = reader
+
         self.spike_mat = None
+        self.spike_indices = None
+        self.analysis_file_path = None
 
         # basic layout of the new spike_detection_dialog
         title = 'Spike detection'
@@ -20,7 +25,9 @@ class SpikeDetectionDialog(QtWidgets.QDialog):
         self.setWindowFlag(QtCore.Qt.WindowTitleHint, True)
         self.setWindowFlag(QtCore.Qt.WindowMaximizeButtonHint, True)
         self.setWindowFlag(QtCore.Qt.WindowCloseButtonHint, True)
-        self.resize(800, 600)
+        self.width = 800
+        self.height = 600
+        self.resize(self.width, self.height)
 
         # main layout is the layout for this specific dialog, sub layouts can also be defined and later on be added to
         # the main layout (e.g. if single buttons/plots/whatever should have a defined layout)
@@ -48,27 +55,60 @@ class SpikeDetectionDialog(QtWidgets.QDialog):
         # operation and progress_label is linked to the progress bar, so that the user sees, what is happening in the
         # background of the GUI
         self.operation_label = QtWidgets.QLabel(self)
+        self.operation_label.setText('Nothing happens so far')
         main_layout.addWidget(self.operation_label)
         self.progress_label = QtWidgets.QLabel(self)
         main_layout.addWidget(self.progress_label)
 
         self.progress_bar = QtWidgets.QProgressBar(self)
+        self.progress_bar.setFixedSize(self.width, 25)
         self.progress_bar.setMinimum(0)
         self.progress_bar.setMaximum(100)
         self.progress_bar.setTextVisible(True)
         main_layout.addWidget(self.progress_bar)
 
+        self.plot_widget = pg.PlotWidget()
+        self.plot_widget.setBackground('w')
+        styles = {'color': 'k', 'font-size': '10px'}
+        self.plot_widget.setLabel('left', 'amplitude [&#956;]', **styles)
+        self.plot_widget.setLabel('bottom', 'time [s]', **styles)
+        main_layout.addWidget(self.plot_widget)
+
+        self.voltage_trace = [[0, 0, 0, 0]]
+        self.time_vt = [[0, 0, 0, 0]]
+        self.spiketimes = [[0, 0, 0, 0]]
+        self.height_spiketimes = [[0, 0, 0, 0]]
+        self.threshold = 0
+
+        pen_1 = pg.mkPen(color='#006e7d')
+        self.fs = 10000     # ToDo: make sure this is stored as well with .meae file creation
+
+        self.signal_plot = self.plot_widget.plot(self.time_vt[-1], self.voltage_trace[-1], pen=pen_1,
+                                                 name='voltage trace')
+        pen_thresh = pg.mkPen(color='k')
+        self.hLine = pg.InfiniteLine(angle=0, movable=False, pen=pen_thresh)
+        self.hLine.setValue(self.threshold)
+        self.plot_widget.addItem(self.hLine)
+        self.hLine2 = pg.InfiniteLine(angle=0, movable=False, pen=pen_thresh)
+        self.hLine2.setValue(-1 * self.threshold)
+        self.plot_widget.addItem(self.hLine2)
+
+        pen_2 = pg.mkPen(color='#a7c9ba')
+        self.scatter = pg.ScatterPlotItem(pen=pen_2, symbol='|', name='spiketimes')
+        self.plot_widget.addItem(self.scatter)
+        self.plot_widget.addLegend()
+
     @QtCore.pyqtSlot()
     def initialize_spike_detection(self):
-        self.spike_mat = self.check_for_spike_times_csv(self.mea_file)
         if self.spike_mat is None:
             self.progress_bar.setValue(0)
             self.progress_label.setText("")
-            self.spike_detection_button.setEnabled(False)
-            self.spike_detection_thread = SpikeDetectionThread(self, self.plot_widget, self.mea_file)
-            self.spike_detection_thread.finished.connect(self.on_spike_detection_thread_finished)
+            self.spike_detection_start_button.setEnabled(False)
+            self.spike_detection_thread = SpikeDetectionThread(self, self.reader)
             self.spike_detection_thread.progress_made.connect(self.on_progress_made)
             self.spike_detection_thread.operation_changed.connect(self.on_operation_changed)
+            self.spike_detection_thread.data_updated.connect(self.on_data_updated)
+            self.spike_detection_thread.finished.connect(self.on_spike_detection_thread_finished)
 
             debug_mode = False  # set to 'True' in order to debug plot creation with embed
             if debug_mode:
@@ -79,29 +119,9 @@ class SpikeDetectionDialog(QtWidgets.QDialog):
                 self.spike_detection_thread.start()  # start will start thread (and run),
                 # but main thread will continue immediately
 
-    def check_for_spike_times_csv(self):
-        # scan path of current file, if there is a .csv file
-        spiketimes_csv = self.mea_file[:-3] + '_spiketimes.csv'
-        if os.path.exists(spiketimes_csv):
-            # if this file already exists, set it as spike_mat
-            spike_mat = self.open_spikemat(spiketimes_csv)
-            # show user an answer that informs him/her about the file and asks, if the user wants to detect spikes again
-            # anyways
-            answer = QtWidgets.QMessageBox.information(self, 'spiketimes already found', 'Detect spikes again?',
-                                              QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No,
-                                              QtWidgets.QMessageBox.No)
-            # depending on the answer of the user, set the found csv file as spike_mat or set spike_mat to none
-            if answer == QtWidgets.QMessageBox.Yes:
-                return None
-            else:
-                return spike_mat
-        # in case there is no csv file found, the spike_mat stays none
-        else:
-            return None
-
     def save_check_box_clicked(self):
         # change label of the save check box in case the user clicked it
-        self.label_save_check_box.setText('Saving spikes to .csv file at the end of spike detection')
+        self.label_save_check_box.setText('Saving spikes to .meae file at the end of spike detection')
 
     # this function changes the label of the progress bar to inform the user what happens in the backgound
     @QtCore.pyqtSlot(str)
@@ -120,30 +140,54 @@ class SpikeDetectionDialog(QtWidgets.QDialog):
     def on_spike_detection_thread_finished(self):
         self.progress_label.setText("Finished :)")
         if self.spike_detection_thread.spike_mat:
+            self.spike_indices = self.spike_detection_thread.spike_indices.copy()
             self.spike_mat = self.spike_detection_thread.spike_mat.copy()
         self.spike_detection_thread = None
         self.spike_detection_button.setEnabled(True)
         if self.save_check_box.isChecked():
-            self.save_spike_mat(self.spike_mat, self.mea_file[:-3] + '_spiketimes.csv')
+            self.save_spike_mat(self.spike_mat, self.spike_indices, self.mea_file[:-3] + '.meae')
 
-    def save_spikemat(self, spikemat, filepath):
-        with open(filepath, 'w') as f:
-            writer = csv.writer(f)
-            writer.writerows(spikemat)
+    @QtCore.pyqtSlot(list)
+    def on_data_updated(self, data):
+        signal, spike_times, threshold = data[0], data[1], data[2]
+        spike_times = spike_times * (312/self.fs)
+        self.voltage_trace.append(signal)
+        self.time_vt.append(list(np.arange(0, len(self.voltage_trace[-1])*(312/self.fs), (312/self.fs))))
+        self.signal_plot.setData(self.time_vt[-1], self.voltage_trace[-1])
+
+        self.hLine.setYValue(threshold)
+        self.hLine2.setYValue(-1 * threshold)
+
+        self.spiketimes.append(spike_times)
+        self.height_spiketimes.append(np.ones(len(spike_times)) * np.max(signal))
+        self.scatter.setData(self.spiketimes[-1], self.height_spiketimes[-1])
+
 
     # function to save the found spiketimes stored in spike_mat as .csv file
-    def save_spike_mat(self, spike_mat, mea_file):
+    def save_spike_mat(self, spike_mat, spike_indices, mea_file):
         self.label_save_check_box.setText('saving spike times...')
         # take filepath and filename, to get name of mea file and save it to the same directory
         file_name = mea_file[:-3]
-        spike_filename = file_name + '_spiketimes.csv'
-        self.save_spikemat(spike_mat, spike_filename)
+        spike_filename = file_name + 'meae'
+        split_path = mea_file.split('\\')
+        overall_path = split_path[0] + '\\' + split_path[1] + '\\' + split_path[2]
+        analysis_filename = [file for file in os.listdir(overall_path) if file.endswith('.meae')]
+        if len(analysis_filename) > 0:
+            self.analysis_file_path = overall_path + '\\' + analysis_filename[0]
+        if self.analysis_file_path:
+            with h5py.File(self.analysis_file_path, 'a') as hf:
+                dset_1 = hf.create_dataset('spiketimes', data=spike_mat, dtype='f')
+                dset_2 = hf.create_dataset('spiketimes_indices', data=spike_indices, dtype='int')
+        else:
+            with h5py.File(self.reader.file_path[:-3] + '.meae', 'w') as hf:
+                dset_1 = hf.create_dataset('spiketimes', data=spike_mat, dtype='f')
+                dset_2 = hf.create_dataset('spiketimes_indices', data=spike_indices, dtype='int')
         self.label_save_check_box.setText('spike times saved in: ' + spike_filename)
 
     # function to open spike_mat .csv in case it exists
-    def open_spikemat(self, filepath):
-        with open(filepath, 'r') as read_obj:
-            csv_reader = csv.reader(read_obj)
-            spike_mat = list(csv_reader)
-        return spike_mat
+    # def open_spikemat(self, filepath):
+    #     with open(filepath, 'r') as read_obj:
+    #         csv_reader = csv.reader(read_obj)
+    #         spike_mat = list(csv_reader)
+    #     return spike_mat
 

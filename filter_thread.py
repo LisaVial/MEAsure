@@ -1,9 +1,5 @@
 from PyQt5 import QtCore
-import numpy as np
 from scipy.signal import lfilter, butter
-import pyqtgraph as pg
-
-from mea_data_reader import MeaDataReader
 
 
 class FilterThread(QtCore.QThread):
@@ -21,6 +17,7 @@ class FilterThread(QtCore.QThread):
         self.cut_2 = cutoff_2
 
         self.filtered_mat = None
+        self.spike_indices = None
 
     def butter_bandpass(self, lowcut, highcut, fs, order=2):
         nyq = 0.5 * fs
@@ -34,7 +31,7 @@ class FilterThread(QtCore.QThread):
         y = lfilter(b, a, data)
         return y
 
-    def butter_filter(self, cutoff, fs, mode, order=2):
+    def butter_filter(self, cutoff, fs, mode, order=4):
         nyq = 0.5 * fs
         normal_cutoff = cutoff/nyq
         b, a = butter(order, normal_cutoff, btype=mode, analog=False)
@@ -55,7 +52,7 @@ class FilterThread(QtCore.QThread):
         labels = reader.labels
         fs = reader.sampling_frequency
 
-        for idx, ch_id in enumerate(ids):    # only first two channels for testing
+        for idx, ch_id in enumerate(ids):
             # in this case, the whole channel should be loaded, since the filter should be applied at once
             signal = signals[ch_id]
             if self.filter_mode == 0:

@@ -1,5 +1,4 @@
-import McsPy
-import McsPy.McsData
+import os
 import numpy as np
 import h5py
 from IPython import embed
@@ -7,17 +6,31 @@ from IPython import embed
 
 class MeaDataReader:
     def __init__(self, path):
-        if 'filtered' in path:
-            self.file, self.voltage_traces = self.open_mea_file(path)
+        self.file_path = path
+        self.analysis_file_path = None
+        split_path = path.split('\\')
+        overall_path = split_path[0] + '\\' + split_path[1] + '\\' + split_path[2]
+        analysis_filename = [file for file in os.listdir(overall_path) if file.endswith('.meae') and split_path[3] in file]
+        # print(os.listdir(overall_path))
+        print(len(analysis_filename), analysis_filename)
+        if len(analysis_filename) >= 1:
+            self.analysis_file_path = overall_path + '\\' + analysis_filename[0]
+            print(self.analysis_file_path)
+        if self.analysis_file_path:
+            self.file, self.voltage_traces, self.sampling_frequency, self.channel_indices, self.labels = \
+                self.open_mea_file(self.analysis_file_path)
         else:
-            self.file, self.voltage_traces, self.sampling_frequency = self.open_mea_file(path)
+            self.file, self.voltage_traces, self.sampling_frequency = self.open_mea_file(self.file_path)
             self.channel_indices, self.labels = self.get_channel_indices(self.file)
 
     def open_mea_file(self, path):
         file = h5py.File(path, 'r')
-        if 'filtered' in path:
+        if self.analysis_file_path:
             voltage_traces = file['filter']
-            return file, voltage_traces
+            sampling_frequency = file['fs']
+            channel_indices = file['channel_indices']
+            channel_labels = file['channel_labels']
+            return file, voltage_traces, sampling_frequency, channel_indices, channel_labels
         voltage_traces = file['Data']['Recording_0']['AnalogStream']['Stream_0']['ChannelData']
         sampling_frequency = 1000000/file['Data']['Recording_0']['AnalogStream']['Stream_0']['InfoChannel']['Tick'][0]
         # infos of the recording:

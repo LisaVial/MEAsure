@@ -25,7 +25,8 @@ class CsdPlot:
         ax = figure.add_subplot(111)
         if ch_ids is not None:
             for idx, ch_id in enumerate(reversed(ch_ids)):
-                ax.plot(time[::1250], signal[ch_id][::1250]+(idx*1000), color=colors[idx % color_count], lw=4)
+                if len(labels[idx]) < 3:
+                    ax.plot(time[::1250], signal[ch_id][::1250]+(idx*1000), color=colors[idx % color_count], lw=4)
 
             ax.spines['right'].set_visible(False)
             ax.spines['top'].set_visible(False)

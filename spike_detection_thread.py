@@ -1,28 +1,19 @@
 from PyQt5 import QtCore
 import numpy as np
-import funcs
-import math
-from IPython import embed
-
-from mea_data_reader import MeaDataReader
-from live_plot import LivePlotter
 
 
 class SpikeDetectionThread(QtCore.QThread):
     operation_changed = QtCore.pyqtSignal(str)
     progress_made = QtCore.pyqtSignal(float)
+    data_updated = QtCore.pyqtSignal(list)
     finished = QtCore.pyqtSignal()
 
-    def __init__(self, parent, plot_widget, mea_file):
+    def __init__(self, parent, reader):
         super().__init__(parent)
-        self.mea_file = mea_file
-        self.plot_widget = plot_widget
+        self.reader = reader
 
         self.spike_mat = None
-        self.signal = None
-        self.spike_threshold = None
-        self.current_timestamps = None
-        self.time = None
+        self.spike_indices = None
         self.live_plotter = None
 
     def get_signal(self, electrode_stream, channel_id, chunk_size=10000):
@@ -43,38 +34,60 @@ class SpikeDetectionThread(QtCore.QThread):
             current_start_index = current_end_index + 1
         return signal
 
-    def spike_detection(self, file):
+    def spike_detection(self, mea_data_reader):
+        indices = []
         spike_mat = []
-        for idx, ch_id in enumerate(reversed(np.argsort(same_len_labels))): #range(len(ids)):
-            channel_id = ids[idx]
-            # in case the whole channel data should be loaded at once, uncomment next line
-            # signal = electrode_stream.get_channel_in_range(channel_id, 0, electrode_stream.channel_data.shape[1])[0]
-            self.signal = self.get_signal(electrode_stream, channel_id)
-            # channel_info = electrode_stream.channel_infos[channel_id]
-            channel_label = ch_id
-            noise_mad = np.median(np.absolute(self.signal)) / 0.6745
-            self.spike_threshold = -5 * noise_mad
-            fs = int(electrode_stream.channel_infos[channel_id].sampling_frequency.magnitude)
-            # if i == 0:
-            #     time = np.arange(duration) * (1 / fs)
-            #     spike_mat.append(['time [s]', time])
-            crossings = funcs.detect_threshold_crossings(self.signal, fs, self.spike_threshold, 0.003)
-            # dead time of 3 ms
-            spks = funcs.align_to_minimum(self.signal, fs, crossings, 0.002)  # search range 2 ms
-            self.current_timestamps = spks / fs
-            # self.live_plotter = LivePlotter(self.plot_widget.figure, self.signal, self.spike_threshold,
-            #                                 self.current_timestamps)
-            spike_mat.append(channel_label)
-            spike_mat.append(self.current_timestamps)
 
-            progress = round(((idx + 1) / len(same_len_labels)) * 100.0, 2)
+        reader = mea_data_reader
+        signals = reader.voltage_traces
+        ids = reader.channel_indices
+        labels = reader.labels
+        fs = reader.sampling_frequency
+
+        above_upper_threshold = False
+        below_lower_threshold = False
+        current_extreme_index_and_value = None  # current local minimum or maximum
+
+        for index, channel_id in enumerate(ids):
+            signal = signals[channel_id]
+            threshold = 4.5 * np.median(np.absolute(signal)) / 0.6745
+            for idx, value in enumerate(signal):
+                if above_upper_threshold:  # last value was above positive threshold limit
+                    if value <= threshold:  # leaving upper area
+                        # -> add current maximum index to list (unless its empty)
+                        indices.append(current_extreme_index_and_value[0])
+                    else:  # still above positive threshold
+                        # check if value is bigger than current maximum
+                        if value > current_extreme_index_and_value[1]:
+                            current_extreme_index_and_value = (index, value)
+
+                elif below_lower_threshold:  # last value was below negative threshold limit
+                    if value <= threshold:  # leaving lower area
+                        # -> add current minimum index to list (unless its empty)
+                        indices.append(current_extreme_index_and_value[0])
+                    else:  # still below negative threshold
+                        # check if value is smaller than current maximum
+                        if value < current_extreme_index_and_value[1]:
+                            current_extreme_index_and_value = (index, value)
+
+                else:  # last value was within threshold limits
+                    if value > threshold or value < -threshold:  # crossing threshold limit
+                        # initialise new local extreme value
+                        current_extreme_index_and_value = (index, value)
+
+                # update state
+                below_lower_threshold = (value < -threshold)
+                above_upper_threshold = (value > threshold)
+            spiketimes = np.asarray(indices) * (1/fs)
+            spike_mat.append(spiketimes)
+            data = [list(signal[::312]), list(spiketimes), list(threshold)]
+            self.data_updated.emit(data)
+            progress = round(((idx + 1) / len(ids)) * 100.0, 2)
             self.progress_made.emit(progress)
 
-        return spike_mat
+        return indices, spike_mat
 
     def run(self):
-        reader = MeaDataReader()
-        file = reader.open_mea_file(self.mea_file)
         self.operation_changed.emit("Detecting spikes")
-        self.spike_mat = self.spike_detection(file)
+        self.spike_indices, self.spike_mat = self.spike_detection(self.reader)
         self.finished.emit()

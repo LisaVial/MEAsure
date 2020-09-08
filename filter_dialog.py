@@ -82,6 +82,7 @@ class FilterDialog(QtWidgets.QDialog):
         filter_settings_layout.addWidget(self.progress_label)
 
         self.progress_bar = QtWidgets.QProgressBar(self)
+        self.progress_bar.setFixedSize(self.width, 25)
         self.progress_bar.setMinimum(0)
         self.progress_bar.setMaximum(100)
         self.progress_bar.setTextVisible(True)
@@ -146,10 +147,14 @@ class FilterDialog(QtWidgets.QDialog):
     def save_filtered_box_clicked(self):
         self.label_save_filtered_box.setText('Saving filtered traces to .h5 file at end of filtering')
 
-    def save_filter_mat(self, filter_mat, filename):
+    def save_filter_mat(self, filter_mat, filename, reader):
         self.label_save_filtered_box.setText('Saving filtered traces...')
         with h5py.File(filename, 'w') as hf:
-            dset = hf.create_dataset('filter', data=filter_mat, dtype='f')
+            dset_1 = hf.create_dataset('filter', data=filter_mat)
+            dset_2 = hf.create_dataset('fs', data=reader.sampling_frequency)
+            dset_3 = hf.create_dataset('channel_indices', data=reader.channel_indices)
+            save_labels = [label.encode('utf-8') for label in reader.labels]
+            dset_3 = hf.create_dataset('channel_labels', data=save_labels)
         self.label_save_filtered_box.setText('Filtered traces saved in: ' + filename)
 
     def open_filter_file(self, filepath):
@@ -160,7 +165,7 @@ class FilterDialog(QtWidgets.QDialog):
 
     def check_for_filtered_traces(self):
         # scan path of current file, if the desired .h5 file exists
-        filtered = self.mea_file[:-3] + '_filtered_test.h5'
+        filtered = self.mea_file[:-3] + '_filtered.h5'
         print(filtered)
         if os.path.exists(filtered):
             # if this file already exists, set it as filter_mat
@@ -190,8 +195,7 @@ class FilterDialog(QtWidgets.QDialog):
         self.signal.append(signal)
 
         self.time_s.append(list(np.arange(0, len(self.signal[-1])*(312/self.fs), (312/self.fs))))
-        print(len(self.signal[-1]), (312/self.fs))
-        # embed()
+
         self.unfiltered.setData(self.time_s[-1], self.signal[-1])
 
         self.filter.append(filterd)
@@ -218,6 +222,5 @@ class FilterDialog(QtWidgets.QDialog):
             self.filtered_mat = self.filtering_thread.filtered_mat.copy()
         self.filtering_thread = None
         self.filter_start_button.setEnabled(True)
-        print(self.mea_file[:-3] + '_filtered.h5')
         if self.save_filtered_box.isChecked():
-            self.save_filter_mat(self.filtered_mat, self.mea_file[:-3] + '_filtered.h5')
+            self.save_filter_mat(self.filtered_mat, self.reader.file_path[:-3] + '.meae', self.reader)

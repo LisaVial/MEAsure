@@ -73,7 +73,7 @@ class MeaFileView(QtWidgets.QWidget):
 
     @QtCore.pyqtSlot()
     def open_sd_dialog(self):
-        spike_detection_dialog = SpikeDetectionDialog(None, self.mea_file)
+        spike_detection_dialog = SpikeDetectionDialog(None, self.reader)
         spike_detection_dialog.exec_()
 
     @QtCore.pyqtSlot()
