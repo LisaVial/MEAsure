@@ -8,12 +8,10 @@ class MeaDataReader:
     def __init__(self, path):
         self.file_path = path
         self.analysis_file_path = None
-        split_path = path.split('\\')
-        overall_path = split_path[0] + '\\' + split_path[1] + '\\' + split_path[2]
-        analysis_filename = [file for file in os.listdir(overall_path) if file.endswith('.meae') and split_path[3] in file]
-        # print(os.listdir(overall_path))
-        print(len(analysis_filename), analysis_filename)
-        if len(analysis_filename) >= 1:
+        overall_path, filename = os.path.split(path)
+        if filename.endswith('.h5'):
+            analysis_filename = filename[:-2] + 'meae'
+        if os.path.exists(overall_path+analysis_filename):
             self.analysis_file_path = overall_path + '\\' + analysis_filename[0]
             print(self.analysis_file_path)
         if self.analysis_file_path:

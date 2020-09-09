@@ -94,7 +94,7 @@ class SpikeDetectionDialog(QtWidgets.QDialog):
         self.plot_widget.addItem(self.hLine2)
 
         pen_2 = pg.mkPen(color='#a7c9ba')
-        self.scatter = pg.ScatterPlotItem(pen=pen_2, symbol='|', name='spiketimes')
+        self.scatter = pg.ScatterPlotItem(pen=pen_2, symbol='o', name='spiketimes')
         self.plot_widget.addItem(self.scatter)
         self.plot_widget.addLegend()
 
@@ -150,18 +150,20 @@ class SpikeDetectionDialog(QtWidgets.QDialog):
     @QtCore.pyqtSlot(list)
     def on_data_updated(self, data):
         signal, spike_times, threshold = data[0], data[1], data[2]
-        spike_times = spike_times * (312/self.fs)
         self.voltage_trace.append(signal)
         self.time_vt.append(list(np.arange(0, len(self.voltage_trace[-1])*(312/self.fs), (312/self.fs))))
+        # H, edges = np.histogram(signal, bins=1000)
+        # centers = edges[:-1] + np.diff(edges)[0] / 2
+        # self.signal_plot.setData(centers, H)
         self.signal_plot.setData(self.time_vt[-1], self.voltage_trace[-1])
 
-        self.hLine.setYValue(threshold)
-        self.hLine2.setYValue(-1 * threshold)
+        self.hLine.setValue(threshold)
+        self.hLine2.setValue(-1 * threshold)
 
         self.spiketimes.append(spike_times)
         self.height_spiketimes.append(np.ones(len(spike_times)) * np.max(signal))
-        self.scatter.setData(self.spiketimes[-1], self.height_spiketimes[-1])
-
+        print(len(spike_times))
+        self.scatter.setData(spike_times, np.ones(len(spike_times)) * np.max(signal))
 
     # function to save the found spiketimes stored in spike_mat as .csv file
     def save_spike_mat(self, spike_mat, spike_indices, mea_file):

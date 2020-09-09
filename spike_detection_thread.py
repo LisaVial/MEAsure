@@ -1,5 +1,6 @@
 from PyQt5 import QtCore
 import numpy as np
+from IPython import embed
 
 
 class SpikeDetectionThread(QtCore.QThread):
@@ -41,49 +42,58 @@ class SpikeDetectionThread(QtCore.QThread):
         reader = mea_data_reader
         signals = reader.voltage_traces
         ids = reader.channel_indices
-        labels = reader.labels
         fs = reader.sampling_frequency
 
         above_upper_threshold = False
         below_lower_threshold = False
         current_extreme_index_and_value = None  # current local minimum or maximum
 
-        for index, channel_id in enumerate(ids):
-            signal = signals[channel_id]
-            threshold = 4.5 * np.median(np.absolute(signal)) / 0.6745
+        for index in range(len(signals)):
+            channel_spike_indices = []
+            print(mea_data_reader.labels[index])
+            signal = signals[index]
+            threshold = 5 * np.median(np.absolute(signal) / 0.6745)
             for idx, value in enumerate(signal):
                 if above_upper_threshold:  # last value was above positive threshold limit
                     if value <= threshold:  # leaving upper area
                         # -> add current maximum index to list (unless its empty)
-                        indices.append(current_extreme_index_and_value[0])
+                        channel_spike_indices.append(current_extreme_index_and_value[0])
                     else:  # still above positive threshold
                         # check if value is bigger than current maximum
                         if value > current_extreme_index_and_value[1]:
-                            current_extreme_index_and_value = (index, value)
+                            current_extreme_index_and_value = (idx, value)
 
                 elif below_lower_threshold:  # last value was below negative threshold limit
                     if value <= threshold:  # leaving lower area
                         # -> add current minimum index to list (unless its empty)
-                        indices.append(current_extreme_index_and_value[0])
+                        channel_spike_indices.append(current_extreme_index_and_value[0])
                     else:  # still below negative threshold
                         # check if value is smaller than current maximum
                         if value < current_extreme_index_and_value[1]:
-                            current_extreme_index_and_value = (index, value)
+                            current_extreme_index_and_value = (idx, value)
 
                 else:  # last value was within threshold limits
                     if value > threshold or value < -threshold:  # crossing threshold limit
                         # initialise new local extreme value
-                        current_extreme_index_and_value = (index, value)
+                        current_extreme_index_and_value = (idx, value)
 
                 # update state
                 below_lower_threshold = (value < -threshold)
                 above_upper_threshold = (value > threshold)
-            spiketimes = np.asarray(indices) * (1/fs)
+                indices.append(channel_spike_indices)
+            spiketimes = np.asarray(channel_spike_indices) * (1/fs)
+            print(len(spiketimes))
             spike_mat.append(spiketimes)
-            data = [list(signal[::312]), list(spiketimes), list(threshold)]
+            data = [list(signal[::312]), list(spiketimes), threshold]
             self.data_updated.emit(data)
-            progress = round(((idx + 1) / len(ids)) * 100.0, 2)
+            progress = round(((index + 1) / len(signal)) * 100.0, 2)
             self.progress_made.emit(progress)
+            # import matplotlib.pyplot as plt
+            # plt.figure()
+            # H,edges = np.histogram(signal, bins=1000)
+            # centers = edges[:-1] + np.diff(edges)[0]/2
+            # plt.plot(centers, H)
+            # plt.show()
 
         return indices, spike_mat
 
