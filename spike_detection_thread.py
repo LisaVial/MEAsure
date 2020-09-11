@@ -48,12 +48,12 @@ class SpikeDetectionThread(QtCore.QThread):
         below_lower_threshold = False
         current_extreme_index_and_value = None  # current local minimum or maximum
 
-        for index in range(len(signals)):
+        for idx, ch_id in enumerate(ids):
+            # in this case, the whole channel should be loaded, since the filter should be applied at once
+            signal = signals[ch_id]
             channel_spike_indices = []
-            print(mea_data_reader.labels[index])
-            signal = signals[index]
             threshold = 5 * np.median(np.absolute(signal) / 0.6745)
-            for idx, value in enumerate(signal):
+            for index, value in enumerate(signal):
                 if above_upper_threshold:  # last value was above positive threshold limit
                     if value <= threshold:  # leaving upper area
                         # -> add current maximum index to list (unless its empty)
@@ -61,7 +61,7 @@ class SpikeDetectionThread(QtCore.QThread):
                     else:  # still above positive threshold
                         # check if value is bigger than current maximum
                         if value > current_extreme_index_and_value[1]:
-                            current_extreme_index_and_value = (idx, value)
+                            current_extreme_index_and_value = (index, value)
 
                 elif below_lower_threshold:  # last value was below negative threshold limit
                     if value <= threshold:  # leaving lower area
@@ -70,12 +70,12 @@ class SpikeDetectionThread(QtCore.QThread):
                     else:  # still below negative threshold
                         # check if value is smaller than current maximum
                         if value < current_extreme_index_and_value[1]:
-                            current_extreme_index_and_value = (idx, value)
+                            current_extreme_index_and_value = (index, value)
 
                 else:  # last value was within threshold limits
                     if value > threshold or value < -threshold:  # crossing threshold limit
                         # initialise new local extreme value
-                        current_extreme_index_and_value = (idx, value)
+                        current_extreme_index_and_value = (index, value)
 
                 # update state
                 below_lower_threshold = (value < -threshold)
@@ -86,7 +86,7 @@ class SpikeDetectionThread(QtCore.QThread):
             spike_mat.append(spiketimes)
             data = [list(signal[::312]), list(spiketimes), threshold]
             self.data_updated.emit(data)
-            progress = round(((index + 1) / len(signal)) * 100.0, 2)
+            progress = round(((idx + 1) / len(signal)) * 100.0, 2)
             self.progress_made.emit(progress)
             # import matplotlib.pyplot as plt
             # plt.figure()

@@ -14,10 +14,6 @@ class SpikeDetectionDialog(QtWidgets.QDialog):
         # set variables that come from MEA file reader as class variables
         self.reader = reader
 
-        self.spike_mat = None
-        self.spike_indices = None
-        self.analysis_file_path = None
-
         # basic layout of the new spike_detection_dialog
         title = 'Spike detection'
 
@@ -31,41 +27,57 @@ class SpikeDetectionDialog(QtWidgets.QDialog):
 
         # main layout is the layout for this specific dialog, sub layouts can also be defined and later on be added to
         # the main layout (e.g. if single buttons/plots/whatever should have a defined layout)
-        main_layout = QtWidgets.QVBoxLayout(self)
+        main_layout = QtWidgets.QHBoxLayout(self)
         main_layout.setAlignment(QtCore.Qt.AlignTop | QtCore.Qt.AlignCenter)
         self.setWindowTitle(title)
 
         # set spike_detection_thread to none
         self.spike_detection_thread = None
 
+        self.spike_mat = None
+        self.spike_indices = None
+        self.analysis_file_path = None
+
+        spike_detection_settings_layout = QtWidgets.QVBoxLayout(self)
+        spike_detection_settings_layout.setAlignment(QtCore.Qt.AlignTop | QtCore.Qt.AlignCenter)
+
+        self.plot_time_textbox = QtWidgets.QLineEdit(self)
+        self.plot_time_textbox.setAlignment(QtCore.Qt.AlignCenter)
+        self.plot_time_textbox.setFixedSize(self.width, 25)
+        self.textbox_label = QtWidgets.QLabel('time around spike [s]')
+        spike_detection_settings_layout.addWidget(self.plot_time_textbox)
+        spike_detection_settings_layout.addWidget(self.textbox_label)
+
         # implementation of widgets in the spike_detection_dialog
         # save check box is connected to a function that saves spike_mat as .csv file
         self.save_check_box = QtWidgets.QCheckBox("Save spiketimes")
         self.label_save_check_box = QtWidgets.QLabel("Don\'t save spiketimes")
-        main_layout.addWidget(self.save_check_box)
-        main_layout.addWidget(self.label_save_check_box)
+        spike_detection_settings_layout.addWidget(self.save_check_box)
+        spike_detection_settings_layout.addWidget(self.label_save_check_box)
         self.save_check_box.stateChanged.connect(self.save_check_box_clicked)
 
         # spike_detection_start_button is connected to a function that initializes spike detection thread
         self.spike_detection_start_button = QtWidgets.QPushButton(self)
         self.spike_detection_start_button.setText("Start spike detection")
         self.spike_detection_start_button.clicked.connect(self.initialize_spike_detection)
-        main_layout.addWidget(self.spike_detection_start_button)
+        spike_detection_settings_layout.addWidget(self.spike_detection_start_button)
 
         # operation and progress_label is linked to the progress bar, so that the user sees, what is happening in the
         # background of the GUI
         self.operation_label = QtWidgets.QLabel(self)
         self.operation_label.setText('Nothing happens so far')
-        main_layout.addWidget(self.operation_label)
+        spike_detection_settings_layout.addWidget(self.operation_label)
         self.progress_label = QtWidgets.QLabel(self)
-        main_layout.addWidget(self.progress_label)
+        spike_detection_settings_layout.addWidget(self.progress_label)
 
         self.progress_bar = QtWidgets.QProgressBar(self)
         self.progress_bar.setFixedSize(self.width, 25)
         self.progress_bar.setMinimum(0)
         self.progress_bar.setMaximum(100)
         self.progress_bar.setTextVisible(True)
-        main_layout.addWidget(self.progress_bar)
+        spike_detection_settings_layout.addWidget(self.progress_bar)
+
+        main_layout.addLayout(spike_detection_settings_layout)
 
         self.plot_widget = pg.PlotWidget()
         self.plot_widget.setBackground('w')
@@ -149,7 +161,7 @@ class SpikeDetectionDialog(QtWidgets.QDialog):
 
     @QtCore.pyqtSlot(list)
     def on_data_updated(self, data):
-        signal, spike_times, threshold = data[0], data[1], data[2]
+        signal, spike_times, thresh = data[0], data[1], data[2]
         self.voltage_trace.append(signal)
         self.time_vt.append(list(np.arange(0, len(self.voltage_trace[-1])*(312/self.fs), (312/self.fs))))
         # H, edges = np.histogram(signal, bins=1000)
@@ -157,11 +169,12 @@ class SpikeDetectionDialog(QtWidgets.QDialog):
         # self.signal_plot.setData(centers, H)
         self.signal_plot.setData(self.time_vt[-1], self.voltage_trace[-1])
 
-        self.hLine.setValue(threshold)
-        self.hLine2.setValue(-1 * threshold)
+        self.hLine.setValue(thresh)
+        self.hLine2.setValue(-1 * thresh)
 
         self.spiketimes.append(spike_times)
         self.height_spiketimes.append(np.ones(len(spike_times)) * np.max(signal))
+        print(self.spiketimes)
         print(len(spike_times))
         self.scatter.setData(spike_times, np.ones(len(spike_times)) * np.max(signal))
 

@@ -1,7 +1,6 @@
 from PyQt5 import QtCore, QtWidgets
 import h5py
 import os
-from IPython import embed
 import pyqtgraph as pg
 import numpy as np
 

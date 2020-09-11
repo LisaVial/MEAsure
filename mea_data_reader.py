@@ -11,12 +11,12 @@ class MeaDataReader:
         overall_path, filename = os.path.split(path)
         if filename.endswith('.h5'):
             analysis_filename = filename[:-2] + 'meae'
-        if os.path.exists(overall_path+analysis_filename):
+        if os.path.exists(overall_path + analysis_filename):
             self.analysis_file_path = overall_path + '\\' + analysis_filename[0]
-            print(self.analysis_file_path)
         if self.analysis_file_path:
-            self.file, self.voltage_traces, self.sampling_frequency, self.channel_indices, self.labels = \
+            self.file, self.voltage_traces, self.sampling_frequency, self.labels = \
                 self.open_mea_file(self.analysis_file_path)
+            self.channel_indices = range(len(self.voltage_traces))
         else:
             self.file, self.voltage_traces, self.sampling_frequency = self.open_mea_file(self.file_path)
             self.channel_indices, self.labels = self.get_channel_indices(self.file)
