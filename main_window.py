@@ -7,7 +7,7 @@ from data_list_view import DataListView
 
 from mea_data_reader import MeaDataReader
 from mea_file_tab_widget import MeaFileTabWidget
-from settings import Settings, load_settings_from_file
+from settings import Settings
 
 
 class MainWindow(QtWidgets.QMainWindow):
@@ -37,10 +37,10 @@ class MainWindow(QtWidgets.QMainWindow):
         self.load_settings()
 
     def load_settings(self):
-        settings = None
+        settings = Settings()
         if os.path.isfile(MainWindow.settings_file_name):
             with open(MainWindow.settings_file_name) as settings_file:
-                settings = load_settings_from_file(settings_file)
+                settings.load_settings_from_file(settings_file)
 
         if settings:
             self.file_list_view.set_current_folder(settings.last_folder)
@@ -62,7 +62,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.mea_tab_widget.show_mea_file_view(absolute_path)
 
     def save_settings(self):
-        settings = Settings()
+        settings = Settings.instance
         settings.last_folder = self.file_list_view.current_folder
         settings.main_window_geometry = self.saveGeometry().toBase64()
         settings.main_window_state = self.saveState().toBase64()

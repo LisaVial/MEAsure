@@ -4,9 +4,10 @@ import pyqtgraph as pg
 import numpy as np
 import h5py
 
+from settings import Settings
 from spike_detection_thread import SpikeDetectionThread
 from settings_dialog import SettingsDialog
-
+from spike_detection.spike_detection_settings import SpikeDetectionSettings
 
 class SpikeDetectionDialog(QtWidgets.QDialog):
     def __init__(self, parent, reader):
@@ -15,6 +16,8 @@ class SpikeDetectionDialog(QtWidgets.QDialog):
         # set variables that come from MEA file reader as class variables
         self.reader = reader
 
+        self.settings = Settings.instance.spike_detection_settings
+
         # basic layout of the new spike_detection_dialog
         title = 'Spike detection'
 
@@ -22,9 +25,9 @@ class SpikeDetectionDialog(QtWidgets.QDialog):
         self.setWindowFlag(QtCore.Qt.WindowTitleHint, True)
         self.setWindowFlag(QtCore.Qt.WindowMaximizeButtonHint, True)
         self.setWindowFlag(QtCore.Qt.WindowCloseButtonHint, True)
-        self.width = 800
-        self.height = 600
-        self.resize(self.width, self.height)
+        # self.width = 800
+        # self.height = 600
+        # self.resize(self.width, self.height)
 
         # main layout is the layout for this specific dialog, sub layouts can also be defined and later on be added to
         # the main layout (e.g. if single buttons/plots/whatever should have a defined layout)
@@ -44,7 +47,7 @@ class SpikeDetectionDialog(QtWidgets.QDialog):
 
         self.settings_button = QtWidgets.QPushButton(self)
         self.settings_button.setText("Settings")
-        self.settings_button.setFixedSize(self.width, 25)
+        # self.settings_button.setFixedSize(self.width, 25)
         self.settings_button.clicked.connect(self.open_settings_dialog)
         spike_detection_settings_layout.addWidget(self.settings_button)
 
@@ -71,7 +74,7 @@ class SpikeDetectionDialog(QtWidgets.QDialog):
         spike_detection_settings_layout.addWidget(self.progress_label)
 
         self.progress_bar = QtWidgets.QProgressBar(self)
-        self.progress_bar.setFixedSize(self.width, 25)
+        # self.progress_bar.setFixedSize(self.width, 25)
         self.progress_bar.setMinimum(0)
         self.progress_bar.setMaximum(100)
         self.progress_bar.setTextVisible(True)
@@ -149,8 +152,11 @@ class SpikeDetectionDialog(QtWidgets.QDialog):
 
     @QtCore.pyqtSlot()
     def open_settings_dialog(self):
-        settings_dialog = SettingsDialog(None)
-        settings_dialog.exec()
+        settings_dialog = SettingsDialog(self, self.settings)
+        if settings_dialog.exec() == 1:  # 'ok' clicked
+            self.settings = settings_dialog.get_settings()
+            # overwrite global settings as well
+            Settings.instance.spike_detection_settings = self.settings
 
     @QtCore.pyqtSlot()
     def initialize_spike_detection(self):
