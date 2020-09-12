@@ -1,10 +1,11 @@
-from PyQt5 import QtCore, QtWidgets
+from PyQt5 import QtCore, QtWidgets, QtGui
 import os
 import pyqtgraph as pg
 import numpy as np
 import h5py
 
 from spike_detection_thread import SpikeDetectionThread
+from settings_dialog import SettingsDialog
 
 
 class SpikeDetectionDialog(QtWidgets.QDialog):
@@ -41,12 +42,11 @@ class SpikeDetectionDialog(QtWidgets.QDialog):
         spike_detection_settings_layout = QtWidgets.QVBoxLayout(self)
         spike_detection_settings_layout.setAlignment(QtCore.Qt.AlignTop | QtCore.Qt.AlignCenter)
 
-        self.plot_time_textbox = QtWidgets.QLineEdit(self)
-        self.plot_time_textbox.setAlignment(QtCore.Qt.AlignCenter)
-        self.plot_time_textbox.setFixedSize(self.width, 25)
-        self.textbox_label = QtWidgets.QLabel('time around spike [s]')
-        spike_detection_settings_layout.addWidget(self.plot_time_textbox)
-        spike_detection_settings_layout.addWidget(self.textbox_label)
+        self.settings_button = QtWidgets.QPushButton(self)
+        self.settings_button.setText("Settings")
+        self.settings_button.setFixedSize(self.width, 25)
+        self.settings_button.clicked.connect(self.open_settings_dialog)
+        spike_detection_settings_layout.addWidget(self.settings_button)
 
         # implementation of widgets in the spike_detection_dialog
         # save check box is connected to a function that saves spike_mat as .csv file
@@ -77,38 +77,80 @@ class SpikeDetectionDialog(QtWidgets.QDialog):
         self.progress_bar.setTextVisible(True)
         spike_detection_settings_layout.addWidget(self.progress_bar)
 
-        main_layout.addLayout(spike_detection_settings_layout)
-
-        self.plot_widget = pg.PlotWidget()
-        self.plot_widget.setBackground('w')
+        # set styles for plot
         styles = {'color': 'k', 'font-size': '10px'}
-        self.plot_widget.setLabel('left', 'amplitude [&#956;]', **styles)
-        self.plot_widget.setLabel('bottom', 'time [s]', **styles)
-        main_layout.addWidget(self.plot_widget)
+        # get sampling frequency, this is important for time ratios in plots
+        self.fs = self.reader.sampling_frequency
 
+        # open plot that will show raster plot of overall spiketimes of a channel, this will be portrayed at the bottom
+        # on the left handside, that is why it is added to the spike_detection_settings_layout
+        self.channel_raster_plot = pg.GraphicsLayoutWidget()
+        self.channel_raster_plot.useOpenGL(True)
+
+        vtick = QtGui.QPainterPath()
+        vtick.moveTo(0, -0.5)
+        vtick.lineTo(0, 0.5)
+
+        p1 = self.channel_raster_plot.addPlot(row=0, col=0)
+        p1.setXRange(-0.05, 1.05)
+        p1.hideAxis('bottom')
+
+        s1 = pg.ScatterPlotItem(pxMode=False)
+        s1.setSymbol(vtick)
+        s1.setSize(1)
+        s1.setPen(QtGui.QColor(*np.random.randint(0, 255 + 1, 3).tolist()))
+        p1.addItem(s1)
+
+        s2 = pg.ScatterPlotItem(pxMode=False, symbol=vtick, size=1,
+                                pen=QtGui.QColor(*np.random.randint(0, 255 + 1, 3).tolist()))
+        p1.addItem(s2)
+        self.spis = [s1, s2]
+        spike_detection_settings_layout.addWidget(self.channel_raster_plot)
+        main_layout.addLayout(spike_detection_settings_layout)
+        # open plot that will portray single spikes that are found, it will be portrayed on the right side of the
+        # dialog, this is why it is added to the main layout
+        self.single_spike_plot = pg.PlotWidget()
+        self.single_spike_plot.setBackground('w')
+        self.single_spike_plot.setLabel('left', 'amplitude [&#956;]', **styles)
+        self.single_spike_plot.setLabel('bottom', 'time [s]', **styles)
+        main_layout.addWidget(self.single_spike_plot)
+
+        # set up initial values to plot (everything is set to zero with dimensions according to default values of
+        # settings
+        # self.voltage_trace = [np.zeros(self.settings.spike_window * self.reader.fs)]
         self.voltage_trace = [[0, 0, 0, 0]]
+        # self.time_vt = [np.zeros(self.settings.spike_window * self.reader.fs)]
         self.time_vt = [[0, 0, 0, 0]]
-        self.spiketimes = [[0, 0, 0, 0]]
-        self.height_spiketimes = [[0, 0, 0, 0]]
+        self.spike_index = [2]
+        self.spike_height = [self.voltage_trace[-1][self.spike_index[0]]]
         self.threshold = 0
 
-        pen_1 = pg.mkPen(color='#006e7d')
-        self.fs = 10000     # ToDo: make sure this is stored as well with .meae file creation
-
-        self.signal_plot = self.plot_widget.plot(self.time_vt[-1], self.voltage_trace[-1], pen=pen_1,
-                                                 name='voltage trace')
+        # plot initial values
+        pen_spike_voltage = pg.mkPen(color='#006e7d')
+        self.signal_plot = self.single_spike_plot.plot(self.time_vt[-1], self.voltage_trace[-1], pen=pen_spike_voltage,
+                                                       name='voltage trace')
         pen_thresh = pg.mkPen(color='k')
         self.hLine = pg.InfiniteLine(angle=0, movable=False, pen=pen_thresh)
         self.hLine.setValue(self.threshold)
-        self.plot_widget.addItem(self.hLine)
+        self.single_spike_plot.addItem(self.hLine)
         self.hLine2 = pg.InfiniteLine(angle=0, movable=False, pen=pen_thresh)
         self.hLine2.setValue(-1 * self.threshold)
-        self.plot_widget.addItem(self.hLine2)
+        self.single_spike_plot.addItem(self.hLine2)
 
-        pen_2 = pg.mkPen(color='#a7c9ba')
-        self.scatter = pg.ScatterPlotItem(pen=pen_2, symbol='o', name='spiketimes')
-        self.plot_widget.addItem(self.scatter)
-        self.plot_widget.addLegend()
+        pen_spike_timepoint = pg.mkPen(color='#a7c9ba')
+        self.scatter = pg.ScatterPlotItem(pen=pen_spike_timepoint, symbol='o', name='spiketimes')
+        self.single_spike_plot.addItem(self.scatter)
+        self.single_spike_plot.addLegend()
+
+    def update(self):
+        super(self.channel_raster_plot, self).update()
+        for spi_ix in range(len(self.spis)):
+            self.spis[spi_ix].setData(np.random.rand(10), spi_ix + 0.5 + np.zeros((10,)))
+
+    @QtCore.pyqtSlot()
+    def open_settings_dialog(self):
+        settings_dialog = SettingsDialog(None)
+        settings_dialog.exec()
 
     @QtCore.pyqtSlot()
     def initialize_spike_detection(self):
