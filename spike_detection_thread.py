@@ -1,18 +1,21 @@
 from PyQt5 import QtCore
 import numpy as np
 from IPython import embed
-
+from spike_detection.spike_detection_settings import SpikeDetectionSettings
 
 class SpikeDetectionThread(QtCore.QThread):
     operation_changed = QtCore.pyqtSignal(str)
     progress_made = QtCore.pyqtSignal(float)
-    data_updated = QtCore.pyqtSignal(list)
+    single_spike_data_updated = QtCore.pyqtSignal(list)
+    channel_data_updated = QtCore.pyqtSignal(list)
     finished = QtCore.pyqtSignal()
 
-    def __init__(self, parent, reader):
+    def __init__(self, parent, reader, spike_window, mode, threshold_factor):
         super().__init__(parent)
         self.reader = reader
-
+        self.spike_window = spike_window
+        self.mode = mode
+        self.threshold_factor = threshold_factor
         self.spike_mat = None
         self.spike_indices = None
         self.live_plotter = None
@@ -52,12 +55,23 @@ class SpikeDetectionThread(QtCore.QThread):
             # in this case, the whole channel should be loaded, since the filter should be applied at once
             signal = signals[ch_id]
             channel_spike_indices = []
-            threshold = 5 * np.median(np.absolute(signal) / 0.6745)
+            threshold = self.threshold_factor * np.median(np.absolute(signal) / 0.6745)
+            collect_peaks = (self.mode == SpikeDetectionSettings.Mode.PEAKS or
+                             self.mode == SpikeDetectionSettings.Mode.BOTH)
+            collect_troughs = (self.mode == SpikeDetectionSettings.Mode.TROUGHS or
+                             self.mode == SpikeDetectionSettings.Mode.BOTH)
             for index, value in enumerate(signal):
                 if above_upper_threshold:  # last value was above positive threshold limit
                     if value <= threshold:  # leaving upper area
-                        # -> add current maximum index to list (unless its empty)
-                        channel_spike_indices.append(current_extreme_index_and_value[0])
+                        # -> add current maximum index to list
+                        if collect_peaks:
+                            channel_spike_indices.append(current_extreme_index_and_value[0])
+                            lower_index = current_extreme_index_and_value[0] - int((self.spike_window/2) * fs)
+                            upper_index = current_extreme_index_and_value[0] + int((self.spike_window/2) * fs)
+                            single_spike_voltage = signal[lower_index:upper_index]
+                            single_spike_index = (current_extreme_index_and_value[0] - lower_index)
+                            single_spike_data = [single_spike_voltage, single_spike_index, threshold]
+                            self.single_spike_data_updated.emit(single_spike_data)
                     else:  # still above positive threshold
                         # check if value is bigger than current maximum
                         if value > current_extreme_index_and_value[1]:
@@ -65,8 +79,16 @@ class SpikeDetectionThread(QtCore.QThread):
 
                 elif below_lower_threshold:  # last value was below negative threshold limit
                     if value <= threshold:  # leaving lower area
-                        # -> add current minimum index to list (unless its empty)
-                        channel_spike_indices.append(current_extreme_index_and_value[0])
+                        # -> add current minimum index to list
+                        if collect_troughs:
+                            channel_spike_indices.append(current_extreme_index_and_value[0])
+                            lower_index = current_extreme_index_and_value[0] - int((self.spike_window / 2) * fs)
+                            upper_index = current_extreme_index_and_value[0] + int((self.spike_window / 2) * fs)
+                            single_spike_voltage = signal[lower_index:upper_index]
+                            print(single_spike_voltage)
+                            single_spike_index = (current_extreme_index_and_value[0] - lower_index)
+                            single_spike_data = [single_spike_voltage, single_spike_index, threshold]
+                            self.single_spike_data_updated.emit(single_spike_data)
                     else:  # still below negative threshold
                         # check if value is smaller than current maximum
                         if value < current_extreme_index_and_value[1]:
@@ -81,11 +103,11 @@ class SpikeDetectionThread(QtCore.QThread):
                 below_lower_threshold = (value < -threshold)
                 above_upper_threshold = (value > threshold)
                 indices.append(channel_spike_indices)
-            spiketimes = np.asarray(channel_spike_indices) * (1/fs)
-            print(len(spiketimes))
+
+            spiketimes = np.asarray(channel_spike_indices) / fs
             spike_mat.append(spiketimes)
-            data = [list(signal[::312]), list(spiketimes), threshold]
-            self.data_updated.emit(data)
+            data = [spiketimes]
+            self.channel_data_updated.emit(data)
             progress = round(((idx + 1) / len(signal)) * 100.0, 2)
             self.progress_made.emit(progress)
             # import matplotlib.pyplot as plt
