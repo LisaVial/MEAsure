@@ -90,6 +90,10 @@ class SpikeDetectionDialog(QtWidgets.QDialog):
         # on the left handside, that is why it is added to the spike_detection_settings_layout
         self.channel_raster_plot = pg.GraphicsLayoutWidget()
         self.channel_raster_plot.useOpenGL(True)
+        self.channel_raster_plot.setBackground('w')
+
+        self.timer = pg.QtCore.QTimer(self)
+        self.timer.timeout.connect(self.on_timer)
 
         vtick = QtGui.QPainterPath()
         vtick.moveTo(0, -0.5)
@@ -102,11 +106,11 @@ class SpikeDetectionDialog(QtWidgets.QDialog):
         s1 = pg.ScatterPlotItem(pxMode=False)
         s1.setSymbol(vtick)
         s1.setSize(1)
-        s1.setPen(QtGui.QColor(*np.random.randint(0, 255 + 1, 3).tolist()))
+        s1.setPen(QtGui.QColor('#d0797a'))
         p1.addItem(s1)
 
         s2 = pg.ScatterPlotItem(pxMode=False, symbol=vtick, size=1,
-                                pen=QtGui.QColor(*np.random.randint(0, 255 + 1, 3).tolist()))
+                                pen=QtGui.QColor('#d0797a'))
         p1.addItem(s2)
         self.spis = [s1, s2]
         spike_detection_settings_layout.addWidget(self.channel_raster_plot)
@@ -182,6 +186,8 @@ class SpikeDetectionDialog(QtWidgets.QDialog):
                 self.spike_detection_thread.start()  # start will start thread (and run),
                 # but main thread will continue immediately
 
+            self.timer.start(2000) # time in [ms]
+
     def save_check_box_clicked(self):
         # change label of the save check box in case the user clicked it
         self.label_save_check_box.setText('Saving spikes to .meae file at the end of spike detection')
@@ -201,6 +207,8 @@ class SpikeDetectionDialog(QtWidgets.QDialog):
     # spike_mat is saved to a .csv file
     @QtCore.pyqtSlot()
     def on_spike_detection_thread_finished(self):
+        self.timer.stop()
+
         self.progress_label.setText("Finished :)")
         if self.spike_detection_thread.spike_mat:
             self.spike_indices = self.spike_detection_thread.spike_indices.copy()
@@ -212,21 +220,27 @@ class SpikeDetectionDialog(QtWidgets.QDialog):
 
     @QtCore.pyqtSlot(list)
     def on_single_spike_data_updated(self, data):
-        signal, spike_time, thresh = data[0], data[1], data[2]
+        signal, spike_time, self.threshold = data[0], data[1], data[2]
         self.voltage_trace.append(signal)
-        self.time_vt.append(list(np.arange(0, len(self.voltage_trace[-1]), (1/self.fs))))
+        self.time_vt.append(list(np.arange(0, len(self.voltage_trace[-1]))/self.fs))
         # H, edges = np.histogram(signal, bins=1000)
         # centers = edges[:-1] + np.diff(edges)[0] / 2
         # self.signal_plot.setData(centers, H)
-        self.signal_plot.setData(self.time_vt[-1], self.voltage_trace[-1])
-
-        self.hLine.setValue(thresh)
-        self.hLine2.setValue(-1 * thresh)
-
         self.spike_indices.append(spike_time)
-        print(self.voltage_trace[-1])
+        #print(self.voltage_trace[-1])
+
+    @QtCore.pyqtSlot()
+    def on_timer(self):
+        if len(self.time_vt) == 0 or len(self.voltage_trace) == 0:
+            return  # nothing to plot
+
+        self.signal_plot.setData(self.time_vt[-1], self.voltage_trace[-1])
+        self.hLine.setValue(self.threshold)
+        self.hLine2.setValue(-1 * self.threshold)
+
         # self.spike_height.append(np.max(self.voltage_trace[-1]))
         # self.scatter.setData(spike_time, np.max(self.voltage_trace[-1]))
+
 
     # function to save the found spiketimes stored in spike_mat as .csv file
     def save_spike_mat(self, spike_mat, spike_indices, mea_file):
