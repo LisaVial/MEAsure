@@ -51,7 +51,7 @@ class SpikeDetectionThread(QtCore.QThread):
         below_lower_threshold = False
         current_extreme_index_and_value = None  # current local minimum or maximum
 
-        for idx, ch_id in enumerate(ids):
+        for idx, ch_id in enumerate(ids[:2]):
             # in this case, the whole channel should be loaded, since the filter should be applied at once
             signal = signals[ch_id]
             channel_spike_indices = []
@@ -85,7 +85,6 @@ class SpikeDetectionThread(QtCore.QThread):
                             lower_index = current_extreme_index_and_value[0] - int((self.spike_window / 2) * fs)
                             upper_index = current_extreme_index_and_value[0] + int((self.spike_window / 2) * fs)
                             single_spike_voltage = signal[lower_index:upper_index]
-                            print(single_spike_voltage)
                             single_spike_index = (current_extreme_index_and_value[0] - lower_index)
                             single_spike_data = [single_spike_voltage, single_spike_index, threshold]
                             self.single_spike_data_updated.emit(single_spike_data)

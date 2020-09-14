@@ -120,7 +120,7 @@ class SpikeDetectionDialog(QtWidgets.QDialog):
         # dialog, this is why it is added to the main layout
         self.single_spike_plot = pg.PlotWidget()
         self.single_spike_plot.setBackground('w')
-        self.single_spike_plot.setLabel('left', 'amplitude [&#956;]', **styles)
+        self.single_spike_plot.setLabel('left', 'amplitude [&#956;V]', **styles)
         self.single_spike_plot.setLabel('bottom', 'time [s]', **styles)
         main_layout.addWidget(self.single_spike_plot)
 
@@ -214,9 +214,9 @@ class SpikeDetectionDialog(QtWidgets.QDialog):
             self.spike_indices = self.spike_detection_thread.spike_indices.copy()
             self.spike_mat = self.spike_detection_thread.spike_mat.copy()
         self.spike_detection_thread = None
-        self.spike_detection_button.setEnabled(True)
+        self.spike_detection_start_button.setEnabled(True)
         if self.save_check_box.isChecked():
-            self.save_spike_mat(self.spike_mat, self.spike_indices, self.mea_file[:-3] + '.meae')
+            self.save_spike_mat(self.spike_mat, self.spike_indices, self.reader.file_path[:-3] + '.meae')
 
     @QtCore.pyqtSlot(list)
     def on_single_spike_data_updated(self, data):
@@ -246,14 +246,12 @@ class SpikeDetectionDialog(QtWidgets.QDialog):
     def save_spike_mat(self, spike_mat, spike_indices, mea_file):
         self.label_save_check_box.setText('saving spike times...')
         # take filepath and filename, to get name of mea file and save it to the same directory
-        file_name = mea_file[:-3]
-        spike_filename = file_name + 'meae'
-        split_path = mea_file.split('\\')
-        overall_path = split_path[0] + '\\' + split_path[1] + '\\' + split_path[2]
-        analysis_filename = [file for file in os.listdir(overall_path) if file.endswith('.meae')]
-        if len(analysis_filename) > 0:
-            self.analysis_file_path = overall_path + '\\' + analysis_filename[0]
-        if self.analysis_file_path:
+        overall_path, filename = os.path.split(mea_file)
+        if filename.endswith('.h5'):
+            analysis_filename = filename[:-2] + 'meae'
+        if os.path.exists(overall_path + analysis_filename):
+            analysis_file_path = os.path.join(overall_path, analysis_filename)
+        if os.path.exists(analysis_file_path):
             with h5py.File(self.analysis_file_path, 'a') as hf:
                 dset_1 = hf.create_dataset('spiketimes', data=spike_mat, dtype='f')
                 dset_2 = hf.create_dataset('spiketimes_indices', data=spike_indices, dtype='int')
@@ -261,7 +259,7 @@ class SpikeDetectionDialog(QtWidgets.QDialog):
             with h5py.File(self.reader.file_path[:-3] + '.meae', 'w') as hf:
                 dset_1 = hf.create_dataset('spiketimes', data=spike_mat, dtype='f')
                 dset_2 = hf.create_dataset('spiketimes_indices', data=spike_indices, dtype='int')
-        self.label_save_check_box.setText('spike times saved in: ' + spike_filename)
+        self.label_save_check_box.setText('spike times saved in: ' + analysis_file_path)
 
     # function to open spike_mat .csv in case it exists
     # def open_spikemat(self, filepath):
