@@ -3,6 +3,7 @@ import os
 import pyqtgraph as pg
 import numpy as np
 import h5py
+from IPython import embed
 
 from settings import Settings
 from spike_detection_thread import SpikeDetectionThread
@@ -130,8 +131,8 @@ class SpikeDetectionDialog(QtWidgets.QDialog):
         self.voltage_trace = [[0, 0, 0, 0]]
         # self.time_vt = [np.zeros(self.settings.spike_window * self.reader.fs)]
         self.time_vt = [[0, 0, 0, 0]]
-        self.spike_indices = [2]
-        self.spike_height = [self.voltage_trace[-1][self.spike_indices[0]]]
+        self.spike_indices = [[0]]
+        self.spike_height = [[0]]
         self.threshold = 0
 
         # plot initial values
@@ -146,9 +147,7 @@ class SpikeDetectionDialog(QtWidgets.QDialog):
         self.hLine2.setValue(-1 * self.threshold)
         self.single_spike_plot.addItem(self.hLine2)
 
-        pen_spike_timepoint = pg.mkPen(color='#a7c9ba')
-        self.scatter = pg.ScatterPlotItem(pen=pen_spike_timepoint, symbol='o', name='spiketimes')
-        self.single_spike_plot.addItem(self.scatter)
+        self.scatter = self.single_spike_plot.plot(pen=None, symbol='o', name='spiketimes')
         self.single_spike_plot.addLegend()
 
     def on_channel_data_updated(self, data):
@@ -208,7 +207,6 @@ class SpikeDetectionDialog(QtWidgets.QDialog):
     @QtCore.pyqtSlot()
     def on_spike_detection_thread_finished(self):
         self.timer.stop()
-
         self.progress_label.setText("Finished :)")
         if self.spike_detection_thread.spike_mat:
             self.spike_indices = self.spike_detection_thread.spike_indices.copy()
@@ -216,18 +214,18 @@ class SpikeDetectionDialog(QtWidgets.QDialog):
         self.spike_detection_thread = None
         self.spike_detection_start_button.setEnabled(True)
         if self.save_check_box.isChecked():
-            self.save_spike_mat(self.spike_mat, self.spike_indices, self.reader.file_path[:-3] + '.meae')
+            self.save_spike_mat(self.spike_mat, self.spike_indices, self.reader.file_path)
 
     @QtCore.pyqtSlot(list)
     def on_single_spike_data_updated(self, data):
-        signal, spike_time, self.threshold = data[0], data[1], data[2]
+        signal, spike_time, spike_height, self.threshold = data[0], data[1], data[2], data[3]
         self.voltage_trace.append(signal)
         self.time_vt.append(list(np.arange(0, len(self.voltage_trace[-1]))/self.fs))
         # H, edges = np.histogram(signal, bins=1000)
         # centers = edges[:-1] + np.diff(edges)[0] / 2
         # self.signal_plot.setData(centers, H)
-        self.spike_indices.append(spike_time)
-        #print(self.voltage_trace[-1])
+        self.spike_height.append([spike_height])
+        self.spike_indices.append([spike_time/self.fs])
 
     @QtCore.pyqtSlot()
     def on_timer(self):
@@ -238,8 +236,7 @@ class SpikeDetectionDialog(QtWidgets.QDialog):
         self.hLine.setValue(self.threshold)
         self.hLine2.setValue(-1 * self.threshold)
 
-        # self.spike_height.append(np.max(self.voltage_trace[-1]))
-        # self.scatter.setData(spike_time, np.max(self.voltage_trace[-1]))
+        self.scatter.setData(self.spike_indices[-1], self.spike_height[-1])
 
 
     # function to save the found spiketimes stored in spike_mat as .csv file
@@ -247,18 +244,20 @@ class SpikeDetectionDialog(QtWidgets.QDialog):
         self.label_save_check_box.setText('saving spike times...')
         # take filepath and filename, to get name of mea file and save it to the same directory
         overall_path, filename = os.path.split(mea_file)
+        print(spike_indices)
         if filename.endswith('.h5'):
             analysis_filename = filename[:-2] + 'meae'
-        if os.path.exists(overall_path + analysis_filename):
-            analysis_file_path = os.path.join(overall_path, analysis_filename)
-        if os.path.exists(analysis_file_path):
-            with h5py.File(self.analysis_file_path, 'a') as hf:
-                dset_1 = hf.create_dataset('spiketimes', data=spike_mat, dtype='f')
-                dset_2 = hf.create_dataset('spiketimes_indices', data=spike_indices, dtype='int')
         else:
-            with h5py.File(self.reader.file_path[:-3] + '.meae', 'w') as hf:
-                dset_1 = hf.create_dataset('spiketimes', data=spike_mat, dtype='f')
-                dset_2 = hf.create_dataset('spiketimes_indices', data=spike_indices, dtype='int')
+            analysis_filename = filename
+        analysis_file_path = os.path.join(overall_path, analysis_filename)
+        if os.path.exists(analysis_file_path):
+            with h5py.File(analysis_file_path, 'w') as hf:
+                dset_1 = hf.create_dataset('spiketimes', data=np.array(spike_mat))
+                dset_2 = hf.create_dataset('spiketimes_indices', data=np.array(spike_indices))
+        else:
+            with h5py.File(analysis_file_path, 'w') as hf:
+                dset_1 = hf.create_dataset('spiketimes', data=spike_mat)
+                dset_2 = hf.create_dataset('spiketimes_indices', data=spike_indices)
         self.label_save_check_box.setText('spike times saved in: ' + analysis_file_path)
 
     # function to open spike_mat .csv in case it exists

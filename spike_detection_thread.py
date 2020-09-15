@@ -51,26 +51,29 @@ class SpikeDetectionThread(QtCore.QThread):
         below_lower_threshold = False
         current_extreme_index_and_value = None  # current local minimum or maximum
 
-        for idx, ch_id in enumerate(ids[:2]):
+        for idx, ch_id in enumerate(ids):
             # in this case, the whole channel should be loaded, since the filter should be applied at once
             signal = signals[ch_id]
-            channel_spike_indices = []
             threshold = self.threshold_factor * np.median(np.absolute(signal) / 0.6745)
             collect_peaks = (self.mode == SpikeDetectionSettings.Mode.PEAKS or
                              self.mode == SpikeDetectionSettings.Mode.BOTH)
             collect_troughs = (self.mode == SpikeDetectionSettings.Mode.TROUGHS or
-                             self.mode == SpikeDetectionSettings.Mode.BOTH)
+                               self.mode == SpikeDetectionSettings.Mode.BOTH)
+            channel_spike_indices = []
             for index, value in enumerate(signal):
                 if above_upper_threshold:  # last value was above positive threshold limit
                     if value <= threshold:  # leaving upper area
                         # -> add current maximum index to list
                         if collect_peaks:
                             channel_spike_indices.append(current_extreme_index_and_value[0])
+
                             lower_index = current_extreme_index_and_value[0] - int((self.spike_window/2) * fs)
                             upper_index = current_extreme_index_and_value[0] + int((self.spike_window/2) * fs)
                             single_spike_voltage = signal[lower_index:upper_index]
                             single_spike_index = (current_extreme_index_and_value[0] - lower_index)
-                            single_spike_data = [single_spike_voltage, single_spike_index, threshold]
+                            single_spike_height = signal[current_extreme_index_and_value[0]]
+                            single_spike_data = [single_spike_voltage, single_spike_index, single_spike_height,
+                                                 threshold]
                             self.single_spike_data_updated.emit(single_spike_data)
                     else:  # still above positive threshold
                         # check if value is bigger than current maximum
@@ -82,11 +85,14 @@ class SpikeDetectionThread(QtCore.QThread):
                         # -> add current minimum index to list
                         if collect_troughs:
                             channel_spike_indices.append(current_extreme_index_and_value[0])
+
                             lower_index = current_extreme_index_and_value[0] - int((self.spike_window / 2) * fs)
                             upper_index = current_extreme_index_and_value[0] + int((self.spike_window / 2) * fs)
                             single_spike_voltage = signal[lower_index:upper_index]
                             single_spike_index = (current_extreme_index_and_value[0] - lower_index)
-                            single_spike_data = [single_spike_voltage, single_spike_index, threshold]
+                            single_spike_height = signal[current_extreme_index_and_value[0]]
+                            single_spike_data = [single_spike_voltage, single_spike_index, single_spike_height,
+                                                 threshold]
                             self.single_spike_data_updated.emit(single_spike_data)
                     else:  # still below negative threshold
                         # check if value is smaller than current maximum
@@ -103,7 +109,7 @@ class SpikeDetectionThread(QtCore.QThread):
                 above_upper_threshold = (value > threshold)
                 indices.append(channel_spike_indices)
 
-            spiketimes = np.asarray(channel_spike_indices) / fs
+            spiketimes = channel_spike_indices / fs
             spike_mat.append(spiketimes)
             data = [spiketimes]
             self.channel_data_updated.emit(data)
