@@ -49,7 +49,6 @@ class SpikeDetectionDialog(QtWidgets.QDialog):
 
         self.settings_button = QtWidgets.QPushButton(self)
         self.settings_button.setText("Settings")
-        # self.settings_button.setFixedSize(self.width, 25)
         self.settings_button.clicked.connect(self.open_settings_dialog)
         spike_detection_settings_layout.addWidget(self.settings_button)
 

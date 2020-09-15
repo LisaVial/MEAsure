@@ -2,6 +2,7 @@ import os
 
 import PyQt5.QtCore as QtCore
 import PyQt5.QtWidgets as QtWidgets
+import PyQt5.QtGui as QtGui
 
 from data_list_view import DataListView
 
@@ -18,6 +19,9 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.setWindowTitle(title)
         self.mea_reader = None
+
+        app_icon = QtGui.QIcon("icon.png")
+        self.setWindowIcon(app_icon)
 
         self.file_list_view = DataListView(self)
         self.centralwidget = QtWidgets.QWidget(self)

@@ -1,13 +1,10 @@
-from PyQt5 import QtCore, QtWidgets
-import h5py
-import os
-import numpy as np
+import PyQt5.QtCore as QtCore
+import PyQt5.QtWidgets as QtWidgets
 
-from spike_detection.spike_detection_settings_widget import SpikeDetectionSettingsWidget
+from filtering.filter_settings_widget import FilterSettingsWidget
 
-
-class SettingsDialog(QtWidgets.QDialog):
-    def __init__(self, parent, initial_settings=None):
+class FilterSettingsDialog(QtWidgets.QDialog):
+    def __init__(self, parent, inital_settings=None):
         super().__init__(parent)
 
         title = 'Settings'
@@ -18,17 +15,16 @@ class SettingsDialog(QtWidgets.QDialog):
         self.setWindowFlag(QtCore.Qt.WindowMinimizeButtonHint, True)
         self.width = 300
         self.height = 200
-        self.resize(self.width, self.height)
 
         main_layout = QtWidgets.QVBoxLayout(self)
         main_layout.setAlignment(QtCore.Qt.AlignTop | QtCore.Qt.AlignCenter)
 
-        self.spike_detection_settings_widget = SpikeDetectionSettingsWidget(self, initial_settings)
-        main_layout.addWidget(self.spike_detection_settings_widget)
+        self.filter_settings_widget = FilterSettingsWidget(self, inital_settings)
+        main_layout.addWidget(self.filter_settings_widget)
 
         self.okay_button = QtWidgets.QPushButton(self)
         self.okay_button.setText('Okay')
-        self.okay_button.clicked.connect(self.on_ok_clicked)
+        self.okay_button.clicked.connect(self.on_okay_clicked)
         main_layout.addWidget(self.okay_button)
 
         self.cancel_button = QtWidgets.QPushButton(self)
@@ -39,9 +35,9 @@ class SettingsDialog(QtWidgets.QDialog):
         self.setWindowTitle(title)
 
     def get_settings(self):
-        return self.spike_detection_settings_widget.get_settings()
+        return self.filter_settings_widget.get_settings()
 
-    def on_ok_clicked(self):
+    def on_okay_clicked(self):
         self.accept()
 
     def on_cancel_clicked(self):

@@ -4,7 +4,9 @@ import os
 import pyqtgraph as pg
 import numpy as np
 
+from settings import Settings
 from filter_thread import FilterThread
+from filter_settings_dialog import FilterSettingsDialog
 
 
 class FilterDialog(QtWidgets.QDialog):
@@ -25,6 +27,8 @@ class FilterDialog(QtWidgets.QDialog):
 
         self.filtering_thread = None
 
+        self.settings = Settings.instance.filter_settings
+
         main_layout = QtWidgets.QHBoxLayout(self)
         main_layout.setAlignment(QtCore.Qt.AlignTop | QtCore.Qt.AlignCenter)
         self.setWindowTitle(title)
@@ -32,35 +36,10 @@ class FilterDialog(QtWidgets.QDialog):
         filter_settings_layout = QtWidgets.QVBoxLayout(self)
         filter_settings_layout.setAlignment(QtCore.Qt.AlignTop | QtCore.Qt.AlignCenter)
 
-        self.filter_combo_box = QtWidgets.QComboBox(self)
-        self.filter_combo_box.setFixedSize(self.width, 25)
-
-        self.filter_combo_box.addItem('Lowpass Filter')
-        self.filter_combo_box.addItem('Highpass Filter')
-        self.filter_combo_box.addItem('Bandpass Filter')
-
-        self.filter_combo_box.setEditable(True)
-        self.filter_combo_box.lineEdit().setReadOnly(True)
-
-        self.filter_combo_box.lineEdit().setAlignment(QtCore.Qt.AlignCenter)
-        self.filter_combo_box.currentIndexChanged.connect(self.filter_type_changed)
-        filter_settings_layout.addWidget(self.filter_combo_box)
-
-        self.single_cutoff_textbox = QtWidgets.QLineEdit(self)
-        self.single_cutoff_textbox.setAlignment(QtCore.Qt.AlignCenter)
-        self.single_cutoff_textbox.setFixedSize(self.width, 25)
-        self.textbox_label = QtWidgets.QLabel('Cutoff frequency [Hz]')
-        filter_settings_layout.addWidget(self.single_cutoff_textbox)
-        filter_settings_layout.addWidget(self.textbox_label)
-
-        self.second_cutoff_textbox = QtWidgets.QLineEdit(self)
-        self.second_cutoff_textbox.setAlignment(QtCore.Qt.AlignCenter)
-        self.second_cutoff_textbox.setFixedSize(self.width, 25)
-        self.second_textbox_label = QtWidgets.QLabel('Upper cutoff frequency [Hz]')
-        filter_settings_layout.addWidget(self.second_cutoff_textbox)
-        filter_settings_layout.addWidget(self.second_textbox_label)
-        self.second_cutoff_textbox.setVisible(False)
-        self.second_textbox_label.setVisible(False)
+        self.settings_button = QtWidgets.QPushButton(self)
+        self.settings_button.setText("Settings")
+        self.settings_button.clicked.connect(self.open_settings_dialog)
+        filter_settings_layout.addWidget(self.settings_button)
 
         self.save_filtered_box = QtWidgets.QCheckBox('Save filtered traces')
         self.label_save_filtered_box = QtWidgets.QLabel('Don\'t save filtered traces')
@@ -110,12 +89,20 @@ class FilterDialog(QtWidgets.QDialog):
         self.filtered = self.plot_widget.plot(self.time_f[-1], self.filter[-1], pen=pen_2, name='filtered')
         self.plot_widget.addLegend()
 
+    @QtCore.pyqtSlot()
+    def open_settings_dialog(self):
+        settings_dialog = FilterSettingsDialog(self, self.settings)
+        if settings_dialog.exec() == 1:  # 'ok' clicked
+            self.settings = settings_dialog.get_settings()
+            # overwrite global settings as well
+            Settings.instance.filter_settings = self.settings
+
     def initialize_filtering(self):
-        filter_mode = self.filter_combo_box.currentIndex()
-        cutoff_1 = float(self.single_cutoff_textbox.text())
+        filter_mode = self.settings.mode
+        cutoff_1 = float(self.settings.lower_cutoff)
         cutoff_2 = None
-        if self.filter_combo_box.currentIndex() == 2:
-            cutoff_2 = float(self.second_cutoff_textbox.text())
+        if self.settings.mode == 2:
+            cutoff_2 = float(self.settings.upper_cutoff)
         if self.filtered_mat is None:
             self.progress_bar.setValue(0)
             self.progress_label.setText('')
@@ -135,13 +122,6 @@ class FilterDialog(QtWidgets.QDialog):
                 # asynchronous plotting (default):
                 self.filtering_thread.start()  # start will start thread (and run),
                 # but main thread will continue immediately
-
-    def filter_type_changed(self, index):
-        self.filter_combo_box.setCurrentIndex(index)
-        if index == 2:
-            self.textbox_label.setText('Lower cutoff frequency [Hz]')
-            self.second_cutoff_textbox.setVisible(True)
-            self.second_textbox_label.setVisible(True)
 
     def save_filtered_box_clicked(self):
         self.label_save_filtered_box.setText('Saving filtered traces to .h5 file at end of filtering')

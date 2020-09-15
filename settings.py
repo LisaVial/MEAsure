@@ -2,6 +2,7 @@ import PyQt5.QtCore as QtCore
 import json
 
 from spike_detection.spike_detection_settings import SpikeDetectionSettings
+from filtering.filter_settings import FilterSettings
 
 
 class Settings:
@@ -13,6 +14,7 @@ class Settings:
         self.main_window_geometry = bytearray()
         self.main_window_state = bytearray()
         self.spike_detection_settings = SpikeDetectionSettings()
+        self.filter_settings = FilterSettings()
         Settings.instance = self
 
     def load_settings_from_file(self, path):
@@ -26,6 +28,8 @@ class Settings:
                 self.main_window_state = QtCore.QByteArray(bytearray(d["main_window_state"], "ascii"))
             if "spike_detection_settings" in d.keys():
                 self.spike_detection_settings.from_dict(d["spike_detection_settings"])
+            if "filter_settings" in d.keys():
+                self.filter_settings.from_dict(d["filter_settings"])
         except:
             pass
 
@@ -35,6 +39,7 @@ class Settings:
         d["main_window_geometry"] = bytearray(self.main_window_geometry).decode("ascii")
         d["main_window_state"] = bytearray(self.main_window_state).decode("ascii")
         d["spike_detection_settings"] = self.spike_detection_settings.to_dict()
+        d["filter_settings"] = self.filter_settings.to_dict()
         return d
 
     def save(self, path):
