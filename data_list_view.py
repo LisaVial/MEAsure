@@ -1,6 +1,8 @@
 import PyQt5.QtCore as QtCore
 import PyQt5.QtWidgets as QtWidgets
+import PyQt5.QtGui as QtGui
 import os.path
+from IPython import embed
 
 
 class DataListView(QtWidgets.QWidget):
@@ -38,21 +40,27 @@ class DataListView(QtWidgets.QWidget):
         self.current_folder = folder
         self.selected_folder_label.setText(folder)
         self.file_list.clear()
-        data_files = self.get_data()
-        for file in data_files:
+        data_files, mea_indices = self.get_data()
+        print(mea_indices)
+        for idx, file in enumerate(data_files):
             self.file_list.addItem(file)
+            if idx in mea_indices:
+                self.file_list.item(idx).setBackground(QtGui.QColor(208, 121, 122))
 
     # function that scans absolute and relative paths of data
     def get_data(self):
         # scan recursively for (which file format do we have?) files
         found_files = []
+        meae_indices = []
         for root, sub_folders, files in os.walk(self.current_folder):
-            for file in files:
+            for idx, file in enumerate(files):
                 if file.endswith(".h5"):
                     absolute_path = os.path.join(root, file)
                     relative_path = os.path.relpath(absolute_path, self.current_folder)
                     found_files.append(relative_path)
-        return found_files
+                if file.endswith(".meae"):
+                    meae_indices.append(idx)
+        return found_files, meae_indices
 
 
 

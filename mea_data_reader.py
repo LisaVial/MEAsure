@@ -14,8 +14,7 @@ class MeaDataReader:
         if os.path.exists(overall_path + analysis_filename):
             self.analysis_file_path = overall_path + '\\' + analysis_filename[0]
         if self.analysis_file_path:
-            self.file, self.voltage_traces, self.sampling_frequency, self.labels = \
-                self.open_mea_file(self.analysis_file_path)
+            self.file, self.voltage_traces, self.sampling_frequency = self.open_mea_file(self.analysis_file_path)
             self.channel_indices = range(len(self.voltage_traces))
         else:
             self.file, self.voltage_traces, self.sampling_frequency = self.open_mea_file(self.file_path)
@@ -28,7 +27,7 @@ class MeaDataReader:
             sampling_frequency = file['fs']
             channel_indices = file['channel_indices']
             channel_labels = file['channel_labels']
-            return file, voltage_traces, sampling_frequency, channel_indices, channel_labels
+            return file, voltage_traces, sampling_frequency
         voltage_traces = file['Data']['Recording_0']['AnalogStream']['Stream_0']['ChannelData']
         sampling_frequency = 1000000/file['Data']['Recording_0']['AnalogStream']['Stream_0']['InfoChannel']['Tick'][0]
         # infos of the recording:
