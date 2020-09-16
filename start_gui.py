@@ -2,8 +2,11 @@ import sys
 import os
 import ctypes
 import PyQt5.QtWidgets as QtWidgets
+import PyQt5.QtCore as QtCore
+import PyQt5.QtGui as QtGui
 
 from main_window import MainWindow
+
 
 if os.name == 'nt':
     my_app_id = u'lv.meaanalyzer.subproduct.version'
@@ -25,7 +28,7 @@ sys.excepthook = my_exception_hook
 # end of exception hook creation
 
 application = QtWidgets.QApplication(sys.argv)
-mainWindow = MainWindow('MEA Analyzer')
+mainWindow = MainWindow('MEAsure')
 mainWindow.show()
 
 application.setActiveWindow(mainWindow)

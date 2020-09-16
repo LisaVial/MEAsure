@@ -45,7 +45,8 @@ class DataListView(QtWidgets.QWidget):
         for idx, file in enumerate(data_files):
             self.file_list.addItem(file)
             if idx in mea_indices:
-                self.file_list.item(idx).setBackground(QtGui.QColor(208, 121, 122))
+                self.file_list.item(idx).setBackground(QtGui.QColor(0, 134, 153))
+                self.file_list.item(idx).setForeground(QtGui.QColor("white"))
 
     # function that scans absolute and relative paths of data
     def get_data(self):
