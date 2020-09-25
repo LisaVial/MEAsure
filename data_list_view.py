@@ -55,7 +55,7 @@ class DataListView(QtWidgets.QWidget):
         meae_indices = []
         for root, sub_folders, files in os.walk(self.current_folder):
             for idx, file in enumerate(files):
-                if file.endswith(".h5"):
+                if file.endswith(".h5") or file.endswith('result.hdf5'):
                     absolute_path = os.path.join(root, file)
                     relative_path = os.path.relpath(absolute_path, self.current_folder)
                     found_files.append(relative_path)
