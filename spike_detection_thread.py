@@ -108,13 +108,13 @@ class SpikeDetectionThread(QtCore.QThread):
                 below_lower_threshold = (value < -threshold)
                 above_upper_threshold = (value > threshold)
                 indices.append(channel_spike_indices)
+            progress = round(((idx + 1) / len(ids)) * 100.0, 2)
+            self.progress_made.emit(progress)
 
             spiketimes = channel_spike_indices / fs
             spike_mat.append(spiketimes)
             data = [spiketimes]
             self.channel_data_updated.emit(data)
-            progress = round(((idx + 1) / len(signal)) * 100.0, 2)
-            self.progress_made.emit(progress)
             # import matplotlib.pyplot as plt
             # plt.figure()
             # H,edges = np.histogram(signal, bins=1000)
