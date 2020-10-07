@@ -52,16 +52,25 @@ class DataListView(QtWidgets.QWidget):
     def get_data(self):
         # scan recursively for (which file format do we have?) files
         found_files = []
-        meae_indices = []
+        meae_files = []
         for root, sub_folders, files in os.walk(self.current_folder):
-            for idx, file in enumerate(files):
-                if file.endswith(".h5"):
-                    absolute_path = os.path.join(root, file)
-                    relative_path = os.path.relpath(absolute_path, self.current_folder)
+            for file in files:
+                absolute_path = os.path.join(root, file)
+                relative_path = os.path.relpath(absolute_path, self.current_folder)
+                if file.endswith(".h5") or file.endswith('result.hdf5'):
                     found_files.append(relative_path)
                 if file.endswith(".meae"):
-                    meae_indices.append(idx)
-        return found_files, meae_indices
+                    meae_files.append(relative_path)
+
+        mea_indices = []
+        for index, file in enumerate(found_files):
+            if '.' in file:
+                file_without_extension = ".".join(file.split('.')[:-1])
+                file_as_meae = file_without_extension + ".meae"
+                if file_as_meae in meae_files:
+                    mea_indices.append(index)
+
+        return found_files, mea_indices
 
 
 

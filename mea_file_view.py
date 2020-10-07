@@ -169,3 +169,13 @@ class MeaFileView(QtWidgets.QWidget):
         self.csd_plot_button.setEnabled(True)
         self.plot_widget.refresh_canvas()
 
+    def can_be_closed(self):
+        return self.can_be_closed()
+
+    def closeEvent(self, close_event):
+        self.close()
+        super().closeEvent(close_event)
+
+    def closeEvent(self, close_event):
+        super().closeEvent(close_event)
+
