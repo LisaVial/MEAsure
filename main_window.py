@@ -2,12 +2,13 @@ import os
 
 import PyQt5.QtCore as QtCore
 import PyQt5.QtWidgets as QtWidgets
+import PyQt5.QtGui as QtGui
 
 from data_list_view import DataListView
 
 from mea_data_reader import MeaDataReader
 from mea_file_tab_widget import MeaFileTabWidget
-from settings import Settings, load_settings_from_file
+from settings import Settings
 
 
 class MainWindow(QtWidgets.QMainWindow):
@@ -17,7 +18,10 @@ class MainWindow(QtWidgets.QMainWindow):
         super().__init__(parent)
 
         self.setWindowTitle(title)
-        self.mea_reader = MeaDataReader()
+        self.mea_reader = None
+
+        app_icon = QtGui.QIcon("icon.png")
+        self.setWindowIcon(app_icon)
 
         self.file_list_view = DataListView(self)
         self.centralwidget = QtWidgets.QWidget(self)
@@ -37,10 +41,10 @@ class MainWindow(QtWidgets.QMainWindow):
         self.load_settings()
 
     def load_settings(self):
-        settings = None
+        settings = Settings()
         if os.path.isfile(MainWindow.settings_file_name):
             with open(MainWindow.settings_file_name) as settings_file:
-                settings = load_settings_from_file(settings_file)
+                settings.load_settings_from_file(settings_file)
 
         if settings:
             self.file_list_view.set_current_folder(settings.last_folder)
@@ -58,11 +62,11 @@ class MainWindow(QtWidgets.QMainWindow):
     @QtCore.pyqtSlot(QtWidgets.QListWidgetItem)
     def on_file_double_clicked(self, item):
         absolute_path = os.path.join(self.file_list_view.current_folder, item.text())
+        self.mea_reader = MeaDataReader(absolute_path)
         self.mea_tab_widget.show_mea_file_view(absolute_path)
 
-
     def save_settings(self):
-        settings = Settings()
+        settings = Settings.instance
         settings.last_folder = self.file_list_view.current_folder
         settings.main_window_geometry = self.saveGeometry().toBase64()
         settings.main_window_state = self.saveState().toBase64()

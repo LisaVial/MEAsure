@@ -4,6 +4,7 @@ from PyQt5 import QtCore, QtWidgets
 from mea_data_reader import MeaDataReader
 from mea_file_view import MeaFileView
 
+
 class MeaFileTabWidget(QtWidgets.QTabWidget):
 
     def __init__(self, parent):

@@ -1,49 +1,55 @@
 from PyQt5 import QtWidgets, QtCore
 import os
-import h5py
 import csv
-from IPython import embed
 
+from plot_widget import PlotWidget
 from mea_data_reader import MeaDataReader
 from mea_grid import MeaGrid
-from spike_detection_thread import SpikeDetectionThread
+
+from spike_detection_dialog import SpikeDetectionDialog
+from filter_dialog import FilterDialog
 from plot_creation_thread import PlotCreationThread
-from plot_widget import PlotWidget
+from csd_plot_creation_thread import CsdPlotCreationThread
 
 
 class MeaFileView(QtWidgets.QWidget):
     def __init__(self, parent, mea_file):
         super().__init__(parent)
-        self.reader = MeaDataReader()
+        self.reader = MeaDataReader(mea_file)
         self.mea_file = mea_file
-        self.spike_mat = None
+
+        self.plot_creation_thread = None
+        self.csd_plot_creation_thread = None
 
         self.mea_grid = MeaGrid(self)
         self.mea_grid.setFixedSize(600, 600)
 
-        self.spike_detection_thread = None
-        self.plot_creation_thread = None
-
         main_layout = QtWidgets.QHBoxLayout(self)
         main_layout.setAlignment(QtCore.Qt.AlignTop | QtCore.Qt.AlignLeft)
-
-        self.spike_detection_button = QtWidgets.QPushButton(self)
-        self.spike_detection_button.setText("Spike Detection")
 
         grid_buttons_and_progress_bar_layout = QtWidgets.QVBoxLayout(self)
         grid_buttons_and_progress_bar_layout.setAlignment(QtCore.Qt.AlignTop | QtCore.Qt.AlignLeft)
         grid_buttons_and_progress_bar_layout.addWidget(self.mea_grid)
-        self.save_check_box = QtWidgets.QCheckBox("save spike times")
-        self.label_save_check_box = QtWidgets.QLabel("don't save spike times")
 
-        self.save_check_box.stateChanged.connect(self.save_check_box_clicked)
+        self.csd_plot_button = QtWidgets.QPushButton(self)
+        self.csd_plot_button.setText('Show unfiltered channels (CSD plot)')
+        self.csd_plot_button.clicked.connect(self.initialize_csd_plotting)
 
-        grid_buttons_and_progress_bar_layout.addWidget(self.save_check_box)
-        grid_buttons_and_progress_bar_layout.addWidget(self.label_save_check_box)
-        grid_buttons_and_progress_bar_layout.addWidget(self.spike_detection_button)
+        grid_buttons_and_progress_bar_layout.addWidget(self.csd_plot_button)
+
+        self.filter_dialog_button = QtWidgets.QPushButton(self)
+        self.filter_dialog_button.setText('Open filtering dialog')
+        self.filter_dialog_button.clicked.connect(self.open_filter_dialog)
+        grid_buttons_and_progress_bar_layout.addWidget(self.filter_dialog_button)
+
+        self.spike_detection_dialog_button = QtWidgets.QPushButton(self)
+        self.spike_detection_dialog_button.setText("Open spike detection dialog")
+        self.spike_detection_dialog_button.clicked.connect(self.open_sd_dialog)
+        grid_buttons_and_progress_bar_layout.addWidget(self.spike_detection_dialog_button)
 
         self.raster_plot_button = QtWidgets.QPushButton(self)
         self.raster_plot_button.setText("Raster Plot")
+        self.raster_plot_button.clicked.connect(self.initialize_plotting)
 
         grid_buttons_and_progress_bar_layout.addWidget(self.raster_plot_button)
 
@@ -59,61 +65,41 @@ class MeaFileView(QtWidgets.QWidget):
         grid_buttons_and_progress_bar_layout.addWidget(self.progress_bar)
         main_layout.addLayout(grid_buttons_and_progress_bar_layout)
 
-        self.spike_detection_button.clicked.connect(self.initialize_spike_detection)
-        self.raster_plot_button.clicked.connect(self.initialize_plotting)
-
         self.plot_widget = PlotWidget(self)
+
         self.figure = self.plot_widget.figure
+
         main_layout.addWidget(self.plot_widget)
 
-    def save_spikemat(self, spikemat, filepath):
-        with open(filepath, 'w') as f:
-            writer = csv.writer(f)
-            writer.writerows(spikemat)
-
-    def open_spikemat(self, filepath):
-        with open(filepath, 'r') as read_obj:
-            csv_reader = csv.reader(read_obj)
-            spike_mat = list(csv_reader)
-        return spike_mat
-
-    def check_for_spike_times_csv(self, mea_file):
-        spiketimes_csv = mea_file[:-3] + '_spiketimes.csv'
-        if os.path.exists(spiketimes_csv):
-            spike_mat = self.open_spikemat(spiketimes_csv)
-
-            answer = QtWidgets.QMessageBox.information(self, 'spiketimes already found', 'Detect spikes again?',
-                                              QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No,
-                                              QtWidgets.QMessageBox.No)
-
-            if answer == QtWidgets.QMessageBox.Yes:
-                return None
-            else:
-                return spike_mat
-        else:
-            return None
+    @QtCore.pyqtSlot()
+    def open_sd_dialog(self):
+        spike_detection_dialog = SpikeDetectionDialog(None, self.reader)
+        spike_detection_dialog.exec_()
 
     @QtCore.pyqtSlot()
-    def initialize_spike_detection(self):
-        self.spike_mat = self.check_for_spike_times_csv(self.mea_file)
-        if self.spike_mat is None:
-            self.progress_bar.setValue(0)
-            self.progress_label.setText("")
-            self.spike_detection_button.setEnabled(False)
-            self.spike_detection_thread = SpikeDetectionThread(self, self.plot_widget, self.mea_file)
-            self.spike_detection_thread.finished.connect(self.on_spike_detection_thread_finished)
-            self.spike_detection_thread.progress_made.connect(self.on_progress_made)
-            self.spike_detection_thread.operation_changed.connect(self.on_operation_changed)
+    def open_filter_dialog(self):
+        filter_dialog = FilterDialog(None, self.reader)
+        filter_dialog.exec_()
 
-            debug_mode = False  # set to 'True' in order to debug plot creation with embed
-            if debug_mode:
-                # synchronous plotting (runs in main thread and thus allows debugging)
-                self.spike_detection_thread.run()
-            else:
-                # asynchronous plotting (default):
-                self.spike_detection_thread.start()  # start will start thread (and run),
-                # but main thread will continue immediately
+    @QtCore.pyqtSlot()
+    def initialize_csd_plotting(self):
+        reader = MeaDataReader(self.mea_file)
+        self.progress_bar.setValue(0)
+        self.progress_label.setText("")
+        self.raster_plot_button.setEnabled(False)
+        self.csd_plot_creation_thread = CsdPlotCreationThread(self.plot_widget, reader)
+        self.csd_plot_creation_thread.finished.connect(self.on_plot_creation_thread_finished)
+        self.csd_plot_creation_thread.progress_made.connect(self.on_progress_made)
+        self.csd_plot_creation_thread.operation_changed.connect(self.on_operation_changed)
 
+        debug_mode = False  # set to 'True' in order to debug plot creation with embed
+        if debug_mode:
+            # synchronous plotting (runs in main thread and thus allows debugging)
+            self.csd_plot_creation_thread.run()
+        else:
+            # asynchronous plotting (default):
+            self.csd_plot_creation_thread.start()  # start will start thread (and run),
+            # but main thread will continue immediately
 
     @QtCore.pyqtSlot()
     def initialize_plotting(self):
@@ -141,9 +127,6 @@ class MeaFileView(QtWidgets.QWidget):
                 self.plot_creation_thread.start()  # start will start thread (and run),
                 # but main thread will continue immediately
 
-    def save_check_box_clicked(self):
-        self.label_save_check_box.setText('Saving spikes to .csv file at the end of spike detection')
-
     @QtCore.pyqtSlot(str)
     def on_operation_changed(self, operation):
         self.operation_label.setText(operation)
@@ -154,6 +137,7 @@ class MeaFileView(QtWidgets.QWidget):
         self.progress_label.setText(str(progress) + "%")
 
     @QtCore.pyqtSlot()
+<<<<<<< HEAD
     def on_spike_detection_thread_finished(self):
         self.progress_label.setText("Finished :)")
         if self.spike_detection_thread.spike_mat:
@@ -173,11 +157,15 @@ class MeaFileView(QtWidgets.QWidget):
 
 
     @QtCore.pyqtSlot()
+=======
+>>>>>>> c05ec384b690b09ab945e724dedb9f71bedfc465
     def on_plot_creation_thread_finished(self):
         self.progress_label.setText("Finished :)")
         self.plot_creation_thread = None
+        self.csd_plot_creation_thread = None
         self.plot_widget.toolbar.show()
         # self.plot_manager.add_plot(self)
         self.raster_plot_button.setEnabled(True)
+        self.csd_plot_button.setEnabled(True)
         self.plot_widget.refresh_canvas()
 
