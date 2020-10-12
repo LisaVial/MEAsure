@@ -1,5 +1,9 @@
 from PyQt5 import QtCore
+import numpy as np
 from scipy.signal import lfilter, butter
+import pyqtgraph as pg
+
+from mea_data_reader import MeaDataReader
 
 
 class FilterThread(QtCore.QThread):
@@ -17,7 +21,6 @@ class FilterThread(QtCore.QThread):
         self.cut_2 = cutoff_2
 
         self.filtered_mat = None
-        self.spike_indices = None
 
     def butter_bandpass(self, lowcut, highcut, fs, order=2):
         nyq = 0.5 * fs

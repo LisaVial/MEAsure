@@ -124,16 +124,18 @@ class FilterDialog(QtWidgets.QDialog):
                 # but main thread will continue immediately
 
     def save_filtered_box_clicked(self):
-        self.label_save_filtered_box.setText('Saving filtered traces to .h5 file at end of filtering')
+        self.label_save_filtered_box.setText('Saving filtered traces to .meae file at end of filtering')
 
     def save_filter_mat(self, filter_mat, filename, reader):
-        self.label_save_filtered_box.setText('Saving filtered traces...')
-        with h5py.File(filename, 'w') as hf:
-            dset_1 = hf.create_dataset('filter', data=filter_mat)
-            dset_2 = hf.create_dataset('fs', data=reader.sampling_frequency)
-            dset_3 = hf.create_dataset('channel_indices', data=reader.channel_indices)
-            save_labels = [label.encode('utf-8') for label in reader.labels]
-            dset_3 = hf.create_dataset('channel_labels', data=save_labels)
+        self.label_save_filtered_box.setText('Saving filtered traces im .meae file...')
+        if reader.voltage_traces and reader.sampling_frequency and reader.channel_indices and reader.labels and \
+                reader.indices:
+            with h5py.File(filename, 'w') as hf:
+                dset_1 = hf.create_dataset('filter', data=filter_mat)
+                dset_2 = hf.create_dataset('fs', data=reader.sampling_frequency)
+                dset_3 = hf.create_dataset('channel_indices', data=reader.channel_indices)
+                save_labels = [label.encode('utf-8') for label in reader.labels]
+                dset_3 = hf.create_dataset('channel_labels', data=save_labels)
         self.label_save_filtered_box.setText('Filtered traces saved in: ' + filename)
 
     def open_filter_file(self, filepath):

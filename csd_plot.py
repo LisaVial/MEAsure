@@ -1,12 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.collections import LineCollection
-import matplotlib as mpl
-from IPython import embed
 
-#lowpass signal with cutoff of 50 Hz
-# detect spikes
-# plot channels were spikes had a certain amplitude (and rather are csd than spikes)
 
 class CsdPlot:
     def __init__(self, figure, reader):

@@ -1,6 +1,5 @@
 from PyQt5 import QtWidgets, QtCore
 import os
-import csv
 
 from plot_widget import PlotWidget
 from mea_data_reader import MeaDataReader
@@ -136,29 +135,6 @@ class MeaFileView(QtWidgets.QWidget):
         self.progress_bar.setValue(int(progress))
         self.progress_label.setText(str(progress) + "%")
 
-    @QtCore.pyqtSlot()
-<<<<<<< HEAD
-    def on_spike_detection_thread_finished(self):
-        self.progress_label.setText("Finished :)")
-        if self.spike_detection_thread.spike_mat:
-            self.spike_mat = self.spike_detection_thread.spike_mat.copy()
-        self.spike_detection_thread = None
-        self.spike_detection_button.setEnabled(True)
-        if self.save_check_box.isChecked():
-            self.save_spike_mat(self.spike_mat, self.mea_file[:-3] + '_spiketimes.csv')
-
-    def save_spike_mat(self, spike_mat, mea_file):
-        self.label_save_check_box.setText('saving spike times...')
-        # take filepath and filename, to get name of mea file and save it to the same directory
-        file_name = mea_file[:-3]
-        spike_filename = file_name + '_spiketimes.csv'
-        self.save_spikemat(spike_mat, spike_filename)
-        self.label_save_check_box.setText('spike times saved in: ' + spike_filename)
-
-
-    @QtCore.pyqtSlot()
-=======
->>>>>>> c05ec384b690b09ab945e724dedb9f71bedfc465
     def on_plot_creation_thread_finished(self):
         self.progress_label.setText("Finished :)")
         self.plot_creation_thread = None
@@ -168,14 +144,4 @@ class MeaFileView(QtWidgets.QWidget):
         self.raster_plot_button.setEnabled(True)
         self.csd_plot_button.setEnabled(True)
         self.plot_widget.refresh_canvas()
-
-    def can_be_closed(self):
-        return self.can_be_closed()
-
-    def closeEvent(self, close_event):
-        self.close()
-        super().closeEvent(close_event)
-
-    def closeEvent(self, close_event):
-        super().closeEvent(close_event)
 

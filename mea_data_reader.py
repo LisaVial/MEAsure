@@ -1,14 +1,7 @@
-<<<<<<< HEAD
-import McsPy
-import McsPy.McsData
-from IPython import embed
-=======
 import os
 import numpy as np
 import h5py
 from IPython import embed
-
->>>>>>> c05ec384b690b09ab945e724dedb9f71bedfc465
 
 class MeaDataReader:
     def __init__(self, path):
@@ -27,11 +20,6 @@ class MeaDataReader:
             self.channel_indices, self.labels = self.get_channel_indices(self.file)
 
     def open_mea_file(self, path):
-<<<<<<< HEAD
-        file = McsPy.McsData.RawData(path)
-        # embed()
-        return file
-=======
         file = h5py.File(path, 'r')
         if self.analysis_file_path:
             voltage_traces = file['filter']
@@ -61,4 +49,4 @@ class MeaDataReader:
         same_len_labels = [str(label[0]) + '0' + str(label[1]) if len(label) < 3 else label for label in labels]
         ordered_indices = list(np.argsort(same_len_labels))
         return list(np.asarray(ids)[ordered_indices]), list(np.asarray(labels)[ordered_indices])
->>>>>>> c05ec384b690b09ab945e724dedb9f71bedfc465
+
