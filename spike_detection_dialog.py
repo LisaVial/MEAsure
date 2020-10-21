@@ -3,7 +3,6 @@ import os
 import pyqtgraph as pg
 import numpy as np
 import h5py
-from IPython import embed
 
 from settings import Settings
 from spike_detection_thread import SpikeDetectionThread

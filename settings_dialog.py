@@ -1,7 +1,4 @@
 from PyQt5 import QtCore, QtWidgets
-import h5py
-import os
-import numpy as np
 
 from spike_detection.spike_detection_settings_widget import SpikeDetectionSettingsWidget
 

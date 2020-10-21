@@ -2,8 +2,7 @@ import sys
 import os
 import ctypes
 import PyQt5.QtWidgets as QtWidgets
-import PyQt5.QtCore as QtCore
-import PyQt5.QtGui as QtGui
+
 
 from main_window import MainWindow
 

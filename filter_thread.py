@@ -1,9 +1,5 @@
 from PyQt5 import QtCore
-import numpy as np
-from scipy.signal import lfilter, butter
-import pyqtgraph as pg
-
-from mea_data_reader import MeaDataReader
+from scipy.signal import filtfilt, butter
 
 
 class FilterThread(QtCore.QThread):
@@ -31,7 +27,7 @@ class FilterThread(QtCore.QThread):
 
     def butter_bandpass_filter(self, data, lowcut, highcut, fs, order=2):
         b, a = self.butter_bandpass(lowcut, highcut, fs, order=order)
-        y = lfilter(b, a, data)
+        y = filtfilt(b, a, data)
         return y
 
     def butter_filter(self, cutoff, fs, mode, order=4):
@@ -44,7 +40,7 @@ class FilterThread(QtCore.QThread):
         # as far as I understood it, all three filter types (low, high, notch) can be applied with these functions
         # and which filter will be applied at the end depends on the chosen mode
         b, a = self.butter_filter(cutoff_freq, fs, mode)
-        y = lfilter(b, a, data)
+        y = filtfilt(b, a, data)
         return y
 
     def filtering(self, mea_data_reader):

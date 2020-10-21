@@ -128,8 +128,7 @@ class FilterDialog(QtWidgets.QDialog):
 
     def save_filter_mat(self, filter_mat, filename, reader):
         self.label_save_filtered_box.setText('Saving filtered traces im .meae file...')
-        if reader.voltage_traces and reader.sampling_frequency and reader.channel_indices and reader.labels and \
-                reader.indices:
+        if reader.voltage_traces and reader.sampling_frequency and reader.channel_indices and reader.labels:
             with h5py.File(filename, 'w') as hf:
                 dset_1 = hf.create_dataset('filter', data=filter_mat)
                 dset_2 = hf.create_dataset('fs', data=reader.sampling_frequency)

@@ -1,7 +1,4 @@
-from IPython import embed
 import numpy as np
-import matplotlib.cm as cm
-import string
 
 
 class RasterPlot:

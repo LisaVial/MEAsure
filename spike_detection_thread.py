@@ -1,6 +1,6 @@
 from PyQt5 import QtCore
 import numpy as np
-from IPython import embed
+
 from spike_detection.spike_detection_settings import SpikeDetectionSettings
 
 class SpikeDetectionThread(QtCore.QThread):

@@ -1,5 +1,5 @@
-import numpy as np
 import matplotlib.pyplot as plt
+
 
 class VoltageTracePlotter:
     def __init__(self, analog_stream, channel_idx):
