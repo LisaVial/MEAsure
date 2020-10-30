@@ -40,11 +40,10 @@ class DataListView(QtWidgets.QWidget):
         self.current_folder = folder
         self.selected_folder_label.setText(folder)
         self.file_list.clear()
-        data_files, mea_indices = self.get_data()
-        print(mea_indices)
+        data_files, meae_indices = self.get_data()
         for idx, file in enumerate(data_files):
             self.file_list.addItem(file)
-            if idx in mea_indices:
+            if idx in meae_indices:
                 self.file_list.item(idx).setBackground(QtGui.QColor(0, 134, 153))
                 self.file_list.item(idx).setForeground(QtGui.QColor("white"))
 
