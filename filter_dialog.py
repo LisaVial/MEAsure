@@ -20,7 +20,7 @@ class FilterDialog(QtWidgets.QDialog):
         self.setWindowFlag(QtCore.Qt.CustomizeWindowHint, True)
         self.setWindowFlag(QtCore.Qt.WindowTitleHint, True)
         self.setWindowFlag(QtCore.Qt.WindowMaximizeButtonHint, True)
-        self.setWindowFlag(QtCore.Qt.WindowMaximizeButtonHint, True)
+        self.setWindowFlag(QtCore.Qt.WindowMinimizeButtonHint, True)
         self.width = 800
         self.height = 600
         self.resize(self.width, self.height)

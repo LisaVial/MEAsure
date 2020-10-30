@@ -24,7 +24,6 @@ class MainWindow(QtWidgets.QMainWindow):
         self.setWindowIcon(app_icon)
 
         self.file_list_view = DataListView(self)
-        self.centralwidget = QtWidgets.QWidget(self)
 
         self.data_file_list_dock_widget = QtWidgets.QDockWidget(self)
         self.data_file_list_dock_widget.setWidget(self.file_list_view)
@@ -34,11 +33,21 @@ class MainWindow(QtWidgets.QMainWindow):
         self.data_file_list_dock_widget.setWindowTitle("Folder selection")
         self.data_file_list_dock_widget.setObjectName("folder-selection")
         self.addDockWidget(QtCore.Qt.LeftDockWidgetArea, self.data_file_list_dock_widget)
+        self.centralwidget = QtWidgets.QWidget(self)
 
         self.mea_tab_widget = MeaFileTabWidget(self)
         self.setCentralWidget(self.mea_tab_widget)
 
         self.load_settings()
+
+        self.toolbar = QtWidgets.QToolBar(self)
+        self.show_file_selection = QtWidgets.QAction("File selection", self)
+        self.show_file_selection.triggered.connect(self.on_show_file_selection)
+        self.show_file_selection.setCheckable(True)  # kann an/aus sein
+        self.show_file_selection.setChecked(True)
+        # self.show_file_selection.setChecked(False)
+        self.toolbar.addAction(self.show_file_selection)
+        self.addToolBar(self.toolbar)
 
     def load_settings(self):
         settings = Settings()
@@ -54,6 +63,9 @@ class MainWindow(QtWidgets.QMainWindow):
     @QtCore.pyqtSlot()
     def on_close_button_pressed(self):
         self.accept()
+
+    def on_show_file_selection(self, is_pressed):
+        self.data_file_list_dock_widget.setVisible(is_pressed)
 
     def closeEvent(self, close_event):
         self.save_settings()
