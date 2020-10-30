@@ -1,7 +1,6 @@
 from PyQt5 import QtWidgets, QtCore
-import os
+import pyqtgraph as pg
 
-from plot_widget import PlotWidget
 from mea_data_reader import MeaDataReader
 from mea_grid import MeaGrid
 
@@ -23,7 +22,7 @@ class MeaFileView(QtWidgets.QWidget):
 
         self.show_mea_grid = QtWidgets.QAction("MEA grid", self)
         self.show_mea_grid.triggered.connect(self.on_show_mea_grid)
-        self.show_mea_grid.setCheckable(True)  # kann an/aus sein
+        self.show_mea_grid.setCheckable(True)
         self.show_mea_grid.setChecked(True)
         self.toolbar.addAction(self.show_mea_grid)
 
@@ -31,38 +30,42 @@ class MeaFileView(QtWidgets.QWidget):
         self.show_filter_dialog.triggered.connect(self.open_filter_dialog)
         self.toolbar.addAction(self.show_filter_dialog)
 
+        self.show_spike_detection_dialog = QtWidgets.QAction('Spike Detection', self)
+        self.show_spike_detection_dialog.triggered.connect(self.open_sd_dialog)
+        self.toolbar.addAction(self.show_spike_detection_dialog)
+
         main_layout.addWidget(self.toolbar)
 
+        sub_layout = QtWidgets.QHBoxLayout(self)
+        sub_layout.setAlignment(QtCore.Qt.AlignCenter | QtCore.Qt.AlignTop)
+
+        mea_grid_and_minor_widgets_layout = QtWidgets.QVBoxLayout(self)
+        mea_grid_and_minor_widgets_layout.setAlignment(QtCore.Qt.AlignTop | QtCore.Qt.AlignCenter)
         self.mea_grid = MeaGrid(self)
-        self.mea_grid.setFixedSize(500, 500)
-
-        grid_buttons_and_progress_bar_layout = QtWidgets.QHBoxLayout(self)
-        grid_buttons_and_progress_bar_layout.setAlignment(QtCore.Qt.AlignTop | QtCore.Qt.AlignLeft)
-        grid_buttons_and_progress_bar_layout.addWidget(self.mea_grid)
-
-
-        self.spike_detection_dialog_button = QtWidgets.QPushButton(self)
-        self.spike_detection_dialog_button.setText("Open spike detection dialog")
-        self.spike_detection_dialog_button.clicked.connect(self.open_sd_dialog)
-        grid_buttons_and_progress_bar_layout.addWidget(self.spike_detection_dialog_button)
-
-        self.plot_button = QtWidgets.QPushButton(self)
-        self.plot_button.setText("Plots")
-        self.plot_button.clicked.connect(self.open_plot_dialog)
-
-        grid_buttons_and_progress_bar_layout.addWidget(self.plot_button)
+        self.mea_grid.setFixedSize(600, 600)
+        mea_grid_and_minor_widgets_layout.addWidget(self.mea_grid)
 
         self.operation_label = QtWidgets.QLabel(self)
-        grid_buttons_and_progress_bar_layout.addWidget(self.operation_label)
+        self.operation_label.setText('Nothing happens so far...')
+        mea_grid_and_minor_widgets_layout.addWidget(self.operation_label)
         self.progress_label = QtWidgets.QLabel(self)
-        grid_buttons_and_progress_bar_layout.addWidget(self.progress_label)
+        mea_grid_and_minor_widgets_layout.addWidget(self.progress_label)
 
         self.progress_bar = QtWidgets.QProgressBar(self)
         self.progress_bar.setMinimum(0)
         self.progress_bar.setMaximum(100)
+        self.progress_bar.setFixedSize(600, 26)
         self.progress_bar.setTextVisible(True)
-        grid_buttons_and_progress_bar_layout.addWidget(self.progress_bar)
-        main_layout.addLayout(grid_buttons_and_progress_bar_layout)
+        mea_grid_and_minor_widgets_layout.addWidget(self.progress_bar)
+
+        sub_layout.addLayout(mea_grid_and_minor_widgets_layout)
+
+        self.plot_widget = pg.plot(title='Live plots')
+        self.plot_widget.setBackground('w')
+        styles = {'color': 'k', 'font-size': '10px'}
+
+        sub_layout.addWidget(self.plot_widget)
+        main_layout.addLayout(sub_layout)
 
     def on_show_mea_grid(self, is_pressed):
         self.mea_grid.setVisible(is_pressed)
