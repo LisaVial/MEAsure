@@ -5,6 +5,7 @@ from mea_data_reader import MeaDataReader
 from mea_grid import MeaGrid
 
 from settings import Settings
+from file_manager import FileManager
 
 from spike_detection.spike_detection_dialog import SpikeDetectionDialog
 
@@ -27,6 +28,12 @@ class MeaFileView(QtWidgets.QWidget):
         main_layout.setAlignment(QtCore.Qt.AlignTop | QtCore.Qt.AlignLeft)
 
         self.toolbar = QtWidgets.QToolBar(self)
+
+        self.show_file_manager = QtWidgets.QAction("File manager", self)
+        self.show_file_manager.triggered.connect(self.on_show_file_manager)
+        self.show_file_manager.setCheckable(True)
+        self.show_file_manager.setChecked(False)
+        self.toolbar.addAction(self.show_file_manager)
 
         self.show_mea_grid = QtWidgets.QAction("MEA grid", self)
         self.show_mea_grid.triggered.connect(self.on_show_mea_grid)
@@ -53,6 +60,8 @@ class MeaFileView(QtWidgets.QWidget):
 
         mea_grid_and_minor_widgets_layout = QtWidgets.QVBoxLayout(self)
         mea_grid_and_minor_widgets_layout.setAlignment(QtCore.Qt.AlignTop | QtCore.Qt.AlignCenter)
+        self.file_manager = FileManager(self, self.reader.file_path)
+        mea_grid_and_minor_widgets_layout.addWidget(self.file_manager)
         self.mea_grid = MeaGrid(self)
         self.mea_grid.setFixedSize(600, 600)
         mea_grid_and_minor_widgets_layout.addWidget(self.mea_grid)
@@ -65,6 +74,13 @@ class MeaFileView(QtWidgets.QWidget):
 
         sub_layout.addWidget(self.tab_widget)
         main_layout.addLayout(sub_layout)
+
+        # make sure widget visibility matches tool bar button check states
+        self.file_manager.setVisible(self.show_file_manager.isChecked())
+        self.mea_grid.setVisible(self.show_mea_grid.isChecked())
+
+    def on_show_file_manager(self, is_pressed):
+        self.file_manager.setVisible(is_pressed)
 
     def on_show_mea_grid(self, is_pressed):
         self.mea_grid.setVisible(is_pressed)
