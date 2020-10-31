@@ -5,68 +5,38 @@ import pyqtgraph as pg
 import numpy as np
 
 from settings import Settings
-from filter_thread import FilterThread
-from filter_settings_dialog import FilterSettingsDialog
+from filtering.filter_thread import FilterThread
+from filtering.filter_settings_dialog import FilterSettingsDialog
 
 
-class FilterDialog(QtWidgets.QDialog):
-    def __init__(self, parent,  reader):
+class FilterTab(QtWidgets.QWidget):
+    def __init__(self, parent, reader, settings):
         super().__init__(parent)
         self.reader = reader
+        self.settings = settings
+
         self.filtered_mat = None
-
-        title = 'Filtering'
-
-        self.setWindowFlag(QtCore.Qt.CustomizeWindowHint, True)
-        self.setWindowFlag(QtCore.Qt.WindowTitleHint, True)
-        self.setWindowFlag(QtCore.Qt.WindowMaximizeButtonHint, True)
-        self.setWindowFlag(QtCore.Qt.WindowMinimizeButtonHint, True)
-        self.width = 800
-        self.height = 600
-        self.resize(self.width, self.height)
 
         self.filtering_thread = None
 
-        self.settings = Settings.instance.filter_settings
+        main_layout = QtWidgets.QVBoxLayout(self)
+        main_layout.setAlignment(QtCore.Qt.AlignTop | QtCore.Qt.AlignHCenter)
 
-        main_layout = QtWidgets.QHBoxLayout(self)
-        main_layout.setAlignment(QtCore.Qt.AlignTop | QtCore.Qt.AlignCenter)
-        self.setWindowTitle(title)
-
-        filter_settings_layout = QtWidgets.QVBoxLayout(self)
-        filter_settings_layout.setAlignment(QtCore.Qt.AlignTop | QtCore.Qt.AlignCenter)
-
-        self.settings_button = QtWidgets.QPushButton(self)
-        self.settings_button.setText("Settings")
-        self.settings_button.clicked.connect(self.open_settings_dialog)
-        filter_settings_layout.addWidget(self.settings_button)
-
-        self.save_filtered_box = QtWidgets.QCheckBox('Save filtered traces')
-        self.label_save_filtered_box = QtWidgets.QLabel('Don\'t save filtered traces')
-        filter_settings_layout.addWidget(self.save_filtered_box)
-        filter_settings_layout.addWidget(self.label_save_filtered_box)
-        self.save_filtered_box.stateChanged.connect(self.save_filtered_box_clicked)
-
-        self.filter_start_button = QtWidgets.QPushButton(self)
-        self.filter_start_button.setFixedSize(self.width, 25)
-        self.filter_start_button.setText('Start filtering')
-        self.filter_start_button.clicked.connect(self.initialize_filtering)
-        filter_settings_layout.addWidget(self.filter_start_button)
-
+        operation_layout = QtWidgets.QVBoxLayout(self)
+        operation_layout.setAlignment(QtCore.Qt.AlignTop | QtCore.Qt.AlignLeft)
         self.operation_label = QtWidgets.QLabel(self)
         self.operation_label.setText('Nothing happens so far')
-        filter_settings_layout.addWidget(self.operation_label)
+        operation_layout.addWidget(self.operation_label)
         self.progress_label = QtWidgets.QLabel(self)
-        filter_settings_layout.addWidget(self.progress_label)
+        operation_layout.addWidget(self.progress_label)
 
         self.progress_bar = QtWidgets.QProgressBar(self)
-        self.progress_bar.setFixedSize(self.width, 25)
         self.progress_bar.setMinimum(0)
         self.progress_bar.setMaximum(100)
         self.progress_bar.setTextVisible(True)
-        filter_settings_layout.addWidget(self.progress_bar)
+        operation_layout.addWidget(self.progress_bar)
 
-        main_layout.addLayout(filter_settings_layout)
+        main_layout.addLayout(operation_layout)
 
         self.plot_widget = pg.PlotWidget()
         self.plot_widget.setBackground('w')
@@ -89,14 +59,6 @@ class FilterDialog(QtWidgets.QDialog):
         self.filtered = self.plot_widget.plot(self.time_f[-1], self.filter[-1], pen=pen_2, name='filtered')
         self.plot_widget.addLegend()
 
-    @QtCore.pyqtSlot()
-    def open_settings_dialog(self):
-        settings_dialog = FilterSettingsDialog(self, self.settings)
-        if settings_dialog.exec() == 1:  # 'ok' clicked
-            self.settings = settings_dialog.get_settings()
-            # overwrite global settings as well
-            Settings.instance.filter_settings = self.settings
-
     def initialize_filtering(self):
         filter_mode = self.settings.mode
         cutoff_1 = float(self.settings.lower_cutoff)
@@ -107,7 +69,6 @@ class FilterDialog(QtWidgets.QDialog):
             self.progress_bar.setValue(0)
             self.progress_label.setText('')
             self.operation_label.setText('Filtering')
-            self.filter_start_button.setEnabled(False)
             self.filtering_thread = FilterThread(self, self.reader, filter_mode, cutoff_1, cutoff_2)
             self.filtering_thread.progress_made.connect(self.on_progress_made)
             self.filtering_thread.operation_changed.connect(self.on_operation_changed)
@@ -123,11 +84,8 @@ class FilterDialog(QtWidgets.QDialog):
                 self.filtering_thread.start()  # start will start thread (and run),
                 # but main thread will continue immediately
 
-    def save_filtered_box_clicked(self):
-        self.label_save_filtered_box.setText('Saving filtered traces to .meae file at end of filtering')
-
     def save_filter_mat(self, filter_mat, filename, reader):
-        self.label_save_filtered_box.setText('Saving filtered traces im .meae file...')
+        self.operation_label.setText('Saving filtered traces im .meae file...')
         if reader.voltage_traces and reader.sampling_frequency and reader.channel_indices and reader.labels:
             with h5py.File(filename, 'w') as hf:
                 dset_1 = hf.create_dataset('filter', data=filter_mat)
@@ -135,7 +93,7 @@ class FilterDialog(QtWidgets.QDialog):
                 dset_3 = hf.create_dataset('channel_indices', data=reader.channel_indices)
                 save_labels = [label.encode('utf-8') for label in reader.labels]
                 dset_3 = hf.create_dataset('channel_labels', data=save_labels)
-        self.label_save_filtered_box.setText('Filtered traces saved in: ' + filename)
+        self.operation_label.setText('Filtered traces saved in: ' + filename)
 
     def open_filter_file(self, filepath):
         hf = h5py.File(filepath, 'r')
@@ -201,6 +159,6 @@ class FilterDialog(QtWidgets.QDialog):
             print('copying new filter mat...')
             self.filtered_mat = self.filtering_thread.filtered_mat.copy()
         self.filtering_thread = None
-        self.filter_start_button.setEnabled(True)
-        if self.save_filtered_box.isChecked():
+
+        if self.settings.save_filtered_traces:
             self.save_filter_mat(self.filtered_mat, self.reader.file_path[:-3] + '.meae', self.reader)

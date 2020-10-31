@@ -44,17 +44,26 @@ class FilterSettingsWidget(QtWidgets.QGroupBox):
         self.second_cutoff_textbox.setVisible(False)
         self.second_textbox_label.setVisible(False)
 
+        self.save_filtered_traces_box = QtWidgets.QCheckBox('Save filtered traces')
+        self.save_filtered_traces_label = QtWidgets.QLabel('')
+        group_box_layout.addWidget(self.save_filtered_traces_box)
+        group_box_layout.addWidget(self.save_filtered_traces_label)
+        self.save_filtered_traces_box.stateChanged.connect(self.save_filtered_traces_changed)
+
         if not settings:
             # create default settings
             settings = FilterSettings()
 
         # initialise widgets with settings
         self.set_settings(settings)
+        # update label (info about saving or not saving traces)
+        self.save_filtered_traces_changed()
 
     def set_settings(self, settings):
-        self.filter_combo_box.setCurrentText(str(settings.mode))
+        self.filter_combo_box.setCurrentIndex(settings.mode)
         self.single_cutoff_textbox.setText(str(settings.lower_cutoff))  # set entry index by reading mode (index) from settings
         self.second_cutoff_textbox.setText(str(settings.upper_cutoff))
+        self.save_filtered_traces_box.setChecked(settings.save_filtered_traces)
 
     def filter_type_changed(self, index):
         self.filter_combo_box.setCurrentIndex(index)
@@ -81,5 +90,12 @@ class FilterSettingsWidget(QtWidgets.QGroupBox):
             # not a float
             pass
 
+        settings.save_filtered_traces = self.save_filtered_traces_box.isChecked()
+
         return settings
 
+    def save_filtered_traces_changed(self):
+        if self.save_filtered_traces_box.isChecked():
+            self.save_filtered_traces_label.setText("Saving filtered traces to .meae file at end of filtering")
+        else:
+            self.save_filtered_traces_label.setText("Don\'t save filtered traces")

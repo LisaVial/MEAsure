@@ -4,8 +4,10 @@ import pyqtgraph as pg
 from mea_data_reader import MeaDataReader
 from mea_grid import MeaGrid
 
-from spike_detection_dialog import SpikeDetectionDialog
-from filter_dialog import FilterDialog
+from spike_detection.spike_detection_dialog import SpikeDetectionDialog
+from filtering.filter_settings_dialog import FilterSettingsDialog
+from filtering.filter_tab import FilterTab
+from settings import Settings
 from plot_dialog import PlotDialog
 
 
@@ -14,6 +16,8 @@ class MeaFileView(QtWidgets.QWidget):
         super().__init__(parent)
         self.reader = MeaDataReader(mea_file)
         self.mea_file = mea_file
+
+        self.filter_settings = Settings.instance.filter_settings
 
         main_layout = QtWidgets.QVBoxLayout(self)
         main_layout.setAlignment(QtCore.Qt.AlignTop | QtCore.Qt.AlignLeft)
@@ -44,27 +48,14 @@ class MeaFileView(QtWidgets.QWidget):
         self.mea_grid = MeaGrid(self)
         self.mea_grid.setFixedSize(600, 600)
         mea_grid_and_minor_widgets_layout.addWidget(self.mea_grid)
-
-        self.operation_label = QtWidgets.QLabel(self)
-        self.operation_label.setText('Nothing happens so far...')
-        mea_grid_and_minor_widgets_layout.addWidget(self.operation_label)
-        self.progress_label = QtWidgets.QLabel(self)
-        mea_grid_and_minor_widgets_layout.addWidget(self.progress_label)
-
-        self.progress_bar = QtWidgets.QProgressBar(self)
-        self.progress_bar.setMinimum(0)
-        self.progress_bar.setMaximum(100)
-        self.progress_bar.setFixedSize(600, 26)
-        self.progress_bar.setTextVisible(True)
-        mea_grid_and_minor_widgets_layout.addWidget(self.progress_bar)
-
         sub_layout.addLayout(mea_grid_and_minor_widgets_layout)
 
-        self.plot_widget = pg.plot(title='Live plots')
-        self.plot_widget.setBackground('w')
-        styles = {'color': 'k', 'font-size': '10px'}
+        self.tab_widget = QtWidgets.QTabWidget(self)
+        self.tab_widget.setTabsClosable(True)
+        self.tab_widget.setMovable(True)
+        self.tab_widget.setTabBarAutoHide(False)
 
-        sub_layout.addWidget(self.plot_widget)
+        sub_layout.addWidget(self.tab_widget)
         main_layout.addLayout(sub_layout)
 
     def on_show_mea_grid(self, is_pressed):
@@ -77,20 +68,20 @@ class MeaFileView(QtWidgets.QWidget):
 
     @QtCore.pyqtSlot()
     def open_filter_dialog(self):
-        filter_dialog = FilterDialog(None, self.reader)
-        filter_dialog.exec_()
+        settings_dialog = FilterSettingsDialog(self, self.filter_settings)
+        if settings_dialog.exec() == 1:  # 'Execute' clicked
+            self.filter_settings = settings_dialog.get_settings()
+            # overwrite global settings as well
+            Settings.instance.filter_settings = self.filter_settings
+
+            # initialise filtering
+            filter_tab = FilterTab(self, self.reader, self.filter_settings)
+            self.tab_widget.addTab(filter_tab, "Filtering")
+            filter_tab.initialize_filtering()
+
 
     @QtCore.pyqtSlot()
     def open_plot_dialog(self):
         plot_dialog = PlotDialog(None, self.reader)
         plot_dialog.exec_()
-
-    @QtCore.pyqtSlot(str)
-    def on_operation_changed(self, operation):
-        self.operation_label.setText(operation)
-
-    @QtCore.pyqtSlot(float)
-    def on_progress_made(self, progress):
-        self.progress_bar.setValue(int(progress))
-        self.progress_label.setText(str(progress) + "%")
 

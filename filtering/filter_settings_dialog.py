@@ -7,7 +7,7 @@ class FilterSettingsDialog(QtWidgets.QDialog):
     def __init__(self, parent, inital_settings=None):
         super().__init__(parent)
 
-        title = 'Settings'
+        title = 'Filtering'
 
         self.setWindowFlag(QtCore.Qt.CustomizeWindowHint, True)
         self.setWindowFlag(QtCore.Qt.WindowTitleHint, True)
@@ -23,12 +23,12 @@ class FilterSettingsDialog(QtWidgets.QDialog):
         main_layout.addWidget(self.filter_settings_widget)
 
         self.okay_button = QtWidgets.QPushButton(self)
-        self.okay_button.setText('Okay')
+        self.okay_button.setText('Execute')
         self.okay_button.clicked.connect(self.on_okay_clicked)
         main_layout.addWidget(self.okay_button)
 
         self.cancel_button = QtWidgets.QPushButton(self)
-        self.cancel_button.setText('Cancel')
+        self.cancel_button.setText('Abort')
         self.cancel_button.clicked.connect(self.on_cancel_clicked)
         main_layout.addWidget(self.cancel_button)
 

@@ -5,7 +5,7 @@ import numpy as np
 import h5py
 
 from settings import Settings
-from spike_detection_thread import SpikeDetectionThread
+from spike_detection.spike_detection_thread import SpikeDetectionThread
 from settings_dialog import SettingsDialog
 from spike_detection.spike_detection_settings import SpikeDetectionSettings
 
