@@ -4,11 +4,15 @@ import pyqtgraph as pg
 from mea_data_reader import MeaDataReader
 from mea_grid import MeaGrid
 
+from settings import Settings
+
 from spike_detection.spike_detection_dialog import SpikeDetectionDialog
+
 from filtering.filter_settings_dialog import FilterSettingsDialog
 from filtering.filter_tab import FilterTab
-from settings import Settings
-from plot_dialog import PlotDialog
+
+from plots.csd_plot_tab import CsdPlotTab
+
 
 
 class MeaFileView(QtWidgets.QWidget):
@@ -37,6 +41,10 @@ class MeaFileView(QtWidgets.QWidget):
         self.show_spike_detection_dialog = QtWidgets.QAction('Spike Detection', self)
         self.show_spike_detection_dialog.triggered.connect(self.open_sd_dialog)
         self.toolbar.addAction(self.show_spike_detection_dialog)
+
+        self.add_csd_plot_tab = QtWidgets.QAction('CSD plot', self)
+        self.add_csd_plot_tab.triggered.connect(self.add_csd_plot_to_tabs)
+        self.toolbar.addAction(self.add_csd_plot_tab)
 
         main_layout.addWidget(self.toolbar)
 
@@ -79,6 +87,11 @@ class MeaFileView(QtWidgets.QWidget):
             self.tab_widget.addTab(filter_tab, "Filtering")
             filter_tab.initialize_filtering()
 
+    @QtCore.pyqtSlot()
+    def add_csd_plot_to_tabs(self):
+        csd_plot_tab = CsdPlotTab(self, self.reader)
+        self.tab_widget.addTab(csd_plot_tab, "CSD Plot")
+        csd_plot_tab.plot()
 
     @QtCore.pyqtSlot()
     def open_plot_dialog(self):

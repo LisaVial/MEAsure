@@ -1,19 +1,19 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from matplotlib.collections import LineCollection
+import pyqtgraph as pg
 
 
-class CsdPlot:
-    def __init__(self, figure, reader):
+class CsdPlotTab:
+    def __init__(self, parent, reader):
+        super().__init__(parent)
         self.reader = reader
+        self.plot_widget = pg.PlotWidget()
+        self.plot_widget.setBackground('w')
         signal = self.reader.voltage_traces[:]
-        try:
-            ch_ids = self.reader.channel_indices
-            labels = self.reader.labels
-            fs = self.reader.sampling_frequency
-            self.plot(figure, signal, ch_ids, labels, fs)
-        except AttributeError:
-            self.plot(figure, signal, ch_ids=None, labels=None, fs=10000)
+        ch_ids = self.reader.channel_indices
+        labels = self.reader.labels
+        fs = self.reader.sampling_frequency
+        self.plot(self.plot_widget, signal, ch_ids, labels, fs)
 
     def plot(self, figure, signal, ch_ids, labels, fs):
         time = np.arange(0, len(signal[0])/fs, 1/fs)
