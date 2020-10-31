@@ -3,6 +3,7 @@ import numpy as np
 import h5py
 from IPython import embed
 
+
 class MeaDataReader:
     def __init__(self, path):
         self.file_path = path
