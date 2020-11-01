@@ -249,13 +249,17 @@ class SpikeDetectionDialog(QtWidgets.QDialog):
             analysis_filename = filename
         analysis_file_path = os.path.join(overall_path, analysis_filename)
         if os.path.exists(analysis_file_path):
-            with h5py.File(analysis_file_path, 'w') as hf:
-                dset_1 = hf.create_dataset('spiketimes', data=np.array(spike_mat))
-                dset_2 = hf.create_dataset('spiketimes_indices', data=np.array(spike_indices))
+            with h5py.File(analysis_file_path, 'a') as hf:
+                dt = h5py.vlen_dtype(np.dtype('float32'))
+                dset_1 = hf.create_dataset('spiketimes', data=np.array(spike_mat), dtype=dt)
+                dt_2 = h5py.vlen_dtype(np.dtype('int32'))
+                dset_2 = hf.create_dataset('spiketimes_indices', data=np.array(spike_indices), dtype=dt_2)
         else:
             with h5py.File(analysis_file_path, 'w') as hf:
-                dset_1 = hf.create_dataset('spiketimes', data=spike_mat)
-                dset_2 = hf.create_dataset('spiketimes_indices', data=spike_indices)
+                dt = h5py.vlen_dtype(np.dtype('float32'))
+                dset_1 = hf.create_dataset('spiketimes', data=spike_mat, dtype=dt)
+                dt_2 = h5py.vlen_dtype(np.dtype('int32'))
+                dset_2 = hf.create_dataset('spiketimes_indices', data=spike_indices, dtype=dt_2)
         self.label_save_check_box.setText('spike times saved in: ' + analysis_file_path)
 
     # function to open spike_mat .csv in case it exists
