@@ -1,11 +1,12 @@
 class RasterplotSettings:
 
     class Mode:
-        MEAE = 0
-        SC = 1
+        MCS = 0
+        MEAE = 1
+        SC = 2
 
-    def __init__(self):
-        self.mode = RasterplotSettings.Mode.SC
+    def __init__(self, initial_mode=Mode.MCS):
+        self.mode = initial_mode
 
     def to_dict(self):
         result = dict()

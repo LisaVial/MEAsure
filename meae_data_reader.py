@@ -10,13 +10,12 @@ class MeaeDataReader:
 
         self.sampling_frequency = self.file['fs']
         self.channel_indices = self.file['channel_indices']
-        self.channel_labels = self.file['channel labels']
+        self.channel_labels = self.file['channel_labels']
 
         filtered = "/filter" in self.file
         if filtered:
             self.filtered_traces = self.file['filter']
 
-        # ToDo: check new saving strategy on one of Andrea's files later on
         spikes = "/spiketimes" in self.file
         if spikes:
             self.spiketimes = self.file['spiketimes']

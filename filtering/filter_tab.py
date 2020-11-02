@@ -22,6 +22,7 @@ class FilterTab(QtWidgets.QWidget):
         main_layout = QtWidgets.QVBoxLayout(self)
         main_layout.setAlignment(QtCore.Qt.AlignTop | QtCore.Qt.AlignHCenter)
 
+        # ToDo: change this to mea_file_view or delete progress bar in mea file view
         operation_layout = QtWidgets.QVBoxLayout(self)
         operation_layout.setAlignment(QtCore.Qt.AlignTop | QtCore.Qt.AlignLeft)
         self.operation_label = QtWidgets.QLabel(self)

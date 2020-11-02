@@ -1,11 +1,8 @@
 from PyQt5 import QtCore, QtWidgets
 import numpy as np
 
-from plot_widget import PlotWidget
-from raster_plot import RasterPlot
 
-
-class PlotCreationThread(QtCore.QThread):
+class PlotThread(QtCore.QThread):
     operation_changed = QtCore.pyqtSignal(str)
     progress_made = QtCore.pyqtSignal(float)
     finished = QtCore.pyqtSignal()

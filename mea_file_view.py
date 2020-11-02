@@ -2,6 +2,7 @@ from PyQt5 import QtWidgets, QtCore
 import pyqtgraph as pg
 
 from mea_data_reader import MeaDataReader
+from meae_data_reader import MeaeDataReader
 from mea_grid import MeaGrid
 
 from settings import Settings
@@ -14,6 +15,9 @@ from filtering.filter_tab import FilterTab
 
 from plots.csd_plot_tab import CsdPlotTab
 
+from plots.raster_plot.rasterplot_tab import RasterplotTab
+from plots.raster_plot.rasterplot_settings_dialog import RasterplotSettingsDialog
+from plots.raster_plot.rasterplot_settings import RasterplotSettings
 
 
 class MeaFileView(QtWidgets.QWidget):
@@ -23,6 +27,7 @@ class MeaFileView(QtWidgets.QWidget):
         self.mea_file = mea_file
 
         self.filter_settings = Settings.instance.filter_settings
+        self.rasterplot_settings = Settings.instance.rasterplot_settings
 
         main_layout = QtWidgets.QVBoxLayout(self)
         main_layout.setAlignment(QtCore.Qt.AlignTop | QtCore.Qt.AlignLeft)
@@ -53,6 +58,10 @@ class MeaFileView(QtWidgets.QWidget):
         self.add_csd_plot_tab.triggered.connect(self.add_csd_plot_to_tabs)
         self.toolbar.addAction(self.add_csd_plot_tab)
 
+        self.add_rasterplot_tab = QtWidgets.QAction('Rasterplot', self)
+        self.add_rasterplot_tab.triggered.connect(self.open_rasterplot_settings_dialog)
+        self.toolbar.addAction(self.add_rasterplot_tab)
+
         main_layout.addWidget(self.toolbar)
 
         sub_layout = QtWidgets.QHBoxLayout(self)
@@ -78,6 +87,36 @@ class MeaFileView(QtWidgets.QWidget):
         # make sure widget visibility matches tool bar button check states
         self.file_manager.setVisible(self.show_file_manager.isChecked())
         self.mea_grid.setVisible(self.show_mea_grid.isChecked())
+
+    def open_rasterplot_settings_dialog(self, is_pressed):
+        # determine allowed modes
+        allowed_modes = [RasterplotSettings.Mode.MCS]
+        if self.file_manager.get_verified_meae_file() is not None:
+            allowed_modes.append(RasterplotSettings.Mode.MEAE)
+        if self.file_manager.get_verified_sc_file() is not None:
+            allowed_modes.append(RasterplotSettings.Mode.SC)
+
+        settings_dialog = RasterplotSettingsDialog(self, allowed_modes, self.rasterplot_settings)
+        if settings_dialog.exec() == 1:  # 'Execute' clicked
+            self.rasterplot_settings = settings_dialog.get_settings()
+            # overwrite global settings as well
+            Settings.instance.raserplot_settings = self.rasterplot_settings
+
+            # initialise filtering
+            if self.rasterplot_settings.mode == RasterplotSettings.Mode.MCS:
+                rasterplot_tab = RasterplotTab(self, self.reader, self.rasterplot_settings)
+                self.tab_widget.addTab(rasterplot_tab, "Rasterplot")
+            elif self.rasterplot_settings.mode == RasterplotSettings.Mode.MEAE:
+                # self.reader.file.close() ?
+                meae_path = self.file_manager.get_verified_meae_file()
+                meae_reader = MeaeDataReader(meae_path)
+                rasterplot_tab = RasterplotTab(self, meae_reader, self.rasterplot_settings)
+                self.tab_widget.addTab(rasterplot_tab, "Rasterplot")
+            elif self.rasterplot_settings.mode == RasterplotSettings.Mode.SC:
+                sc_path = self.file_manager.get_verified_sc_file()
+                sc_reader = MeaeDataReader(sc_path)
+                rasterplot_tab = RasterplotTab(self, sc_reader, self.rasterplot_settings)
+                self.tab_widget.addTab(rasterplot_tab, "Rasterplot")
 
     def on_show_file_manager(self, is_pressed):
         self.file_manager.setVisible(is_pressed)
@@ -109,8 +148,8 @@ class MeaFileView(QtWidgets.QWidget):
         self.tab_widget.addTab(csd_plot_tab, "CSD Plot")
         csd_plot_tab.plot()
 
-    @QtCore.pyqtSlot()
-    def open_plot_dialog(self):
-        plot_dialog = PlotDialog(None, self.reader)
-        plot_dialog.exec_()
+    # @QtCore.pyqtSlot()
+    # def open_plot_dialog(self):
+    #     plot_dialog = PlotDialog(None, self.reader)
+    #     plot_dialog.exec_()
 
