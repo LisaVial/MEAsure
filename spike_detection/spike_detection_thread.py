@@ -3,6 +3,7 @@ import numpy as np
 
 from spike_detection.spike_detection_settings import SpikeDetectionSettings
 
+
 class SpikeDetectionThread(QtCore.QThread):
     operation_changed = QtCore.pyqtSignal(str)
     progress_made = QtCore.pyqtSignal(float)
