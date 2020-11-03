@@ -3,6 +3,8 @@ import pyqtgraph as pg
 
 from mea_data_reader import MeaDataReader
 from meae_data_reader import MeaeDataReader
+from SC_data_reader import SCDataReader
+
 from mea_grid import MeaGrid
 
 from settings import Settings
@@ -102,7 +104,7 @@ class MeaFileView(QtWidgets.QWidget):
             # overwrite global settings as well
             Settings.instance.raserplot_settings = self.rasterplot_settings
 
-            # initialise filtering
+            # initialise plotting
             if self.rasterplot_settings.mode == RasterplotSettings.Mode.MCS:
                 rasterplot_tab = RasterplotTab(self, self.reader, self.rasterplot_settings)
                 self.tab_widget.addTab(rasterplot_tab, "Rasterplot")
@@ -114,7 +116,7 @@ class MeaFileView(QtWidgets.QWidget):
                 self.tab_widget.addTab(rasterplot_tab, "Rasterplot")
             elif self.rasterplot_settings.mode == RasterplotSettings.Mode.SC:
                 sc_path = self.file_manager.get_verified_sc_file()
-                sc_reader = MeaeDataReader(sc_path)
+                sc_reader = SCDataReader(sc_path)
                 rasterplot_tab = RasterplotTab(self, sc_reader, self.rasterplot_settings)
                 self.tab_widget.addTab(rasterplot_tab, "Rasterplot")
 

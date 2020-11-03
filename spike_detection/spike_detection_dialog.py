@@ -236,6 +236,7 @@ class SpikeDetectionDialog(QtWidgets.QDialog):
 
         self.scatter.setData(self.spike_indices[-1], self.spike_height[-1])
 
+    # function to save the found spiketimes stored in spike_mat as .csv file
     def save_spike_mat(self, spike_mat, spike_indices, mea_file):
         self.label_save_check_box.setText('saving spike times...')
         # take filepath and filename, to get name of mea file and save it to the same directory
@@ -247,18 +248,23 @@ class SpikeDetectionDialog(QtWidgets.QDialog):
         analysis_file_path = os.path.join(overall_path, analysis_filename)
         if os.path.exists(analysis_file_path):
             with h5py.File(analysis_file_path, 'a') as hf:
-                for i, spiketimes in enumerate(spike_mat):
-                    key = 'spiketimes_' + str(i)
-                    dset_1 = hf.create_dataset(key, data=np.asarray(spiketimes), dtype=np.float64)
-                    key_2 = 'spiketimes_indices_' + str(i)
-                    dset_2 = hf.create_dataset(key_2, data=np.asarray(spike_indices[i]), dtype=np.int32)
+                for idx, (spikes, indices) in enumerate(zip(spike_mat, spike_indices)):
+                    spike_key = 'spiketimes_' + str(idx)
+                    if spike_key in list(hf.keys()):
+                        del hf[spike_key]
+                        dset_4 = hf.create_dataset(spike_key, data=np.array(spikes))
+                    else:
+                        dset_4 = hf.create_dataset(spike_key, data=np.array(spikes))
+                    indices_key = 'spiketimes_indices_' + str(idx)
+                    if indices_key in list(hf.keys()):
+                        del hf[indices_key]
+                        dset_5 = hf.create_dataset(indices_key, data=np.array(indices))
+                    else:
+                        dset_5 = hf.create_dataset(indices_key, data=np.array(indices))
         else:
             with h5py.File(analysis_file_path, 'w') as hf:
-                for i, spiketimes in enumerate(spike_mat):
-                    key = 'spiketimes_' + str(i)
-                    dset_1 = hf.create_dataset(key, data=np.asarray(spiketimes), dtype=np.float64)
-                    key_2 = 'spiketimes_indices_' + str(i)
-                    dset_2 = hf.create_dataset(key_2, data=np.asarray(spike_indices[i]), dtype=np.int32)
+                dset_1 = hf.create_dataset('spiketimes', data=spike_mat)
+                dset_2 = hf.create_dataset('spiketimes_indices', data=spike_indices)
         self.label_save_check_box.setText('spike times saved in: ' + analysis_file_path)
 
     # function to open spike_mat .csv in case it exists

@@ -86,6 +86,7 @@ class FilterTab(QtWidgets.QWidget):
                 # but main thread will continue immediately
 
     def save_filter_mat(self, filter_mat, filename, reader):
+        # ToDo: handle appending of filtered data on existing .meae file
         self.operation_label.setText('Saving filtered traces im .meae file...')
         if reader.voltage_traces and reader.sampling_frequency and reader.channel_indices and reader.labels:
             with h5py.File(filename, 'w') as hf:

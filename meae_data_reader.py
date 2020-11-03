@@ -16,9 +16,16 @@ class MeaeDataReader:
         if filtered:
             self.filtered_traces = self.file['filter']
 
-        spikes = "/spiketimes" in self.file
-        if spikes:
+
+        has_spike_times = False
+        for key in self.file.keys():
+            if key.startswith("spiketimes_"):
+                has_spike_times = True
+                break
+
+        if has_spike_times:
             self.spiketimes = self.retrieve_spiketimes()
+            print(self.spiketimes)
 
     def retrieve_spiketimes(self):
         same_len_keys = []
@@ -36,7 +43,7 @@ class MeaeDataReader:
 
         sorted_spiketimes = []
         for idx in indices:
-            key = 'times_' + str(idx)
+            key = 'spiketimes_' + str(idx)
             if key in list(self.file.keys()):
                 # ToDo: check how to retrieve sampling frequency from SC results file and then divide spiketimes by fs
                 sorted_spiketimes.append(self.file[key][:])
