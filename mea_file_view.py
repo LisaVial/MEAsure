@@ -67,7 +67,7 @@ class MeaFileView(QtWidgets.QWidget):
         self.toolbar.addAction(self.add_rasterplot_tab)
 
         self.add_heatmap_tab = QtWidgets.QAction('Heatmap', self)
-        self.add_rasterplot_tab.triggered.connect(self.open_heatmap_settings_dialog)
+        self.add_heatmap_tab.triggered.connect(self.open_heatmap_settings_dialog)
         self.toolbar.addAction(self.add_heatmap_tab)
 
         main_layout.addWidget(self.toolbar)

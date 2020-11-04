@@ -1,5 +1,4 @@
 import PyQt5.QtCore as QtCore
-import PyQt5.QtGui as QtGui
 import PyQt5.QtWidgets as QtWidgets
 
 from .plot_settings import PlotSettings

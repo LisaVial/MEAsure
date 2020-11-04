@@ -1,6 +1,7 @@
 import os
 import numpy as np
 import h5py
+from IPython import embed
 
 
 class SCDataReader:

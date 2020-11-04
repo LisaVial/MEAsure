@@ -1,7 +1,6 @@
 from PyQt5 import QtCore, QtWidgets
 import numpy as np
 
-from plots.plot_settings import PlotSettings
 from plot_manager import PlotManager
 from plots.plot_widget import PlotWidget
 
