@@ -8,6 +8,8 @@ from data_list_view import DataListView
 
 from mea_data_reader import MeaDataReader
 from mea_file_tab_widget import MeaFileTabWidget
+
+from plot_manager import PlotManager
 from settings import Settings
 
 
@@ -45,9 +47,16 @@ class MainWindow(QtWidgets.QMainWindow):
         self.show_file_selection.triggered.connect(self.on_show_file_selection)
         self.show_file_selection.setCheckable(True)  # kann an/aus sein
         self.show_file_selection.setChecked(True)
-        # self.show_file_selection.setChecked(False)
         self.toolbar.addAction(self.show_file_selection)
+        # self.show_file_selection.setChecked(False)
+        self.show_plot_manager = QtWidgets.QAction("Save Plots", self)
+        self.show_plot_manager.triggered.connect(self.on_show_plot_manager)
+        self.show_plot_manager.setCheckable(True)
+        self.show_plot_manager.setChecked(False)
+        self.toolbar.addAction(self.show_plot_manager)
         self.addToolBar(self.toolbar)
+
+        plot_manager = PlotManager()
 
     def load_settings(self):
         settings = Settings()
@@ -63,6 +72,9 @@ class MainWindow(QtWidgets.QMainWindow):
     @QtCore.pyqtSlot()
     def on_close_button_pressed(self):
         self.accept()
+
+    def on_show_plot_manager(self, is_pressed):
+        self.plot_list_dock_widget.setVisible(is_pressed)
 
     def on_show_file_selection(self, is_pressed):
         self.data_file_list_dock_widget.setVisible(is_pressed)
