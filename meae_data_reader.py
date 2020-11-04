@@ -5,7 +5,7 @@ import h5py
 
 class MeaeDataReader:
     def __init__(self, path):
-        self.filepath = path
+        self.filename = path.split('/')[-1]
         self.file = h5py.File(path, 'r')
 
         self.sampling_frequency = self.file['fs']

@@ -7,9 +7,9 @@ from matplotlib.figure import Figure
 
 
 class PlotWidget(QtWidgets.QWidget):
-    def __init__(self, parent):
+    def __init__(self, parent, plot_name):
         super().__init__(parent)
-
+        self.plot_name = plot_name
         self.plot_thread = None
 
         self.figure = Figure()

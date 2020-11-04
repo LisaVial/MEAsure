@@ -4,7 +4,7 @@ import h5py
 from IPython import embed
 
 
-class MeaDataReader:
+class McsDataReader:
     def __init__(self, path):
         self.file_path = path
         self.analysis_file_path = None

@@ -5,8 +5,9 @@ import PyQt5.QtWidgets as QtWidgets
 import PyQt5.QtGui as QtGui
 
 from data_list_view import DataListView
+from plot_list_view import PlotListView
 
-from mea_data_reader import MeaDataReader
+from mcs_data_reader import McsDataReader
 from mea_file_tab_widget import MeaFileTabWidget
 
 from plot_manager import PlotManager
@@ -36,6 +37,15 @@ class MainWindow(QtWidgets.QMainWindow):
         self.data_file_list_dock_widget.setObjectName("folder-selection")
         self.addDockWidget(QtCore.Qt.LeftDockWidgetArea, self.data_file_list_dock_widget)
         self.centralwidget = QtWidgets.QWidget(self)
+
+        self.plot_list_view = PlotListView(self)
+
+        self.plot_list_dock_widget = QtWidgets.QDockWidget(self)
+        self.plot_list_dock_widget.setWidget(self.plot_list_view)
+        self.plot_list_dock_widget.setFeatures(QtWidgets.QDockWidget.NoDockWidgetFeatures)
+        self.plot_list_dock_widget.setWindowTitle('Save Plots')
+        self.plot_list_dock_widget.setObjectName('plot-saver')
+        self.addDockWidget(QtCore.Qt.RightDockWidgetArea, self.plot_list_dock_widget)
 
         self.mea_tab_widget = MeaFileTabWidget(self)
         self.setCentralWidget(self.mea_tab_widget)
@@ -86,7 +96,7 @@ class MainWindow(QtWidgets.QMainWindow):
     @QtCore.pyqtSlot(QtWidgets.QListWidgetItem)
     def on_file_double_clicked(self, item):
         absolute_path = os.path.join(self.file_list_view.current_folder, item.text())
-        self.mea_reader = MeaDataReader(absolute_path)
+        self.mcs_reader = McsDataReader(absolute_path)
         self.mea_tab_widget.show_mea_file_view(absolute_path)
 
     def save_settings(self):

@@ -5,6 +5,7 @@ import h5py
 
 class SCDataReader:
     def __init__(self, path):
+        self.filename = path.split('/')[-1]
         self.file = h5py.File(path, 'r')
         self.spiketimes = self.retrieve_spiketimes()
 

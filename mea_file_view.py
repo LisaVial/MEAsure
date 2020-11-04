@@ -1,7 +1,7 @@
 from PyQt5 import QtWidgets, QtCore
 import pyqtgraph as pg
 
-from mea_data_reader import MeaDataReader
+from mcs_data_reader import McsDataReader
 from meae_data_reader import MeaeDataReader
 from SC_data_reader import SCDataReader
 
@@ -25,7 +25,7 @@ from plots.raster_plot.rasterplot_settings import RasterplotSettings
 class MeaFileView(QtWidgets.QWidget):
     def __init__(self, parent, mea_file):
         super().__init__(parent)
-        self.reader = MeaDataReader(mea_file)
+        self.reader = McsDataReader(mea_file)
         self.mea_file = mea_file
 
         self.filter_settings = Settings.instance.filter_settings

@@ -1,7 +1,7 @@
 import os.path
 from PyQt5 import QtCore, QtWidgets
 
-from mea_data_reader import MeaDataReader
+from mcs_data_reader import McsDataReader
 from mea_file_view import MeaFileView
 
 

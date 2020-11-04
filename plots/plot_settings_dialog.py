@@ -2,10 +2,10 @@ import PyQt5.QtCore as QtCore
 import PyQt5.QtGui as QtGui
 import PyQt5.QtWidgets as QtWidgets
 
-from .rasterplot_settings import RasterplotSettings
+from plot_settings import PlotSettings
 
 
-class RasterplotSettingsDialog(QtWidgets.QDialog):
+class PlotSettingsDialog(QtWidgets.QDialog):
     def __init__(self, parent, allowed_modes, settings=None):
         super().__init__(parent)
         title = 'Settings'
