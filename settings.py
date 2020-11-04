@@ -3,7 +3,7 @@ import json
 
 from spike_detection.spike_detection_settings import SpikeDetectionSettings
 from filtering.filter_settings import FilterSettings
-from plots.raster_plot.rasterplot_settings import RasterplotSettings
+from plots.plot_settings import PlotSettings
 
 
 class Settings:
@@ -16,7 +16,7 @@ class Settings:
         self.main_window_state = bytearray()
         self.spike_detection_settings = SpikeDetectionSettings()
         self.filter_settings = FilterSettings()
-        self.rasterplot_settings = RasterplotSettings()
+        self.plot_settings = PlotSettings()
         Settings.instance = self
 
     def load_settings_from_file(self, path):
@@ -33,7 +33,7 @@ class Settings:
             if "filter_settings" in d.keys():
                 self.filter_settings.from_dict(d["filter_settings"])
             if "rasterplot_settings" in d.keys():
-                self.rasterplot_settings.from_dict(d["rasterplot_settings"])
+                self.plot_settings.from_dict(d["rasterplot_settings"])
         except:
             pass
 
@@ -44,7 +44,7 @@ class Settings:
         d["main_window_state"] = bytearray(self.main_window_state).decode("ascii")
         d["spike_detection_settings"] = self.spike_detection_settings.to_dict()
         d["filter_settings"] = self.filter_settings.to_dict()
-        d["rasterplot_settings"] = self.rasterplot_settings.to_dict()
+        d["rasterplot_settings"] = self.plot_settings.to_dict()
         return d
 
     def save(self, path):

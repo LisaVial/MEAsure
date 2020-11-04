@@ -21,12 +21,14 @@ class PlotListView(QtWidgets.QWidget):
         main_layout.addWidget(self.plot_list)
         main_layout.addWidget(self.save_button)
 
-    def add_plot(self):
-        self.plots.append(self.plot_manager.get_plots())
-        # figure out how to get appropriate plot names
-        new_item = QtWidgets.QListWidgetItem(self.plot_manager.plot_names)
-        new_item.setCheckState(QtCore.Qt.Unchecked)
-        self.plot_list.addItem(new_item)
+    def update_list(self):
+        self.plot_list.clear()
+        plots = PlotManager.instance.get_plots()
+        for plot in plots:
+            self.plots.append(plot)
+            new_item = QtWidgets.QListWidgetItem(plot.plot_name)
+            new_item.setCheckState(QtCore.Qt.Unchecked)
+            self.plot_list.addItem(new_item)
 
     def on_save_button_pressed(self):
         self.save_button.setEnabled(False)

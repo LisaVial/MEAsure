@@ -21,7 +21,7 @@ class MainWindow(QtWidgets.QMainWindow):
         super().__init__(parent)
 
         self.setWindowTitle(title)
-        self.mea_reader = None
+        self.mcs_reader = None
 
         app_icon = QtGui.QIcon("icon.png")
         self.setWindowIcon(app_icon)
@@ -67,6 +67,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.addToolBar(self.toolbar)
 
         plot_manager = PlotManager()
+        plot_manager.set_plot_list_view(self.plot_list_view)
 
     def load_settings(self):
         settings = Settings()

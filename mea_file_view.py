@@ -18,8 +18,10 @@ from filtering.filter_tab import FilterTab
 from plots.csd_plot_tab import CsdPlotTab
 
 from plots.raster_plot.rasterplot_tab import RasterplotTab
-from plots.raster_plot.rasterplot_settings_dialog import RasterplotSettingsDialog
-from plots.raster_plot.rasterplot_settings import RasterplotSettings
+from plots.heatmap.heatmap_tab import HeatmapTab
+
+from plots.plot_settings_dialog import PlotSettingsDialog
+from plots.plot_settings import PlotSettings
 
 
 class MeaFileView(QtWidgets.QWidget):
@@ -29,7 +31,7 @@ class MeaFileView(QtWidgets.QWidget):
         self.mea_file = mea_file
 
         self.filter_settings = Settings.instance.filter_settings
-        self.rasterplot_settings = Settings.instance.rasterplot_settings
+        self.plot_settings = Settings.instance.plot_settings
 
         main_layout = QtWidgets.QVBoxLayout(self)
         main_layout.setAlignment(QtCore.Qt.AlignTop | QtCore.Qt.AlignLeft)
@@ -64,6 +66,10 @@ class MeaFileView(QtWidgets.QWidget):
         self.add_rasterplot_tab.triggered.connect(self.open_rasterplot_settings_dialog)
         self.toolbar.addAction(self.add_rasterplot_tab)
 
+        self.add_heatmap_tab = QtWidgets.QAction('Heatmap', self)
+        self.add_rasterplot_tab.triggered.connect(self.open_heatmap_settings_dialog)
+        self.toolbar.addAction(self.add_heatmap_tab)
+
         main_layout.addWidget(self.toolbar)
 
         sub_layout = QtWidgets.QHBoxLayout(self)
@@ -90,34 +96,62 @@ class MeaFileView(QtWidgets.QWidget):
         self.file_manager.setVisible(self.show_file_manager.isChecked())
         self.mea_grid.setVisible(self.show_mea_grid.isChecked())
 
-    def open_rasterplot_settings_dialog(self, is_pressed):
-        # determine allowed modes
-        allowed_modes = [RasterplotSettings.Mode.MCS]
+    def open_heatmap_settings_dialog(self, is_pressed):
+        allowed_modes = [PlotSettings.Mode.MCS]
         if self.file_manager.get_verified_meae_file() is not None:
-            allowed_modes.append(RasterplotSettings.Mode.MEAE)
+            allowed_modes.append(PlotSettings.Mode.MEAE)
         if self.file_manager.get_verified_sc_file() is not None:
-            allowed_modes.append(RasterplotSettings.Mode.SC)
-
-        settings_dialog = RasterplotSettingsDialog(self, allowed_modes, self.rasterplot_settings)
+            allowed_modes.append(PlotSettings.Mode.SC)
+        # To Do: change rasterplot settings to general plot settings
+        settings_dialog = PlotSettingsDialog(self, allowed_modes, self.plot_settings)
         if settings_dialog.exec() == 1:  # 'Execute' clicked
-            self.rasterplot_settings = settings_dialog.get_settings()
+            self.plot_settings = settings_dialog.get_settings()
             # overwrite global settings as well
-            Settings.instance.raserplot_settings = self.rasterplot_settings
+            Settings.instance.plot_settings = self.plot_settings
 
             # initialise plotting
-            if self.rasterplot_settings.mode == RasterplotSettings.Mode.MCS:
-                rasterplot_tab = RasterplotTab(self, self.reader, self.rasterplot_settings)
+            if self.plot_settings.mode == PlotSettings.Mode.MCS:
+                heatmap_tab = HeatmapTab(self, self.reader, self.plot_settings)
+                self.tab_widget.addTab(heatmap_tab, "Heatmap")
+            elif self.plot_settings.mode == PlotSettings.Mode.MEAE:
+                meae_path = self.file_manager.get_verified_meae_file()
+                meae_reader = MeaeDataReader(meae_path)
+                heatmap_tab = HeatmapTab(self, meae_reader, self.plot_settings)
+                self.tab_widget.addTab(heatmap_tab, "Heatmap")
+            elif self.plot_settings.mode == PlotSettings.Mode.SC:
+                sc_path = self.file_manager.get_verified_sc_file()
+                sc_reader = SCDataReader(sc_path)
+                heatmap_tab = HeatmapTab(self, sc_reader, self.plot_settings)
+                self.tab_widget.addTab(heatmap_tab, "Heatmap")
+
+    def open_rasterplot_settings_dialog(self, is_pressed):
+        # determine allowed modes
+        allowed_modes = [PlotSettings.Mode.MCS]
+        if self.file_manager.get_verified_meae_file() is not None:
+            allowed_modes.append(PlotSettings.Mode.MEAE)
+        if self.file_manager.get_verified_sc_file() is not None:
+            allowed_modes.append(PlotSettings.Mode.SC)
+
+        settings_dialog = PlotSettingsDialog(self, allowed_modes, self.plot_settings)
+        if settings_dialog.exec() == 1:  # 'Execute' clicked
+            self.plot_settings = settings_dialog.get_settings()
+            # overwrite global settings as well
+            Settings.instance.raserplot_settings = self.plot_settings
+
+            # initialise plotting
+            if self.plot_settings.mode == PlotSettings.Mode.MCS:
+                rasterplot_tab = RasterplotTab(self, self.reader, self.plot_settings)
                 self.tab_widget.addTab(rasterplot_tab, "Rasterplot")
-            elif self.rasterplot_settings.mode == RasterplotSettings.Mode.MEAE:
+            elif self.plot_settings.mode == PlotSettings.Mode.MEAE:
                 # self.reader.file.close() ?
                 meae_path = self.file_manager.get_verified_meae_file()
                 meae_reader = MeaeDataReader(meae_path)
-                rasterplot_tab = RasterplotTab(self, meae_reader, self.rasterplot_settings)
+                rasterplot_tab = RasterplotTab(self, meae_reader, self.plot_settings)
                 self.tab_widget.addTab(rasterplot_tab, "Rasterplot")
-            elif self.rasterplot_settings.mode == RasterplotSettings.Mode.SC:
+            elif self.plot_settings.mode == PlotSettings.Mode.SC:
                 sc_path = self.file_manager.get_verified_sc_file()
                 sc_reader = SCDataReader(sc_path)
-                rasterplot_tab = RasterplotTab(self, sc_reader, self.rasterplot_settings)
+                rasterplot_tab = RasterplotTab(self, sc_reader, self.plot_settings)
                 self.tab_widget.addTab(rasterplot_tab, "Rasterplot")
 
     def on_show_file_manager(self, is_pressed):

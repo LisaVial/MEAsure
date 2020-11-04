@@ -3,7 +3,6 @@ import numpy as np
 
 from plots.plot_settings import PlotSettings
 from plot_manager import PlotManager
-from plots.plot_creation_thread import PlotCreationThread
 from plots.plot_widget import PlotWidget
 
 
@@ -50,3 +49,4 @@ class RasterplotTab(QtWidgets.QWidget):
         ax.get_xaxis().tick_bottom()
         ax.get_yaxis().tick_left()
         ax.tick_params(labelsize=10, direction='out')
+        PlotManager.instance.add_plot(self.plot_widget)

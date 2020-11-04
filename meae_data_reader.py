@@ -16,7 +16,6 @@ class MeaeDataReader:
         if filtered:
             self.filtered_traces = self.file['filter']
 
-
         has_spike_times = False
         for key in self.file.keys():
             if key.startswith("spiketimes_"):
