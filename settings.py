@@ -5,6 +5,7 @@ from spike_detection.spike_detection_settings import SpikeDetectionSettings
 from filtering.filter_settings import FilterSettings
 from plots.raster_plot.rasterplot_settings import RasterplotSettings
 
+
 class Settings:
 
     instance = None
