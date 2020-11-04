@@ -1,9 +1,9 @@
 from PyQt5 import QtCore, QtWidgets
 import numpy as np
 
-from settings import Settings
+from plots.plot_settings import PlotSettings
 from plot_manager import PlotManager
-from plots.plot_thread import PlotThread
+from plots.plot_creation_thread import PlotCreationThread
 from plots.plot_widget import PlotWidget
 
 
@@ -20,11 +20,12 @@ class RasterplotTab(QtWidgets.QWidget):
         main_layout = QtWidgets.QVBoxLayout(self)
         main_layout.setAlignment(QtCore.Qt.AlignTop | QtCore.Qt.AlignHCenter)
 
-        self.plot_widget = PlotWidget(self)
+        plot_name = 'Rasterplot_' + self.reader.filename
+
+        self.plot_widget = PlotWidget(self, plot_name)
         self.figure = self.plot_widget.figure
         main_layout.addWidget(self.plot_widget)
         self.plot(self.figure, self.spiketimes)
-
 
     def plot(self, fig, spike_mat):
         fs = 10000
@@ -49,6 +50,3 @@ class RasterplotTab(QtWidgets.QWidget):
         ax.get_xaxis().tick_bottom()
         ax.get_yaxis().tick_left()
         ax.tick_params(labelsize=10, direction='out')
-
-        plot_name = 'Rasterplot_' + self.reader.filename
-        PlotManager.instance.add_plot(ax, plot_name)

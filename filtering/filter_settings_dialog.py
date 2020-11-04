@@ -3,6 +3,7 @@ import PyQt5.QtWidgets as QtWidgets
 
 from filtering.filter_settings_widget import FilterSettingsWidget
 
+
 class FilterSettingsDialog(QtWidgets.QDialog):
     def __init__(self, parent, inital_settings=None):
         super().__init__(parent)

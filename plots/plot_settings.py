@@ -1,4 +1,4 @@
-class RasterplotSettings:
+class PlotSettings:
 
     class Mode:
         MCS = 0

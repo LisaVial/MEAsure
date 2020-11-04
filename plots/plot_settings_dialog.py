@@ -2,7 +2,7 @@ import PyQt5.QtCore as QtCore
 import PyQt5.QtGui as QtGui
 import PyQt5.QtWidgets as QtWidgets
 
-from plot_settings import PlotSettings
+from .plot_settings import PlotSettings
 
 
 class PlotSettingsDialog(QtWidgets.QDialog):
@@ -28,15 +28,15 @@ class PlotSettingsDialog(QtWidgets.QDialog):
         group_layout = QtWidgets.QVBoxLayout(group_box)
 
         self.mcs_file_button = QtWidgets.QRadioButton('MCS file')
-        self.mcs_file_button.setEnabled(RasterplotSettings.Mode.MCS in allowed_modes)
+        self.mcs_file_button.setEnabled(PlotSettings.Mode.MCS in allowed_modes)
         group_layout.addWidget(self.mcs_file_button)
 
         self.meae_file_button = QtWidgets.QRadioButton('MEAE file')
-        self.meae_file_button.setEnabled(RasterplotSettings.Mode.MEAE in allowed_modes)
+        self.meae_file_button.setEnabled(PlotSettings.Mode.MEAE in allowed_modes)
         group_layout.addWidget(self.meae_file_button)
 
         self.sc_file_button = QtWidgets.QRadioButton('SC file')
-        self.sc_file_button.setEnabled(RasterplotSettings.Mode.SC in allowed_modes)
+        self.sc_file_button.setEnabled(PlotSettings.Mode.SC in allowed_modes)
         group_layout.addWidget(self.sc_file_button)
 
         main_layout.addWidget(group_box)
@@ -53,9 +53,9 @@ class PlotSettingsDialog(QtWidgets.QDialog):
 
         if not settings:
             # create default settings
-            settings = RasterplotSettings()
+            settings = PlotSettings()
 
-        initial_mode = RasterplotSettings.Mode.MCS
+        initial_mode = PlotSettings.Mode.MCS
         if settings.mode in allowed_modes:
             initial_mode = settings.mode
 
@@ -63,21 +63,21 @@ class PlotSettingsDialog(QtWidgets.QDialog):
         self.set_settings(settings)
 
     def set_settings(self, settings):
-        if settings.mode == RasterplotSettings.Mode.MCS:
+        if settings.mode == PlotSettings.Mode.MCS:
             self.mcs_file_button.setChecked(True)
-        elif settings.mode == RasterplotSettings.Mode.MEAE:
+        elif settings.mode == PlotSettings.Mode.MEAE:
             self.meae_file_button.setChecked(True)
-        elif settings.mode == RasterplotSettings.Mode.SC:
+        elif settings.mode == PlotSettings.Mode.SC:
             self.sc_file_button.setChecked(True)
 
     def get_settings(self):
-        settings = RasterplotSettings()
+        settings = PlotSettings()
         if self.mcs_file_button.isChecked():
-            settings.mode = RasterplotSettings.Mode.MCS
+            settings.mode = PlotSettings.Mode.MCS
         elif self.meae_file_button.isChecked():
-            settings.mode = RasterplotSettings.Mode.MEAE
+            settings.mode = PlotSettings.Mode.MEAE
         elif self.sc_file_button.isChecked():
-            settings.mode = RasterplotSettings.Mode.SC
+            settings.mode = PlotSettings.Mode.SC
 
         return settings
 

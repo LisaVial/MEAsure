@@ -4,9 +4,7 @@ import os
 import pyqtgraph as pg
 import numpy as np
 
-from settings import Settings
 from filtering.filter_thread import FilterThread
-from filtering.filter_settings_dialog import FilterSettingsDialog
 
 
 class FilterTab(QtWidgets.QWidget):
@@ -142,7 +140,6 @@ class FilterTab(QtWidgets.QWidget):
 
         self.time_f.append(list(np.arange(0, len(self.filter[-1])*(312/self.fs), (312/self.fs))))
         self.filtered.setData(self.time_f[-1], self.filter[-1])
-
 
     # this function changes the label of the progress bar to inform the user what happens in the background
     @QtCore.pyqtSlot(str)
