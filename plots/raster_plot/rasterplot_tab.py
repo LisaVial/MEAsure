@@ -3,6 +3,7 @@ import numpy as np
 
 from plot_manager import PlotManager
 from plots.plot_widget import PlotWidget
+from IPython import embed
 
 
 class RasterplotTab(QtWidgets.QWidget):
@@ -34,6 +35,7 @@ class RasterplotTab(QtWidgets.QWidget):
             else:
                 c = self.colors[1]
             ax.scatter(spike_mat[i]/fs, np.ones(len(spike_mat[i])) * i, marker='|', color=c)
+        embed()
         ax.spines['right'].set_visible(False)
         ax.spines['top'].set_visible(False)
         labels = [item.get_text() for item in ax.get_yticklabels()]

@@ -7,10 +7,12 @@ class MeaeDataReader:
     def __init__(self, path):
         self.filename = path.split('/')[-1]
         self.file = h5py.File(path, 'r')
-
-        self.sampling_frequency = self.file['fs']
-        self.channel_indices = self.file['channel_indices']
-        self.channel_labels = self.file['channel_labels']
+        if 'fs' in list(self.file.keys()):
+            self.sampling_frequency = self.file['fs']
+        if 'channel_indices' in list(self.file.keys()):
+            self.channel_indices = self.file['channel_indices']
+        if 'channel_labels' in list(self.file.keys()):
+            self.channel_labels = self.file['channel_labels']
 
         filtered = "/filter" in self.file
         if filtered:

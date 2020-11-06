@@ -117,13 +117,6 @@ class SpikeDetectionThread(QtCore.QThread):
             spike_mat.append(spiketimes)
             data = [spiketimes]
             self.channel_data_updated.emit(data)
-            # import matplotlib.pyplot as plt
-            # plt.figure()
-            # H,edges = np.histogram(signal, bins=1000)
-            # centers = edges[:-1] + np.diff(edges)[0]/2
-            # plt.plot(centers, H)
-            # plt.show()
-
         return indices, spike_mat
 
     def run(self):

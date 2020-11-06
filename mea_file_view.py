@@ -30,6 +30,7 @@ class MeaFileView(QtWidgets.QWidget):
         self.reader = McsDataReader(mea_file)
         self.mea_file = mea_file
 
+        self.file_manager = FileManager(self, self.reader.file_path)
         self.filter_settings = Settings.instance.filter_settings
         self.plot_settings = Settings.instance.plot_settings
 
@@ -77,7 +78,6 @@ class MeaFileView(QtWidgets.QWidget):
 
         mea_grid_and_minor_widgets_layout = QtWidgets.QVBoxLayout(self)
         mea_grid_and_minor_widgets_layout.setAlignment(QtCore.Qt.AlignTop | QtCore.Qt.AlignCenter)
-        self.file_manager = FileManager(self, self.reader.file_path)
         mea_grid_and_minor_widgets_layout.addWidget(self.file_manager)
         self.mea_grid = MeaGrid(self)
         self.mea_grid.setFixedSize(600, 600)
@@ -102,7 +102,6 @@ class MeaFileView(QtWidgets.QWidget):
             allowed_modes.append(PlotSettings.Mode.MEAE)
         if self.file_manager.get_verified_sc_file() is not None:
             allowed_modes.append(PlotSettings.Mode.SC)
-        # To Do: change rasterplot settings to general plot settings
         settings_dialog = PlotSettingsDialog(self, allowed_modes, self.plot_settings)
         if settings_dialog.exec() == 1:  # 'Execute' clicked
             self.plot_settings = settings_dialog.get_settings()
