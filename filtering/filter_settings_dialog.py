@@ -5,7 +5,7 @@ from filtering.filter_settings_widget import FilterSettingsWidget
 
 
 class FilterSettingsDialog(QtWidgets.QDialog):
-    def __init__(self, parent, inital_settings=None):
+    def __init__(self, parent, allowed_modes, inital_settings=None):
         super().__init__(parent)
 
         title = 'Filtering'
@@ -20,7 +20,7 @@ class FilterSettingsDialog(QtWidgets.QDialog):
         main_layout = QtWidgets.QVBoxLayout(self)
         main_layout.setAlignment(QtCore.Qt.AlignTop | QtCore.Qt.AlignCenter)
 
-        self.filter_settings_widget = FilterSettingsWidget(self, inital_settings)
+        self.filter_settings_widget = FilterSettingsWidget(self, inital_settings, allowed_modes)
         main_layout.addWidget(self.filter_settings_widget)
 
         self.okay_button = QtWidgets.QPushButton(self)

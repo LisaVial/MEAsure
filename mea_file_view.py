@@ -13,6 +13,7 @@ from file_manager import FileManager
 from spike_detection.spike_detection_dialog import SpikeDetectionDialog
 
 from filtering.filter_settings_dialog import FilterSettingsDialog
+from filtering.filter_settings import FilterSettings
 from filtering.filter_tab import FilterTab
 
 from plots.csd_plot_tab import CsdPlotTab
@@ -168,7 +169,11 @@ class MeaFileView(QtWidgets.QWidget):
 
     @QtCore.pyqtSlot()
     def open_filter_dialog(self):
-        settings_dialog = FilterSettingsDialog(self, self.filter_settings)
+        channel_labels_and_indices = self.mea_grid.get_selected_channels()
+        allowed_modes = [FilterSettings.ChannelSelection.ALL]
+        if len(channel_labels_and_indices) > 0:
+            allowed_modes.append(FilterSettings.ChannelSelection.SELECTION)
+        settings_dialog = FilterSettingsDialog(self, self.filter_settings, allowed_modes)
         if settings_dialog.exec() == 1:  # 'Execute' clicked
             self.filter_settings = settings_dialog.get_settings()
             # overwrite global settings as well

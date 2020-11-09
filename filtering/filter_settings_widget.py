@@ -7,7 +7,7 @@ from .filter_settings import FilterSettings
 
 class FilterSettingsWidget(QtWidgets.QGroupBox):
 
-    def __init__(self, parent, settings=None):
+    def __init__(self, parent, allowed_modes, settings=None):
         super().__init__(parent)
 
         self.setTitle("Settings")
@@ -16,6 +16,20 @@ class FilterSettingsWidget(QtWidgets.QGroupBox):
         valid_number_pattern = "[0-9]*\.{0,1][0-9]*"
         valid_number_regex = QtCore.QRegExp(valid_number_pattern)
         number_validator = QtGui.QRegExpValidator(valid_number_regex)
+
+        group_box = QtWidgets.QGroupBox(self)
+        group_box.setTitle('Which channels should be used?')
+
+        group_layout = QtWidgets.QVBoxLayout(group_box)
+
+        self.all_channels_button = QtWidgets.QRadioButton('all MEA channels')
+        group_layout.addWidget(self.all_channels_button)
+
+        self.selected_channels_button = QtWidgets.QRadioButton('only selected MEA channels')
+        self.selected_channels_button.setEnabled(FilterSettings.ChannelSelection.SELECTION in allowed_modes)
+        group_layout.addWidget(self.selected_channels_button)
+
+        group_box_layout.addWidget(group_box)
 
         self.filter_combo_box = QtWidgets.QComboBox(self)
 

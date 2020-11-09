@@ -64,6 +64,8 @@ class FilterTab(QtWidgets.QWidget):
         cutoff_2 = None
         if self.settings.mode == 2:
             cutoff_2 = float(self.settings.upper_cutoff)
+        # if self.settings.channel_selection == 1:
+            
         if self.filtered_mat is None:
             self.progress_bar.setValue(0)
             self.progress_label.setText('')

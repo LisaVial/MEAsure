@@ -2,6 +2,7 @@ from PyQt5.QtWidgets import QWidget, QGridLayout, QPushButton
 import PyQt5.QtCore as QtCore
 import PyQt5.QtWidgets as QtWidgets
 
+
 button_style = """
 QPushButton {
     background-color: #8ab3e8;
@@ -28,12 +29,15 @@ class MeaGrid(QWidget):
         self.grid_layout.setVerticalSpacing(0)
 
         self.label_button_map = dict()
+        self.labels = []
+        self.label_indices_map = dict()
         for col, c in enumerate(['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'R']):
             for row, n in enumerate(range(1, 17)):
                 if c == 'A' and n == 1 or c == 'A' and n == 16 or c == 'R' and n == 1 or c == 'R' and n == 16:
                     continue
 
                 number_str = str(n)
+                self.labels.append(c + number_str)
                 if n < 10:
                     number_str = "0" + number_str
                 label = (c + number_str)
@@ -44,10 +48,23 @@ class MeaGrid(QWidget):
                 button.setCheckable(True)
                 button.setChecked(False)
                 id = c + str(n)
+
+                # creation of dictionary
+
+                self.label_indices_map[id] = {}
+                if col == 0:
+                    # self.label_indices_map[id]['mcs id'] = mcs_ids[row-1]
+                    self.label_indices_map[id]['other id'] = row - 1
+                elif col == 15:
+                    # self.label_indices_map[id]['mcs id'] = mcs_ids[16*row+1]
+                    self.label_indices_map[id]['other id'] = row + (col*16) - 3
+                else:
+                    # self.label_indices_map[id]['mcs id'] = mcs_ids[row + ((col*n)-2)]
+                    self.label_indices_map[id]['other id'] = (row + (col*16) - 1) - 1
+
                 button.pressed.connect(lambda id=id: self.on_button_pressed(id))
                 self.label_button_map[label] = button
                 self.grid_layout.addWidget(button, row, col)
-
         self.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
         self.customContextMenuRequested.connect(self.on_context_menu)
 
@@ -56,9 +73,9 @@ class MeaGrid(QWidget):
         ordered_labels.sort()
 
         selected_channels = []
-        for label in ordered_labels:
+        for idx, label in enumerate(ordered_labels):
             if self.label_button_map[label].isChecked():
-                selected_channels.append(label)
+                selected_channels.append((self.labels[idx], self.label_indices_map[self.labels[idx]]['other id']))
         return selected_channels
 
     def select_all(self):

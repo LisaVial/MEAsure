@@ -26,7 +26,6 @@ class MeaeDataReader:
 
         if has_spike_times:
             self.spiketimes = self.retrieve_spiketimes()
-            print(self.spiketimes)
 
     def retrieve_spiketimes(self):
         same_len_keys = []
