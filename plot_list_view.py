@@ -23,9 +23,8 @@ class PlotListView(QtWidgets.QWidget):
 
     def update_list(self):
         self.plot_list.clear()
-        plots = PlotManager.instance.get_plots()
-        for plot in plots:
-            self.plots.append(plot)
+        self.plots = PlotManager.instance.get_plots()
+        for plot in self.plots:
             new_item = QtWidgets.QListWidgetItem(plot.plot_name)
             new_item.setCheckState(QtCore.Qt.Unchecked)
             self.plot_list.addItem(new_item)
