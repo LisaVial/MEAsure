@@ -7,10 +7,12 @@ from IPython import embed
 
 
 class RasterplotTab(QtWidgets.QWidget):
-    def __init__(self, parent, reader, settings):
+    def __init__(self, parent, reader, settings, sampling_rate, duration):
         super().__init__(parent)
         self.reader = reader
         self.settings = settings
+        self.fs = sampling_rate
+        self.duration = duration
         self.colors = ['#749800', '#006d7c']
 
         self.spiketimes = self.reader.spiketimes
@@ -27,7 +29,7 @@ class RasterplotTab(QtWidgets.QWidget):
         self.plot(self.figure, self.spiketimes)
 
     def plot(self, fig, spike_mat):
-        fs = 10000
+        fs = self.fs
         ax = fig.add_subplot(111)
         for i in range(len(spike_mat)):
             if i % 2 == 0:
@@ -35,7 +37,6 @@ class RasterplotTab(QtWidgets.QWidget):
             else:
                 c = self.colors[1]
             ax.scatter(spike_mat[i]/fs, np.ones(len(spike_mat[i])) * i, marker='|', color=c)
-        embed()
         ax.spines['right'].set_visible(False)
         ax.spines['top'].set_visible(False)
         labels = [item.get_text() for item in ax.get_yticklabels()]
@@ -45,7 +46,7 @@ class RasterplotTab(QtWidgets.QWidget):
         xlims = ax.get_xlim()
         ax.set_xticks([0, xlims[1]/2, xlims[1]])
         ax.set_xlim([0, xlims[1]])
-        ax.set_xticklabels(['0', '150', '300'])
+        ax.set_xticklabels(['0', str(int(np.ceil(self.duration/2))), str(int(np.ceil(self.duration)))])
         ax.set_xlabel('time [s]')
         ax.get_xaxis().tick_bottom()
         ax.get_yaxis().tick_left()
