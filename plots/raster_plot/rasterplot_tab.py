@@ -7,15 +7,21 @@ from IPython import embed
 
 
 class RasterplotTab(QtWidgets.QWidget):
-    def __init__(self, parent, reader, settings, sampling_rate, duration):
+    def __init__(self, parent, reader, settings, sampling_rate, duration, grid_indices):
         super().__init__(parent)
         self.reader = reader
         self.settings = settings
         self.fs = sampling_rate
         self.duration = duration
+        self.grid_indices = grid_indices
+        print(self.grid_indices)
         self.colors = ['#749800', '#006d7c']
-
-        self.spiketimes = self.reader.spiketimes
+        if len(grid_indices) > len(self.reader.spiketimes):
+            self.spiketimes = self.reader.spiketimes
+        else:
+            self.spiketimes = self.reader.spiketimes
+            self.spiketimes = [self.spiketimes[g_idx] for g_idx in self.grid_indices]
+        print(self.spiketimes)
         self.plot_thread = None
 
         main_layout = QtWidgets.QVBoxLayout(self)
@@ -31,7 +37,8 @@ class RasterplotTab(QtWidgets.QWidget):
     def plot(self, fig, spike_mat):
         fs = self.fs
         ax = fig.add_subplot(111)
-        for i in range(len(spike_mat)):
+        for i in reversed(range(len(spike_mat))):
+            print(i)
             if i % 2 == 0:
                 c = self.colors[0]
             else:

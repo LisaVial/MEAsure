@@ -5,7 +5,7 @@ from .plot_settings import PlotSettings
 
 
 class PlotSettingsDialog(QtWidgets.QDialog):
-    def __init__(self, parent, allowed_modes, settings=None):
+    def __init__(self, parent, allowed_modes, allowed_channel_modes, settings=None):
         super().__init__(parent)
         title = 'Settings'
 
@@ -40,6 +40,20 @@ class PlotSettingsDialog(QtWidgets.QDialog):
 
         main_layout.addWidget(group_box)
 
+        channel_selection_group_box = QtWidgets.QGroupBox(self)
+        channel_selection_group_box.setTitle('Which channels should be used?')
+
+        channel_selection_group_layout = QtWidgets.QVBoxLayout(channel_selection_group_box)
+
+        self.all_channels_button = QtWidgets.QRadioButton('all MEA channels')
+        channel_selection_group_layout.addWidget(self.all_channels_button)
+
+        self.selected_channels_button = QtWidgets.QRadioButton('only selected MEA channels')
+        self.selected_channels_button.setEnabled(PlotSettings.ChannelSelection.SELECTION in allowed_channel_modes)
+        channel_selection_group_layout.addWidget(self.selected_channels_button)
+
+        main_layout.addWidget(channel_selection_group_box)
+
         self.okay_button = QtWidgets.QPushButton(self)
         self.okay_button.setText('Execute')
         self.okay_button.clicked.connect(self.on_okay_clicked)
@@ -69,6 +83,11 @@ class PlotSettingsDialog(QtWidgets.QDialog):
         elif settings.mode == PlotSettings.Mode.SC:
             self.sc_file_button.setChecked(True)
 
+        if settings.channel_selection == PlotSettings.ChannelSelection.ALL:
+            self.all_channels_button.setChecked(True)
+        elif settings.channel_selection == PlotSettings.ChannelSelection.SELECTION:
+            self.selected_channels_button.setChecked(True)
+
     def get_settings(self):
         settings = PlotSettings()
         if self.mcs_file_button.isChecked():
@@ -77,6 +96,7 @@ class PlotSettingsDialog(QtWidgets.QDialog):
             settings.mode = PlotSettings.Mode.MEAE
         elif self.sc_file_button.isChecked():
             settings.mode = PlotSettings.Mode.SC
+        settings.channel_selection = self.selected_channels_button.isChecked()
 
         return settings
 

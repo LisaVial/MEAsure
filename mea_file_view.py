@@ -128,35 +128,47 @@ class MeaFileView(QtWidgets.QWidget):
                 self.tab_widget.addTab(heatmap_tab, "Heatmap")
 
     def open_rasterplot_settings_dialog(self, is_pressed):
+        channel_labels_and_indices = self.mea_grid.get_selected_channels()
+        allowed_channel_modes = [PlotSettings.ChannelSelection.ALL]
+        if len(channel_labels_and_indices) > 0:
+            allowed_channel_modes.append(PlotSettings.ChannelSelection.SELECTION)
+
         # determine allowed modes
         allowed_modes = [PlotSettings.Mode.MCS]
         if self.file_manager.get_verified_meae_file() is not None:
             allowed_modes.append(PlotSettings.Mode.MEAE)
         if self.file_manager.get_verified_sc_file() is not None:
             allowed_modes.append(PlotSettings.Mode.SC)
-
-        settings_dialog = PlotSettingsDialog(self, allowed_modes, self.plot_settings)
+        settings_dialog = PlotSettingsDialog(self, allowed_modes, allowed_channel_modes, self.plot_settings)
         if settings_dialog.exec() == 1:  # 'Execute' clicked
             self.plot_settings = settings_dialog.get_settings()
             # overwrite global settings as well
+            if self.plot_settings.channel_selection == PlotSettings.ChannelSelection.ALL:
+                grid_indices = range(len(self.reader.voltage_traces))
+            elif self.plot_settings.channel_selection == PlotSettings.ChannelSelection.SELECTION:
+                grid_labels_and_indices = self.mea_grid.get_selected_channels()
+                grid_indices = [values[1] for values in grid_labels_and_indices]
+
             Settings.instance.raserplot_settings = self.plot_settings
             sampling_rate = self.reader.sampling_frequency
             duration = self.reader.duration
 
             # initialise plotting
             if self.plot_settings.mode == PlotSettings.Mode.MCS:
-                rasterplot_tab = RasterplotTab(self, self.reader, self.plot_settings)
+                rasterplot_tab = RasterplotTab(self, self.reader, self.plot_settings, sampling_rate, duration,
+                                               grid_indices)
                 self.tab_widget.addTab(rasterplot_tab, "Rasterplot")
             elif self.plot_settings.mode == PlotSettings.Mode.MEAE:
-                # self.reader.file.close() ?
                 meae_path = self.file_manager.get_verified_meae_file()
                 meae_reader = MeaeDataReader(meae_path)
-                rasterplot_tab = RasterplotTab(self, meae_reader, self.plot_settings, sampling_rate, duration)
+                rasterplot_tab = RasterplotTab(self, meae_reader, self.plot_settings, sampling_rate, duration,
+                                               grid_indices)
                 self.tab_widget.addTab(rasterplot_tab, "Rasterplot")
             elif self.plot_settings.mode == PlotSettings.Mode.SC:
                 sc_path = self.file_manager.get_verified_sc_file()
                 sc_reader = SCDataReader(sc_path)
-                rasterplot_tab = RasterplotTab(self, sc_reader, self.plot_settings, sampling_rate, duration)
+                rasterplot_tab = RasterplotTab(self, sc_reader, self.plot_settings, sampling_rate, duration,
+                                               grid_indices)
                 self.tab_widget.addTab(rasterplot_tab, "Rasterplot")
 
     def on_show_file_manager(self, is_pressed):
@@ -203,7 +215,6 @@ class MeaFileView(QtWidgets.QWidget):
             elif self.filter_settings.channel_selection == FilterSettings.ChannelSelection.SELECTION:
                 grid_labels_and_indices = self.mea_grid.get_selected_channels()
                 grid_indices = [values[1] for values in grid_labels_and_indices]
-            print(self.filter_settings.channel_selection)
             # overwrite global settings as well
             Settings.instance.filter_settings = self.filter_settings
 
