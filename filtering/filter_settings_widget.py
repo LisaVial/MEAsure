@@ -78,6 +78,10 @@ class FilterSettingsWidget(QtWidgets.QGroupBox):
         self.single_cutoff_textbox.setText(str(settings.lower_cutoff))  # set entry index by reading mode (index) from settings
         self.second_cutoff_textbox.setText(str(settings.upper_cutoff))
         self.save_filtered_traces_box.setChecked(settings.save_filtered_traces)
+        if settings.channel_selection == FilterSettings.ChannelSelection.ALL:
+            self.all_channels_button.setChecked(True)
+        elif settings.channel_selection == FilterSettings.ChannelSelection.SELECTION:
+            self.selected_channels_button.setChecked(True)
 
     def filter_type_changed(self, index):
         self.filter_combo_box.setCurrentIndex(index)
@@ -105,6 +109,7 @@ class FilterSettingsWidget(QtWidgets.QGroupBox):
             pass
 
         settings.save_filtered_traces = self.save_filtered_traces_box.isChecked()
+        settings.channel_selection = self.selected_channels_button.isChecked()
 
         return settings
 
