@@ -18,6 +18,21 @@ class SpikeDetectionSettingsWidget(QtWidgets.QGroupBox):
         valid_number_regex = QtCore.QRegExp(valid_number_pattern)
         number_validator = QtGui.QRegExpValidator(valid_number_regex)
 
+        group_box = QtWidgets.QGroupBox(self)
+        group_box.setTitle('Which channels should be used?')
+
+        group_layout = QtWidgets.QVBoxLayout(group_box)
+
+        self.all_channels_button = QtWidgets.QRadioButton('all MEA channels')
+        group_layout.addWidget(self.all_channels_button)
+
+        # To Do: implement allowed modes before opening settings dialog
+        self.selected_channels_button = QtWidgets.QRadioButton('only selected MEA channels')
+        self.selected_channels_button.setEnabled(SpikeDetectionSettings.ChannelSelection.SELECTION in allowed_modes)
+        group_layout.addWidget(self.selected_channels_button)
+
+        group_box_layout.addWidget(group_box)
+
         # add spike window input field
         self.spike_window_input = QtWidgets.QLineEdit(self)
         self.spike_window_input.setValidator(number_validator)  # set number validator (see above)
@@ -37,17 +52,30 @@ class SpikeDetectionSettingsWidget(QtWidgets.QGroupBox):
         group_box_layout.addWidget(QtWidgets.QLabel("Threshold factor"), 2, 0)
         group_box_layout.addWidget(self.threshold_factor_input, 2, 1)
 
+        self.save_spiketimes_box = QtWidgets.QCheckBox('Save filtered traces')
+        self.save_spiketimes_label = QtWidgets.QLabel('')
+        group_box_layout.addWidget(self.save_spiketimes_box)
+        group_box_layout.addWidget(self.save_spiketimes_label)
+        self.save_filtered_traces_box.stateChanged.connect(self.save_spiketimes_changed)
+
         if not settings:
             # create default settings
             settings = SpikeDetectionSettings()
 
         # initialise widgets with settings
         self.set_settings(settings)
+        # update label (info about saving or not saving traces)
+        self.save_spiketimes_changed()
 
     def set_settings(self, settings):
         self.spike_window_input.setText(str(settings.spike_window))
         self.mode_widget.setCurrentIndex(settings.mode)  # set entry index by reading mode (index) from settings
         self.threshold_factor_input.setText(str(settings.threshold_factor))
+        self.save_spiketimes_box.setChecked(settings.save_spiketimes)
+        if settings.channel_selection == SpikeDetectionSettings.ChannelSelection.ALL:
+            self.all_channels_button.setChecked(True)
+        elif settings.channel_selection == SpikeDetectionSettings.ChannelSelection.SELECTION:
+            self.selected_channels_button.setChecked(True)
 
     def get_settings(self):
         settings = SpikeDetectionSettings()
@@ -66,5 +94,12 @@ class SpikeDetectionSettingsWidget(QtWidgets.QGroupBox):
         except ValueError:
             # not a float
             pass
-
+        settings.save_filtered_traces = self.save_filtered_traces_box.isChecked()
+        settings.channel_selection = self.selected_channels_button.isChecked()
         return settings
+
+    def save_spiketimes_changed(self):
+        if self.save_spiketimes_box.isChecked():
+            self.save_spiketimes_label.setText("Saving spiketimes to .meae file at the end of filtering")
+        else:
+            self.save_filtered_traces_label.setText("Don\'t save spiketimes")

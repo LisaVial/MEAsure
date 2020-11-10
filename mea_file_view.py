@@ -10,7 +10,9 @@ from mea_grid import MeaGrid
 from settings import Settings
 from file_manager import FileManager
 
-from spike_detection.spike_detection_dialog import SpikeDetectionDialog
+from spike_detection.spike_detection_settings_dialog import SpikeDetectionSettingsDialog
+from spike_detection.spike_detection_settings import SpikeDetectionSettings
+from spike_detection.spike_detection_tab import SpikeDetectionTab
 
 from filtering.filter_settings_dialog import FilterSettingsDialog
 from filtering.filter_settings import FilterSettings
@@ -166,6 +168,27 @@ class MeaFileView(QtWidgets.QWidget):
     def open_sd_dialog(self):
         spike_detection_dialog = SpikeDetectionDialog(None, self.reader)
         spike_detection_dialog.exec_()
+        channel_labels_and_indices = self.mea_grid.get_selected_channels()
+        allowed_modes = [FilterSettings.ChannelSelection.ALL]
+        if len(channel_labels_and_indices) > 0:
+            allowed_modes.append(SpikeDetectionSettings.ChannelSelection.SELECTION)
+        settings_dialog = SpikeDetectionSettingsDialog(self, self.spike_detection_settings, allowed_modes)
+        if settings_dialog.exec() == 1:  # 'Execute' clicked
+            self.spike_detection_settings = settings_dialog.get_settings()
+            if self.spike_detection_settings.channel_selection == SpikeDetectionSettings.ChannelSelection.ALL:
+                grid_indices = range(len(self.reader.voltage_traces))
+            elif self.spike_detection_settings.channel_selection == SpikeDetectionSettings.ChannelSelection.SELECTION:
+                grid_labels_and_indices = self.mea_grid.get_selected_channels()
+                grid_indices = [values[1] for values in grid_labels_and_indices]
+            # overwrite global settings as well
+            Settings.instance.spike_detection_settings = self.spike_detection_settings
+
+            # initialise filtering
+            # give FilterThread indices (all is default and if selected, thread has to receive special indices
+            # -> via filter tab?)
+            spike_detection_tab = SpikeDetectionTab(self, self.reader, grid_indices, self.spike_detection_settings)
+            self.tab_widget.addTab(spike_detection_tab, "Spike detection")
+            spike_detection_tab.initialize_spike_detection()
 
     @QtCore.pyqtSlot()
     def open_filter_dialog(self):

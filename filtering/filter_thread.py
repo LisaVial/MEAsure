@@ -1,6 +1,5 @@
 from PyQt5 import QtCore
 from scipy.signal import filtfilt, butter
-import numpy as np
 
 
 class FilterThread(QtCore.QThread):

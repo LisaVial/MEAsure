@@ -14,7 +14,7 @@ class FilterSettingsDialog(QtWidgets.QDialog):
         self.setWindowFlag(QtCore.Qt.WindowTitleHint, True)
         self.setWindowFlag(QtCore.Qt.WindowMaximizeButtonHint, True)
         self.setWindowFlag(QtCore.Qt.WindowMinimizeButtonHint, True)
-        self.width = 300
+        self.width = 400
         self.height = 200
 
         main_layout = QtWidgets.QVBoxLayout(self)
