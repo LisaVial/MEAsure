@@ -7,7 +7,7 @@ from .spike_detection_settings import SpikeDetectionSettings
 
 class SpikeDetectionSettingsWidget(QtWidgets.QGroupBox):
 
-    def __init__(self, parent, settings=None):
+    def __init__(self, parent, allowed_modes, settings=None):
         super().__init__(parent)
 
         self.setTitle("Settings")
@@ -31,32 +31,32 @@ class SpikeDetectionSettingsWidget(QtWidgets.QGroupBox):
         self.selected_channels_button.setEnabled(SpikeDetectionSettings.ChannelSelection.SELECTION in allowed_modes)
         group_layout.addWidget(self.selected_channels_button)
 
-        group_box_layout.addWidget(group_box)
+        group_box_layout.addWidget(group_box, 0, 0, 1, 2)
 
         # add spike window input field
         self.spike_window_input = QtWidgets.QLineEdit(self)
         self.spike_window_input.setValidator(number_validator)  # set number validator (see above)
-        group_box_layout.addWidget(QtWidgets.QLabel("Spike window in [s]"), 0, 0)
-        group_box_layout.addWidget(self.spike_window_input, 0, 1)
+        group_box_layout.addWidget(QtWidgets.QLabel("Spike window in [s]"), 1, 0)
+        group_box_layout.addWidget(self.spike_window_input, 1, 1)
 
         # add mode selection widget
         self.mode_widget = QtWidgets.QComboBox(self)
         self.mode_widget.setEditable(False)  # do not allow entering text
         self.mode_widget.addItems(["Peaks", "Troughs", "Both"])  # items have to be in same order as in Mode definition
-        group_box_layout.addWidget(QtWidgets.QLabel("Mode"), 1, 0)
-        group_box_layout.addWidget(self.mode_widget, 1, 1)
+        group_box_layout.addWidget(QtWidgets.QLabel("Mode"), 2, 0)
+        group_box_layout.addWidget(self.mode_widget, 2, 1)
 
         # add threshold factor input field
         self.threshold_factor_input = QtWidgets.QLineEdit(self)
         self.threshold_factor_input.setValidator(number_validator)  # set number validator (see above)
-        group_box_layout.addWidget(QtWidgets.QLabel("Threshold factor"), 2, 0)
-        group_box_layout.addWidget(self.threshold_factor_input, 2, 1)
+        group_box_layout.addWidget(QtWidgets.QLabel("Threshold factor"), 3, 0)
+        group_box_layout.addWidget(self.threshold_factor_input, 3, 1)
 
         self.save_spiketimes_box = QtWidgets.QCheckBox('Save filtered traces')
         self.save_spiketimes_label = QtWidgets.QLabel('')
         group_box_layout.addWidget(self.save_spiketimes_box)
         group_box_layout.addWidget(self.save_spiketimes_label)
-        self.save_filtered_traces_box.stateChanged.connect(self.save_spiketimes_changed)
+        self.save_spiketimes_box.stateChanged.connect(self.save_spiketimes_changed)
 
         if not settings:
             # create default settings
@@ -94,7 +94,7 @@ class SpikeDetectionSettingsWidget(QtWidgets.QGroupBox):
         except ValueError:
             # not a float
             pass
-        settings.save_filtered_traces = self.save_filtered_traces_box.isChecked()
+        settings.save_filtered_traces = self.save_spiketimes_box.isChecked()
         settings.channel_selection = self.selected_channels_button.isChecked()
         return settings
 
@@ -102,4 +102,4 @@ class SpikeDetectionSettingsWidget(QtWidgets.QGroupBox):
         if self.save_spiketimes_box.isChecked():
             self.save_spiketimes_label.setText("Saving spiketimes to .meae file at the end of filtering")
         else:
-            self.save_filtered_traces_label.setText("Don\'t save spiketimes")
+            self.save_spiketimes_label.setText("Don\'t save spiketimes")

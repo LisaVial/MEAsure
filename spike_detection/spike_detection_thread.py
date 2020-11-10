@@ -11,12 +11,14 @@ class SpikeDetectionThread(QtCore.QThread):
     channel_data_updated = QtCore.pyqtSignal(list)
     finished = QtCore.pyqtSignal()
 
-    def __init__(self, parent, reader, spike_window, mode, threshold_factor):
+    def __init__(self, parent, reader, spike_window, mode, threshold_factor, grid_indices):
         super().__init__(parent)
         self.reader = reader
         self.spike_window = spike_window
         self.mode = mode
         self.threshold_factor = threshold_factor
+        self.grid_indices = grid_indices
+
         self.spike_mat = None
         self.spike_indices = None
         self.live_plotter = None
@@ -47,12 +49,13 @@ class SpikeDetectionThread(QtCore.QThread):
         signals = reader.voltage_traces
         ids = reader.channel_indices
         fs = reader.sampling_frequency
+        selected_ids = [ids[g_idx] for g_idx in self.grid_indices]
 
         above_upper_threshold = False
         below_lower_threshold = False
         current_extreme_index_and_value = None  # current local minimum or maximum
 
-        for idx, ch_id in enumerate(ids):
+        for idx, ch_id in enumerate(selected_ids):
             # in this case, the whole channel should be loaded, since the filter should be applied at once
             signal = signals[ch_id]
             threshold = self.threshold_factor * np.median(np.absolute(signal) / 0.6745)
@@ -108,15 +111,15 @@ class SpikeDetectionThread(QtCore.QThread):
                 # update state
                 below_lower_threshold = (value < -threshold)
                 above_upper_threshold = (value > threshold)
-            progress = round(((idx + 1) / len(ids)) * 100.0, 2)
-            self.progress_made.emit(progress)
-
-            indices.append(np.asarray(channel_spike_indices))
-
             spiketimes = channel_spike_indices / fs
             spike_mat.append(spiketimes)
             data = [spiketimes]
             self.channel_data_updated.emit(data)
+
+            indices.append(np.asarray(channel_spike_indices))
+
+            progress = round(((idx + 1) / len(ids)) * 100.0, 2)
+            self.progress_made.emit(progress)
         return indices, spike_mat
 
     def run(self):

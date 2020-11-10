@@ -36,6 +36,7 @@ class MeaFileView(QtWidgets.QWidget):
         self.file_manager = FileManager(self, self.reader.file_path)
         self.filter_settings = Settings.instance.filter_settings
         self.plot_settings = Settings.instance.plot_settings
+        self.spike_detection_settings = Settings.instance.spike_detection_settings
 
         main_layout = QtWidgets.QVBoxLayout(self)
         main_layout.setAlignment(QtCore.Qt.AlignTop | QtCore.Qt.AlignLeft)
@@ -166,8 +167,6 @@ class MeaFileView(QtWidgets.QWidget):
 
     @QtCore.pyqtSlot()
     def open_sd_dialog(self):
-        spike_detection_dialog = SpikeDetectionDialog(None, self.reader)
-        spike_detection_dialog.exec_()
         channel_labels_and_indices = self.mea_grid.get_selected_channels()
         allowed_modes = [FilterSettings.ChannelSelection.ALL]
         if len(channel_labels_and_indices) > 0:

@@ -120,7 +120,7 @@ class SpikeDetectionTab(QtWidgets.QWidget):
         if self.spike_mat is None:
             self.progress_bar.setValue(0)
             self.progress_label.setText("")
-            self.spike_detection_start_button.setEnabled(False)
+            self.progress_label.setText("Detecting Spikes")
             self.spike_detection_thread = SpikeDetectionThread(self, self.reader, self.settings.spike_window,
                                                                self.settings.mode, self.settings.threshold_factor,
                                                                self.grid_indices)
@@ -162,7 +162,6 @@ class SpikeDetectionTab(QtWidgets.QWidget):
             self.spike_indices = self.spike_detection_thread.spike_indices.copy()
             self.spike_mat = self.spike_detection_thread.spike_mat.copy()
         self.spike_detection_thread = None
-        self.spike_detection_start_button.setEnabled(True)
         if self.settings.save_spiketimes:
             self.save_spike_mat(self.spike_mat, self.spike_indices, self.reader.file_path)
 
