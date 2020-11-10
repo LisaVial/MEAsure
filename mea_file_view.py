@@ -176,11 +176,19 @@ class MeaFileView(QtWidgets.QWidget):
         settings_dialog = FilterSettingsDialog(self, self.filter_settings, allowed_modes)
         if settings_dialog.exec() == 1:  # 'Execute' clicked
             self.filter_settings = settings_dialog.get_settings()
+            if self.filter_settings.channel_selection == FilterSettings.ChannelSelection.ALL:
+                grid_indices = range(len(self.reader.voltage_traces))
+            elif self.filter_settings.channel_selection == FilterSettings.ChannelSelection.SELECTION:
+                grid_labels_and_indices = self.mea_grid.get_selected_channels()
+                grid_indices = [values[1] for values in grid_labels_and_indices]
+            print(self.filter_settings.channel_selection)
             # overwrite global settings as well
             Settings.instance.filter_settings = self.filter_settings
 
             # initialise filtering
-            filter_tab = FilterTab(self, self.reader, self.filter_settings)
+            # give FilterThread indices (all is default and if selected, thread has to receive special indices
+            # -> via filter tab?)
+            filter_tab = FilterTab(self, self.reader,  grid_indices, self.filter_settings)
             self.tab_widget.addTab(filter_tab, "Filtering")
             filter_tab.initialize_filtering()
 

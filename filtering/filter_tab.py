@@ -8,9 +8,10 @@ from filtering.filter_thread import FilterThread
 
 
 class FilterTab(QtWidgets.QWidget):
-    def __init__(self, parent, reader, settings):
+    def __init__(self, parent, reader, grid_indices, settings):
         super().__init__(parent)
         self.reader = reader
+        self.grid_indices = grid_indices
         self.settings = settings
 
         self.filtered_mat = None
@@ -65,12 +66,12 @@ class FilterTab(QtWidgets.QWidget):
         if self.settings.mode == 2:
             cutoff_2 = float(self.settings.upper_cutoff)
         # if self.settings.channel_selection == 1:
-            
+
         if self.filtered_mat is None:
             self.progress_bar.setValue(0)
             self.progress_label.setText('')
             self.operation_label.setText('Filtering')
-            self.filtering_thread = FilterThread(self, self.reader, filter_mode, cutoff_1, cutoff_2)
+            self.filtering_thread = FilterThread(self, self.reader, filter_mode, cutoff_1, cutoff_2, self.grid_indices)
             self.filtering_thread.progress_made.connect(self.on_progress_made)
             self.filtering_thread.operation_changed.connect(self.on_operation_changed)
             self.filtering_thread.data_updated.connect(self.on_data_updated)

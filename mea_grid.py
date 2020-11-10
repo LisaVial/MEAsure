@@ -53,14 +53,11 @@ class MeaGrid(QWidget):
 
                 self.label_indices_map[id] = {}
                 if col == 0:
-                    # self.label_indices_map[id]['mcs id'] = mcs_ids[row-1]
-                    self.label_indices_map[id]['other id'] = row - 1
-                elif col == 15:
-                    # self.label_indices_map[id]['mcs id'] = mcs_ids[16*row+1]
-                    self.label_indices_map[id]['other id'] = row + (col*16) - 3
+                    self.label_indices_map[id]['grid index'] = row - 1
+                elif col != 0 and col != 15:
+                    self.label_indices_map[id]['grid index'] = row + (col*16) - 2
                 else:
-                    # self.label_indices_map[id]['mcs id'] = mcs_ids[row + ((col*n)-2)]
-                    self.label_indices_map[id]['other id'] = (row + (col*16) - 1) - 1
+                    self.label_indices_map[id]['grid index'] = row + (col*16) - 3
 
                 button.pressed.connect(lambda id=id: self.on_button_pressed(id))
                 self.label_button_map[label] = button
@@ -75,7 +72,7 @@ class MeaGrid(QWidget):
         selected_channels = []
         for idx, label in enumerate(ordered_labels):
             if self.label_button_map[label].isChecked():
-                selected_channels.append((self.labels[idx], self.label_indices_map[self.labels[idx]]['other id']))
+                selected_channels.append((self.labels[idx], self.label_indices_map[self.labels[idx]]['grid index']))
         return selected_channels
 
     def select_all(self):
