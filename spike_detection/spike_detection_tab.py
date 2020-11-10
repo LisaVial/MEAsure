@@ -1,4 +1,4 @@
-from PyQt5 import QtCore, QtWidgets
+from PyQt5 import QtCore, QtWidgets, QtGui
 import os
 import pyqtgraph as pg
 import numpy as np
@@ -22,27 +22,11 @@ class SpikeDetectionTab(QtWidgets.QWidget):
         self.spike_indices = None
         self.analysis_file_path = None
 
+        main_layout = QtWidgets.QVBoxLayout(self)
+        main_layout.setAlignment(QtCore.Qt.AlignTop | QtCore.Qt.AlignHCenter)
+
         spike_detection_settings_layout = QtWidgets.QVBoxLayout(self)
         spike_detection_settings_layout.setAlignment(QtCore.Qt.AlignTop | QtCore.Qt.AlignCenter)
-
-        self.settings_button = QtWidgets.QPushButton(self)
-        self.settings_button.setText("Settings")
-        self.settings_button.clicked.connect(self.open_settings_dialog)
-        spike_detection_settings_layout.addWidget(self.settings_button)
-
-        # implementation of widgets in the spike_detection_dialog
-        # save check box is connected to a function that saves spike_mat as .csv file
-        self.save_check_box = QtWidgets.QCheckBox("Save spiketimes")
-        self.label_save_check_box = QtWidgets.QLabel("Don\'t save spiketimes")
-        spike_detection_settings_layout.addWidget(self.save_check_box)
-        spike_detection_settings_layout.addWidget(self.label_save_check_box)
-        self.save_check_box.stateChanged.connect(self.save_check_box_clicked)
-
-        # spike_detection_start_button is connected to a function that initializes spike detection thread
-        self.spike_detection_start_button = QtWidgets.QPushButton(self)
-        self.spike_detection_start_button.setText("Start spike detection")
-        self.spike_detection_start_button.clicked.connect(self.initialize_spike_detection)
-        spike_detection_settings_layout.addWidget(self.spike_detection_start_button)
 
         # operation and progress_label is linked to the progress bar, so that the user sees, what is happening in the
         # background of the GUI
@@ -132,21 +116,14 @@ class SpikeDetectionTab(QtWidgets.QWidget):
         self.spis[-1].setData(spiketimes, 0 + 0.5 + np.zeros((len(spiketimes))))
 
     @QtCore.pyqtSlot()
-    def open_settings_dialog(self):
-        settings_dialog = SettingsDialog(self, self.settings)
-        if settings_dialog.exec() == 1:  # 'ok' clicked
-            self.settings = settings_dialog.get_settings()
-            # overwrite global settings as well
-            Settings.instance.spike_detection_settings = self.settings
-
-    @QtCore.pyqtSlot()
     def initialize_spike_detection(self):
         if self.spike_mat is None:
             self.progress_bar.setValue(0)
             self.progress_label.setText("")
             self.spike_detection_start_button.setEnabled(False)
             self.spike_detection_thread = SpikeDetectionThread(self, self.reader, self.settings.spike_window,
-                                                               self.settings.mode, self.settings.threshold_factor)
+                                                               self.settings.mode, self.settings.threshold_factor,
+                                                               self.grid_indices)
             self.spike_detection_thread.progress_made.connect(self.on_progress_made)
             self.spike_detection_thread.operation_changed.connect(self.on_operation_changed)
             self.spike_detection_thread.channel_data_updated.connect(self.on_channel_data_updated)
@@ -163,10 +140,6 @@ class SpikeDetectionTab(QtWidgets.QWidget):
                 # but main thread will continue immediately
 
             self.timer.start(2000)  # time in [ms]
-
-    def save_check_box_clicked(self):
-        # change label of the save check box in case the user clicked it
-        self.label_save_check_box.setText('Saving spikes to .meae file at the end of spike detection')
 
     # this function changes the label of the progress bar to inform the user what happens in the backgound
     @QtCore.pyqtSlot(str)
@@ -190,7 +163,7 @@ class SpikeDetectionTab(QtWidgets.QWidget):
             self.spike_mat = self.spike_detection_thread.spike_mat.copy()
         self.spike_detection_thread = None
         self.spike_detection_start_button.setEnabled(True)
-        if self.save_check_box.isChecked():
+        if self.settings.save_spiketimes:
             self.save_spike_mat(self.spike_mat, self.spike_indices, self.reader.file_path)
 
     @QtCore.pyqtSlot(list)
