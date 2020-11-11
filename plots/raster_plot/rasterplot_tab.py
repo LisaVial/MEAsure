@@ -14,14 +14,12 @@ class RasterplotTab(QtWidgets.QWidget):
         self.fs = sampling_rate
         self.duration = duration
         self.grid_indices = grid_indices
-        print(self.grid_indices)
         self.colors = ['#749800', '#006d7c']
         if len(grid_indices) > len(self.reader.spiketimes):
             self.spiketimes = self.reader.spiketimes
         else:
             self.spiketimes = self.reader.spiketimes
             self.spiketimes = [self.spiketimes[g_idx] for g_idx in self.grid_indices]
-        print(self.spiketimes)
         self.plot_thread = None
 
         main_layout = QtWidgets.QVBoxLayout(self)

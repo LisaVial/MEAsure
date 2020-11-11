@@ -1,36 +1,51 @@
+from PyQt5 import QtWidgets, QtCore
 import numpy as np
-import matplotlib.pyplot as plt
-import pyqtgraph as pg
+import os
+import matplotlib as plt
 
 
-class CsdPlotTab:
+from plot_manager import PlotManager
+from plots.plot_widget import PlotWidget
+
+
+class CsdPlotTab(QtWidgets.QWidget):
     def __init__(self, parent, reader):
         super().__init__(parent)
         self.reader = reader
-        self.plot_widget = pg.PlotWidget()
-        self.plot_widget.setBackground('w')
-        signal = self.reader.voltage_traces[:]
-        ch_ids = self.reader.channel_indices
-        labels = self.reader.labels
-        fs = self.reader.sampling_frequency
-        self.plot(self.plot_widget, signal, ch_ids, labels, fs)
 
-    def plot(self, figure, signal, ch_ids, labels, fs):
-        time = np.arange(0, len(signal[0])/fs, 1/fs)
+        main_layout = QtWidgets.QVBoxLayout(self)
+        main_layout.setAlignment(QtCore.Qt.AlignTop | QtCore.Qt.AlignHCenter)
+
+        file_name = os.path.split(self.reader.file_path)[1]
+        plot_name = 'CSD_Plot_' + file_name
+
+        self.plot_widget = PlotWidget(self, plot_name)
+        self.figure = self.plot_widget.figure
+        main_layout.addWidget(self.plot_widget)
+
+        self.signal = self.reader.voltage_traces[:]
+        self.ch_ids = self.reader.channel_indices
+        self.labels = self.reader.labels
+        self.fs = self.reader.sampling_frequency
+
+        self.plot(self.figure)
+
+    def plot(self, figure):
+        time = np.arange(0, len(self.signal[0])/self.fs, 1/self.fs)
         color_count = 8
         colors = [plt.cm.Pastel2(x) for x in np.linspace(0.0, 1.0, color_count)]
 
         ax = figure.add_subplot(111)
-        if ch_ids is not None:
-            for idx, ch_id in enumerate(reversed(ch_ids)):
-                if len(labels[idx]) < 3:
-                    ax.plot(time[::1250], signal[ch_id][::1250]+(idx*1000), color=colors[idx % color_count], lw=4)
+        if self.ch_ids is not None:
+            for idx, ch_id in enumerate(reversed(self.ch_ids)):
+                if len(self.labels[idx]) < 3:
+                    ax.plot(time[::1250], self.signal[ch_id][::1250]+(idx*1000), color=colors[idx % color_count], lw=4)
 
             ax.spines['right'].set_visible(False)
             ax.spines['top'].set_visible(False)
         else:
-            for idx in range(len(signal)):
-                ax.plot(time[::1250], signal[idx][::1250] + (idx * 1000), color=colors[idx % color_count], lw=4)
+            for idx in range(len(self.signal)):
+                ax.plot(time[::1250], self.signal[idx][::1250] + (idx * 1000), color=colors[idx % color_count], lw=4)
             ax.spines['right'].set_visible(False)
             ax.spines['top'].set_visible(False)
         # label_locs = [item.get_text() for item in ax.get_yticklabels()]
