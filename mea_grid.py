@@ -5,13 +5,14 @@ import PyQt5.QtWidgets as QtWidgets
 
 button_style = """
 QPushButton {
-    background-color: #8ab3e8;
+    background-color: #a985ff;
     border-radius: 13;
     border: 0.5px solid black
 }
 
 QPushButton:checked {
-    background-color: #ff00ff;
+    background-color: #006d7c;
+    color: white
 }
 
 QPushButton:hover {

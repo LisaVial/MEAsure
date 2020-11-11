@@ -163,3 +163,4 @@ class FilterTab(QtWidgets.QWidget):
 
         if self.settings.save_filtered_traces:
             self.save_filter_mat(self.filtered_mat, self.reader.file_path[:-3] + '.meae', self.reader)
+

@@ -1,6 +1,7 @@
 import PyQt5.QtCore as QtCore
 import json
 
+from plots.csd_plot.csd_plot_settings import CsdPlotSettings
 from spike_detection.spike_detection_settings import SpikeDetectionSettings
 from filtering.filter_settings import FilterSettings
 from plots.plot_settings import PlotSettings
@@ -17,6 +18,7 @@ class Settings:
         self.spike_detection_settings = SpikeDetectionSettings()
         self.filter_settings = FilterSettings()
         self.plot_settings = PlotSettings()
+        self.csd_plot_settings = CsdPlotSettings()
         Settings.instance = self
 
     def load_settings_from_file(self, path):
@@ -34,6 +36,8 @@ class Settings:
                 self.filter_settings.from_dict(d["filter_settings"])
             if "rasterplot_settings" in d.keys():
                 self.plot_settings.from_dict(d["rasterplot_settings"])
+            if 'csd_plot_settings' in d.keys():
+                self.csd_plot_settings.from_dict(d['csd_plot_settings'])
         except:
             pass
 

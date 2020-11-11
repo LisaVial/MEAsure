@@ -18,11 +18,12 @@ from filtering.filter_settings_dialog import FilterSettingsDialog
 from filtering.filter_settings import FilterSettings
 from filtering.filter_tab import FilterTab
 
-from plots.csd_plot_tab import CsdPlotTab
-
+from plots.csd_plot.csd_plot_tab import CsdPlotTab
 from plots.raster_plot.rasterplot_tab import RasterplotTab
 from plots.heatmap.heatmap_tab import HeatmapTab
 
+from plots.csd_plot.csd_plot_settings import CsdPlotSettings
+from plots.csd_plot.csd_plot_settings_dialog import CsdPlotSettingsDialog
 from plots.plot_settings_dialog import PlotSettingsDialog
 from plots.plot_settings import PlotSettings
 
@@ -37,6 +38,7 @@ class MeaFileView(QtWidgets.QWidget):
         self.filter_settings = Settings.instance.filter_settings
         self.plot_settings = Settings.instance.plot_settings
         self.spike_detection_settings = Settings.instance.spike_detection_settings
+        self.csd_plot_settings = Settings.instance.csd_plot_settings
 
         main_layout = QtWidgets.QVBoxLayout(self)
         main_layout.setAlignment(QtCore.Qt.AlignTop | QtCore.Qt.AlignLeft)
@@ -227,11 +229,22 @@ class MeaFileView(QtWidgets.QWidget):
 
     @QtCore.pyqtSlot()
     def add_csd_plot_to_tabs(self):
-        csd_plot_tab = CsdPlotTab(self, self.reader)
-        self.tab_widget.addTab(csd_plot_tab, "CSD Plot")
+        channel_labels_and_indices = self.mea_grid.get_selected_channels()
+        allowed_channel_modes = [PlotSettings.ChannelSelection.ALL]
+        if len(channel_labels_and_indices) > 0:
+            allowed_channel_modes.append(PlotSettings.ChannelSelection.SELECTION)
+        settings_dialog = CsdPlotSettingsDialog(self, allowed_channel_modes)
+        if settings_dialog.exec() == 1:  # 'Execute' clicked
+            self.csd_plot_settings = settings_dialog.get_settings()
+            # overwrite global settings as well
+            if self.csd_plot_settings.channel_selection == CsdPlotSettings.ChannelSelection.ALL:
+                grid_indices = range(len(self.reader.voltage_traces))
+            elif self.csd_plot_settings.channel_selection == CsdPlotSettings.ChannelSelection.SELECTION:
+                grid_labels_and_indices = self.mea_grid.get_selected_channels()
+                grid_indices = [values[1] for values in grid_labels_and_indices]
 
-    # @QtCore.pyqtSlot()
-    # def open_plot_dialog(self):
-    #     plot_dialog = PlotDialog(None, self.reader)
-    #     plot_dialog.exec_()
+            Settings.instance.csd_plot_settings = self.csd_plot_settings
+            duration = self.reader.duration
 
+            csd_plot_tab = CsdPlotTab(self, self.reader, grid_indices, duration, self.csd_plot_settings)
+            self.tab_widget.addTab(csd_plot_tab, "CSD Plot")
