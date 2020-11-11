@@ -229,7 +229,6 @@ class MeaFileView(QtWidgets.QWidget):
     def add_csd_plot_to_tabs(self):
         csd_plot_tab = CsdPlotTab(self, self.reader)
         self.tab_widget.addTab(csd_plot_tab, "CSD Plot")
-        csd_plot_tab.plot()
 
     # @QtCore.pyqtSlot()
     # def open_plot_dialog(self):
