@@ -102,6 +102,13 @@ class MeaFileView(QtWidgets.QWidget):
         self.file_manager.setVisible(self.show_file_manager.isChecked())
         self.mea_grid.setVisible(self.show_mea_grid.isChecked())
 
+        self.filter_tab = None
+        self.spike_detection_tab = None
+
+        self.csd_plot_tab = None
+        self.heatmap_tab = None
+        self.rasterplot_tab = None
+
     def open_heatmap_settings_dialog(self, is_pressed):
         allowed_modes = [PlotSettings.Mode.MCS]
         if self.file_manager.get_verified_meae_file() is not None:
@@ -116,18 +123,18 @@ class MeaFileView(QtWidgets.QWidget):
 
             # initialise plotting
             if self.plot_settings.mode == PlotSettings.Mode.MCS:
-                heatmap_tab = HeatmapTab(self, self.reader, self.plot_settings)
-                self.tab_widget.addTab(heatmap_tab, "Heatmap")
+                self.heatmap_tab = HeatmapTab(self, self.reader, self.plot_settings)
+                self.tab_widget.addTab(self.heatmap_tab, "Heatmap")
             elif self.plot_settings.mode == PlotSettings.Mode.MEAE:
                 meae_path = self.file_manager.get_verified_meae_file()
                 meae_reader = MeaeDataReader(meae_path)
-                heatmap_tab = HeatmapTab(self, meae_reader, self.plot_settings)
-                self.tab_widget.addTab(heatmap_tab, "Heatmap")
+                self.heatmap_tab = HeatmapTab(self, meae_reader, self.plot_settings)
+                self.tab_widget.addTab(self.heatmap_tab, "Heatmap")
             elif self.plot_settings.mode == PlotSettings.Mode.SC:
                 sc_path = self.file_manager.get_verified_sc_file()
                 sc_reader = SCDataReader(sc_path)
-                heatmap_tab = HeatmapTab(self, sc_reader, self.plot_settings)
-                self.tab_widget.addTab(heatmap_tab, "Heatmap")
+                self.heatmap_tab = HeatmapTab(self, sc_reader, self.plot_settings)
+                self.tab_widget.addTab(self.heatmap_tab, "Heatmap")
 
     def open_rasterplot_settings_dialog(self, is_pressed):
         channel_labels_and_indices = self.mea_grid.get_selected_channels()
@@ -157,27 +164,21 @@ class MeaFileView(QtWidgets.QWidget):
 
             # initialise plotting
             if self.plot_settings.mode == PlotSettings.Mode.MCS:
-                rasterplot_tab = RasterplotTab(self, self.reader, self.plot_settings, sampling_rate, duration,
+                self.rasterplot_tab = RasterplotTab(self, self.reader, self.plot_settings, sampling_rate, duration,
                                                grid_indices)
-                self.tab_widget.addTab(rasterplot_tab, "Rasterplot")
+                self.tab_widget.addTab(self.rasterplot_tab, "Rasterplot")
             elif self.plot_settings.mode == PlotSettings.Mode.MEAE:
                 meae_path = self.file_manager.get_verified_meae_file()
                 meae_reader = MeaeDataReader(meae_path)
-                rasterplot_tab = RasterplotTab(self, meae_reader, self.plot_settings, sampling_rate, duration,
+                self.rasterplot_tab = RasterplotTab(self, meae_reader, self.plot_settings, sampling_rate, duration,
                                                grid_indices)
-                self.tab_widget.addTab(rasterplot_tab, "Rasterplot")
+                self.tab_widget.addTab(self.rasterplot_tab, "Rasterplot")
             elif self.plot_settings.mode == PlotSettings.Mode.SC:
                 sc_path = self.file_manager.get_verified_sc_file()
                 sc_reader = SCDataReader(sc_path)
-                rasterplot_tab = RasterplotTab(self, sc_reader, self.plot_settings, sampling_rate, duration,
+                self.rasterplot_tab = RasterplotTab(self, sc_reader, self.plot_settings, sampling_rate, duration,
                                                grid_indices)
-                self.tab_widget.addTab(rasterplot_tab, "Rasterplot")
-
-    def on_show_file_manager(self, is_pressed):
-        self.file_manager.setVisible(is_pressed)
-
-    def on_show_mea_grid(self, is_pressed):
-        self.mea_grid.setVisible(is_pressed)
+                self.tab_widget.addTab(self.rasterplot_tab, "Rasterplot")
 
     @QtCore.pyqtSlot()
     def open_sd_dialog(self):
@@ -199,9 +200,9 @@ class MeaFileView(QtWidgets.QWidget):
             # initialise filtering
             # give FilterThread indices (all is default and if selected, thread has to receive special indices
             # -> via filter tab?)
-            spike_detection_tab = SpikeDetectionTab(self, self.reader, grid_indices, self.spike_detection_settings)
-            self.tab_widget.addTab(spike_detection_tab, "Spike detection")
-            spike_detection_tab.initialize_spike_detection()
+            self.spike_detection_tab = SpikeDetectionTab(self, self.reader, grid_indices, self.spike_detection_settings)
+            self.tab_widget.addTab(self.spike_detection_tab, "Spike detection")
+            self.spike_detection_tab.initialize_spike_detection()
 
     @QtCore.pyqtSlot()
     def open_filter_dialog(self):
@@ -223,9 +224,9 @@ class MeaFileView(QtWidgets.QWidget):
             # initialise filtering
             # give FilterThread indices (all is default and if selected, thread has to receive special indices
             # -> via filter tab?)
-            filter_tab = FilterTab(self, self.reader,  grid_indices, self.filter_settings)
-            self.tab_widget.addTab(filter_tab, "Filtering")
-            filter_tab.initialize_filtering()
+            self.filter_tab = FilterTab(self, self.reader,  grid_indices, self.filter_settings)
+            self.tab_widget.addTab(self.filter_tab, "Filtering")
+            self.filter_tab.initialize_filtering()
 
     @QtCore.pyqtSlot()
     def add_csd_plot_to_tabs(self):
@@ -246,5 +247,26 @@ class MeaFileView(QtWidgets.QWidget):
             Settings.instance.csd_plot_settings = self.csd_plot_settings
             duration = self.reader.duration
 
-            csd_plot_tab = CsdPlotTab(self, self.reader, grid_indices, duration, self.csd_plot_settings)
-            self.tab_widget.addTab(csd_plot_tab, "CSD Plot")
+            self.csd_plot_tab = CsdPlotTab(self, self.reader, grid_indices, duration, self.csd_plot_settings)
+            self.tab_widget.addTab(self.csd_plot_tab, "CSD Plot")
+
+    def on_show_file_manager(self, is_pressed):
+        self.file_manager.setVisible(is_pressed)
+
+    def on_show_mea_grid(self, is_pressed):
+        self.mea_grid.setVisible(is_pressed)
+
+    # def can_be_closed(self):
+    #     if self.filter_tab is None:
+    #     return self.filter_tab.can_be_closed(), self.spike_detection_tab.can_be_closed(), \
+    #            self.csd_plot_tab.can_be_closed(), self.heatmap_tab.can_be_closed(),self.rasterplot_tab.can_be_closed()
+    #
+    # def closeEvent(self, close_event):
+    #     self.filter_tab.close()
+    #     self.spike_detection_tab.close()
+    #
+    #     self.csd_plot_tab.close()
+    #     self.heatmap_tab.close()
+    #     self.rasterplot_tab.close()
+    #
+    #     super().closeEvent(close_event)

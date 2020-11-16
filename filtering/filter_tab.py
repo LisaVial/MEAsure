@@ -164,3 +164,13 @@ class FilterTab(QtWidgets.QWidget):
         if self.settings.save_filtered_traces:
             self.save_filter_mat(self.filtered_mat, self.reader.file_path[:-3] + '.meae', self.reader)
 
+    # def is_busy_filtering(self):
+    #     return self.filter_thread is not None
+    #
+    # @QtCore.pyqtSlot(int)
+    # def on_tab_close_requested(self, index):
+    #     # only close and remove tab if not currently loading/plotting
+    #     filter_thread = self.filtering_thread
+    #     if not filter_thread.is_busy_filtering():
+    #         filter_thread.close()
+    #         self.removeTab(index)

@@ -51,7 +51,6 @@ class DataListView(QtWidgets.QWidget):
                 self.file_list.item(idx).setToolTip(tool_tip)
                 file_without_extension = ".".join(file.split('.')[:-1])
                 mea_file = self.current_folder + file_without_extension + ".meae"
-
                 if os.path.exists(mea_file):
                     reader = MeaeDataReader(mea_file)
                     keys = list(reader.file.keys())
