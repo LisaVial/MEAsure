@@ -1,9 +1,9 @@
 import PyQt5.QtCore as QtCore
 import json
 
-from plots.csd_plot.csd_plot_settings import CsdPlotSettings
 from spike_detection.spike_detection_settings import SpikeDetectionSettings
 from filtering.filter_settings import FilterSettings
+from plots.csd_plot.csd_plot_settings import CsdPlotSettings
 from plots.plot_settings import PlotSettings
 
 
