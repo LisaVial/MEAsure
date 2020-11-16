@@ -3,6 +3,8 @@ import PyQt5.QtWidgets as QtWidgets
 import PyQt5.QtGui as QtGui
 import os.path
 
+from meae_data_reader import MeaeDataReader
+
 
 class DataListView(QtWidgets.QWidget):
     def __init__(self, parent):
@@ -45,13 +47,17 @@ class DataListView(QtWidgets.QWidget):
             if idx in meae_indices:
                 self.file_list.item(idx).setBackground(QtGui.QColor(0, 134, 153))
                 self.file_list.item(idx).setForeground(QtGui.QColor("white"))
-
-                # todo: mea file auslesen um keys zu bestimmen
-                mea_file = file
-                keys = ['A', 'B', 'C']
-                tool_tip = "Keys: " + ", ".join(keys)
+                tool_tip = "No .meae file found."
                 self.file_list.item(idx).setToolTip(tool_tip)
+                file_without_extension = ".".join(file.split('.')[:-1])
+                mea_file = self.current_folder + file_without_extension + ".meae"
 
+                if os.path.exists(mea_file):
+                    reader = MeaeDataReader(mea_file)
+                    keys = list(reader.file.keys())
+                    # todo: think of portrayal of keys when there are a lot of keys
+                    tool_tip = "Keys: " + ", ".join(keys)
+                    self.file_list.item(idx).setToolTip(tool_tip)
 
     # function that scans absolute and relative paths of data
     def get_data(self):
