@@ -46,6 +46,13 @@ class DataListView(QtWidgets.QWidget):
                 self.file_list.item(idx).setBackground(QtGui.QColor(0, 134, 153))
                 self.file_list.item(idx).setForeground(QtGui.QColor("white"))
 
+                # todo: mea file auslesen um keys zu bestimmen
+                mea_file = file
+                keys = ['A', 'B', 'C']
+                tool_tip = "Keys: " + ", ".join(keys)
+                self.file_list.item(idx).setToolTip(tool_tip)
+
+
     # function that scans absolute and relative paths of data
     def get_data(self):
         # scan recursively for (which file format do we have?) files
