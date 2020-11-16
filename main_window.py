@@ -60,9 +60,9 @@ class MainWindow(QtWidgets.QMainWindow):
         self.toolbar.addAction(self.show_file_selection)
         # self.show_file_selection.setChecked(False)
         self.show_plot_manager = QtWidgets.QAction("Save Plots", self)
-        self.show_plot_manager.triggered.connect(self.on_show_plot_manager)
         self.show_plot_manager.setCheckable(True)
         self.show_plot_manager.setChecked(False)
+        self.show_plot_manager.triggered.connect(self.on_show_plot_manager)
         self.toolbar.addAction(self.show_plot_manager)
         self.addToolBar(self.toolbar)
 
