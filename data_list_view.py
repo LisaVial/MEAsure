@@ -44,10 +44,11 @@ class DataListView(QtWidgets.QWidget):
         data_files, meae_indices = self.get_data()
         for idx, file in enumerate(data_files):
             self.file_list.addItem(file)
+            tool_tip = "No .meae file found."
+            self.file_list.item(idx).setToolTip(tool_tip)
             if idx in meae_indices:
                 self.file_list.item(idx).setBackground(QtGui.QColor(0, 134, 153))
                 self.file_list.item(idx).setForeground(QtGui.QColor("white"))
-                tool_tip = "No .meae file found."
                 self.file_list.item(idx).setToolTip(tool_tip)
                 file_without_extension = ".".join(file.split('.')[:-1])
                 mea_file = self.current_folder + file_without_extension + ".meae"
