@@ -79,6 +79,10 @@ class MeaFileView(QtWidgets.QWidget):
         self.add_heatmap_tab.triggered.connect(self.open_heatmap_settings_dialog)
         self.toolbar.addAction(self.add_heatmap_tab)
 
+        self.add_frequency_analysis_tab = QtWidgets.QAction('Frequency analysis', self)
+        self.add_frequency_analysis_tab.triggered.connect(self.open_frequency_analysis_settings)
+        self.toolbar.addAction(self.add_frequency_analysis_tab)
+
         main_layout.addWidget(self.toolbar)
 
         sub_layout = QtWidgets.QHBoxLayout(self)
@@ -110,6 +114,10 @@ class MeaFileView(QtWidgets.QWidget):
         self.csd_plot_tab = None
         self.heatmap_tab = None
         self.rasterplot_tab = None
+        self.frequency_analysis_tab = None
+
+    def open_frequency_analysis_settings(self, is_pressed):
+        
 
     def open_heatmap_settings_dialog(self, is_pressed):
         allowed_modes = [HeatmapSettings.Mode.MCS]
