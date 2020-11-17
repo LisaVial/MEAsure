@@ -5,8 +5,8 @@ import h5py
 
 class McsDataReader:
     def __init__(self, path):
-        self.file_path = path
-        self.file, self.voltage_traces, self.sampling_frequency, self.duration = self.open_mea_file(self.file_path)
+        self.filename = path.split('/')[-1]
+        self.file, self.voltage_traces, self.sampling_frequency, self.duration = self.open_mea_file(path)
         self.channel_indices, self.labels = self.get_channel_indices(self.file)
 
     def open_mea_file(self, path):

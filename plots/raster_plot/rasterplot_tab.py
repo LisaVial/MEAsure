@@ -36,7 +36,6 @@ class RasterplotTab(QtWidgets.QWidget):
         fs = self.fs
         ax = fig.add_subplot(111)
         for i in reversed(range(len(spike_mat))):
-            print(i)
             if i % 2 == 0:
                 c = self.colors[0]
             else:

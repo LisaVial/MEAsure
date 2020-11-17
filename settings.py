@@ -1,6 +1,7 @@
 import PyQt5.QtCore as QtCore
 import json
 
+from frequency_analysis.frequency_analysis_settings import FrequencyAnalysisSettings
 from spike_detection.spike_detection_settings import SpikeDetectionSettings
 from filtering.filter_settings import FilterSettings
 from plots.csd_plot.csd_plot_settings import CsdPlotSettings
@@ -19,6 +20,7 @@ class Settings:
         self.filter_settings = FilterSettings()
         self.plot_settings = PlotSettings()
         self.csd_plot_settings = CsdPlotSettings()
+        self.frequency_analysis_settings = FrequencyAnalysisSettings()
         Settings.instance = self
 
     def load_settings_from_file(self, path):
@@ -38,6 +40,8 @@ class Settings:
                 self.plot_settings.from_dict(d["rasterplot_settings"])
             if 'csd_plot_settings' in d.keys():
                 self.csd_plot_settings.from_dict(d['csd_plot_settings'])
+            if 'frequency_analysis_settings' in d.keys():
+                self.frequency_analysis_settings.from_dict(d['frequency_analysis_settings'])
         except:
             pass
 
@@ -49,6 +53,7 @@ class Settings:
         d["spike_detection_settings"] = self.spike_detection_settings.to_dict()
         d["filter_settings"] = self.filter_settings.to_dict()
         d["rasterplot_settings"] = self.plot_settings.to_dict()
+        d["frequency_analysis_settings"] = self.frequency_analysis_settings.to_dict()
         return d
 
     def save(self, path):

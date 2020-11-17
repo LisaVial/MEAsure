@@ -18,6 +18,10 @@ from filtering.filter_settings_dialog import FilterSettingsDialog
 from filtering.filter_settings import FilterSettings
 from filtering.filter_tab import FilterTab
 
+from frequency_analysis.frequency_analysis_settings_dialog import FrequencyAnalysisSettingsDialog
+from frequency_analysis.frequency_analysis_settings import FrequencyAnalysisSettings
+from frequency_analysis.frequency_analysis_tab import FrequencyAnalysisTab
+
 from plots.csd_plot.csd_plot_tab import CsdPlotTab
 from plots.raster_plot.rasterplot_tab import RasterplotTab
 from plots.heatmap.heatmap_tab import HeatmapTab
@@ -36,7 +40,8 @@ class MeaFileView(QtWidgets.QWidget):
         self.reader = McsDataReader(mea_file)
         self.mea_file = mea_file
 
-        self.file_manager = FileManager(self, self.reader.file_path)
+        self.file_manager = FileManager(self, self.reader.filename)
+        self.frequency_analysis_settings = Settings.instance.frequency_analysis_settings
         self.filter_settings = Settings.instance.filter_settings
         self.plot_settings = Settings.instance.plot_settings
         self.spike_detection_settings = Settings.instance.spike_detection_settings
@@ -117,7 +122,26 @@ class MeaFileView(QtWidgets.QWidget):
         self.frequency_analysis_tab = None
 
     def open_frequency_analysis_settings(self, is_pressed):
-        
+        # for portrayal reasons, there should be a maximum of 16 channels (one column) per plot
+        # if more channels are selected, the whisest thing would be to open several plots simultaneously
+        # maybe this approach could also be used for rasterplots and isi histograms
+        channel_labels_and_indices = self.mea_grid.get_selected_channels()
+        allowed_channel_modes = [RasterplotSettings.ChannelSelection.ALL]
+        if len(channel_labels_and_indices) > 0:
+            allowed_channel_modes.append(RasterplotSettings.ChannelSelection.SELECTION)
+        settings_dialog = FrequencyAnalysisSettingsDialog(self, allowed_channel_modes, self.frequency_analysis_settings)
+        if settings_dialog.exec() == 1:
+            self.frequency_analysis_settings = settings_dialog.get_settings()
+            Settings.instance.frequency_analysis_settings = self.frequency_analysis_settings
+            if self.frequency_analysis_settings.channel_selection == FrequencyAnalysisSettings.ChannelSelection.ALL:
+                grid_indices = range(len(self.reader.voltage_traces))
+            elif self.frequency_analysis_settings.channel_selection == FrequencyAnalysisSettings.ChannelSelection.SELECTION:
+                grid_labels_and_indices = self.mea_grid.get_selected_channels()
+                grid_indices = [values[1] for values in grid_labels_and_indices]
+            self.frequency_analysis_tab = FrequencyAnalysisTab(self, self.reader, grid_indices,
+                                                               self.frequency_analysis_settings)
+            # todo: solve plotting of all channels
+            self.tab_widget.addTab(self.frequency_analysis_tab, "Frequency Analysis channel B")
 
     def open_heatmap_settings_dialog(self, is_pressed):
         allowed_modes = [HeatmapSettings.Mode.MCS]

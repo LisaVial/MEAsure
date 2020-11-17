@@ -19,7 +19,7 @@ class CsdPlotTab(QtWidgets.QWidget):
         main_layout = QtWidgets.QVBoxLayout(self)
         main_layout.setAlignment(QtCore.Qt.AlignTop | QtCore.Qt.AlignHCenter)
 
-        file_name = os.path.split(self.reader.file_path)[1]
+        file_name = self.reader.filename
         plot_name = 'CSD_Plot_' + file_name
 
         self.plot_widget = PlotWidget(self, plot_name)
