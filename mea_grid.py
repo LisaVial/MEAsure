@@ -5,7 +5,7 @@ import PyQt5.QtWidgets as QtWidgets
 
 button_style = """
 QPushButton {
-    background-color: #a985ff;
+    background-color: #9ec2c8;
     border-radius: 13;
     border: 0.5px solid black
 }
@@ -60,7 +60,6 @@ class MeaGrid(QWidget):
                 else:
                     self.label_indices_map[id]['grid index'] = row + (col*16) - 3
 
-                button.pressed.connect(lambda id=id: self.on_button_pressed(id))
                 self.label_button_map[label] = button
                 self.grid_layout.addWidget(button, row, col)
         self.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
@@ -89,10 +88,6 @@ class MeaGrid(QWidget):
         for label in self.label_button_map.keys():
             is_checked = self.label_button_map[label].isChecked()
             self.label_button_map[label].setChecked(not is_checked)
-
-    def on_button_pressed(self, id):
-        # plot_widget = PlotWidget(id)
-        print("Button with id:", id)
 
     def are_all_selected(self):
         channel_count = len(self.label_button_map.keys())

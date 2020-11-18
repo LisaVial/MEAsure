@@ -1,4 +1,4 @@
-from PyQt5 import QtWidgets, QtCore
+from PyQt5 import QtWidgets, QtGui, QtCore
 import pyqtgraph as pg
 
 from mcs_data_reader import McsDataReader
@@ -51,14 +51,19 @@ class MeaFileView(QtWidgets.QWidget):
         main_layout.setAlignment(QtCore.Qt.AlignTop | QtCore.Qt.AlignLeft)
 
         self.toolbar = QtWidgets.QToolBar(self)
+        self.toolbar.setIconSize(QtCore.QSize(52, 52))
 
         self.show_file_manager = QtWidgets.QAction("File manager", self)
+        file_manager_icon = QtGui.QIcon("./icons/file_manager_icon.png")
+        self.show_file_manager.setIcon(file_manager_icon)
         self.show_file_manager.triggered.connect(self.on_show_file_manager)
         self.show_file_manager.setCheckable(True)
         self.show_file_manager.setChecked(False)
         self.toolbar.addAction(self.show_file_manager)
 
         self.show_mea_grid = QtWidgets.QAction("MEA grid", self)
+        mea_grid_icon = QtGui.QIcon("./icons/mea_grid_icon.png")
+        self.show_mea_grid.setIcon(mea_grid_icon)
         self.show_mea_grid.triggered.connect(self.on_show_mea_grid)
         self.show_mea_grid.setCheckable(True)
         self.show_mea_grid.setChecked(True)
@@ -66,27 +71,39 @@ class MeaFileView(QtWidgets.QWidget):
 
         self.show_filter_dialog = QtWidgets.QAction("Filtering", self)
         self.show_filter_dialog.triggered.connect(self.open_filter_dialog)
+        filter_icon = QtGui.QIcon("./icons/filter_icon.png")
+        self.show_filter_dialog.setIcon(filter_icon)
         self.toolbar.addAction(self.show_filter_dialog)
 
         self.show_spike_detection_dialog = QtWidgets.QAction('Spike Detection', self)
         self.show_spike_detection_dialog.triggered.connect(self.open_sd_dialog)
+        spike_detection_icon = QtGui.QIcon("./icons/spike_detection_icon.png")
+        self.show_spike_detection_dialog.setIcon(spike_detection_icon)
         self.toolbar.addAction(self.show_spike_detection_dialog)
 
+        self.add_frequency_analysis_tab = QtWidgets.QAction('Frequency analysis', self)
+        frequency_analysis_icon = QtGui.QIcon("./icons/frequency_analysis_icon.png")
+        self.add_frequency_analysis_tab.setIcon(frequency_analysis_icon)
+        self.add_frequency_analysis_tab.triggered.connect(self.open_frequency_analysis_settings)
+        self.toolbar.addAction(self.add_frequency_analysis_tab)
+
         self.add_csd_plot_tab = QtWidgets.QAction('CSD plot', self)
+        csd_plot_icon = QtGui.QIcon("./icons/csd_plot_icon.png")
+        self.add_csd_plot_tab.setIcon(csd_plot_icon)
         self.add_csd_plot_tab.triggered.connect(self.add_csd_plot_to_tabs)
         self.toolbar.addAction(self.add_csd_plot_tab)
 
         self.add_rasterplot_tab = QtWidgets.QAction('Rasterplot', self)
+        rasterplot_plot_icon = QtGui.QIcon("./icons/rasterplot_icon.png")
+        self.add_rasterplot_tab.setIcon(rasterplot_plot_icon)
         self.add_rasterplot_tab.triggered.connect(self.open_rasterplot_settings_dialog)
         self.toolbar.addAction(self.add_rasterplot_tab)
 
         self.add_heatmap_tab = QtWidgets.QAction('Heatmap', self)
+        heatmap_icon = QtGui.QIcon("./icons/heatmap_icon.png")
+        self.add_heatmap_tab.setIcon(heatmap_icon)
         self.add_heatmap_tab.triggered.connect(self.open_heatmap_settings_dialog)
         self.toolbar.addAction(self.add_heatmap_tab)
-
-        self.add_frequency_analysis_tab = QtWidgets.QAction('Frequency analysis', self)
-        self.add_frequency_analysis_tab.triggered.connect(self.open_frequency_analysis_settings)
-        self.toolbar.addAction(self.add_frequency_analysis_tab)
 
         main_layout.addWidget(self.toolbar)
 
@@ -135,13 +152,16 @@ class MeaFileView(QtWidgets.QWidget):
             Settings.instance.frequency_analysis_settings = self.frequency_analysis_settings
             if self.frequency_analysis_settings.channel_selection == FrequencyAnalysisSettings.ChannelSelection.ALL:
                 grid_indices = range(len(self.reader.voltage_traces))
+                grid_labels = self.reader.labels
             elif self.frequency_analysis_settings.channel_selection == FrequencyAnalysisSettings.ChannelSelection.SELECTION:
                 grid_labels_and_indices = self.mea_grid.get_selected_channels()
                 grid_indices = [values[1] for values in grid_labels_and_indices]
-            self.frequency_analysis_tab = FrequencyAnalysisTab(self, self.reader, grid_indices,
+                grid_labels = [values[0] for values in grid_labels_and_indices]
+            self.frequency_analysis_tab = FrequencyAnalysisTab(self, self.reader, grid_indices, grid_labels,
                                                                self.frequency_analysis_settings)
             # todo: solve plotting of all channels
-            self.tab_widget.addTab(self.frequency_analysis_tab, "Frequency Analysis channel B")
+            self.tab_widget.addTab(self.frequency_analysis_tab, "Frequency Analysis")
+            self.frequency_analysis_tab.initialize_frequency_analysis()
 
     def open_heatmap_settings_dialog(self, is_pressed):
         allowed_modes = [HeatmapSettings.Mode.MCS]

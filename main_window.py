@@ -54,12 +54,16 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.toolbar = QtWidgets.QToolBar(self)
         self.show_file_selection = QtWidgets.QAction("File selection", self)
+        file_selection_icon = QtGui.QIcon("./icons/file_selection_icon.png")
+        self.show_file_selection.setIcon(file_selection_icon)
         self.show_file_selection.triggered.connect(self.on_show_file_selection)
         self.show_file_selection.setCheckable(True)  # kann an/aus sein
         self.show_file_selection.setChecked(True)
         self.toolbar.addAction(self.show_file_selection)
         # self.show_file_selection.setChecked(False)
         self.show_plot_manager = QtWidgets.QAction("Save Plots", self)
+        plot_manager_icon = QtGui.QIcon("./icons/plot_manager_icon.png")
+        self.show_plot_manager.setIcon(plot_manager_icon)
         self.show_plot_manager.setCheckable(True)
         self.show_plot_manager.setChecked(False)
         self.show_plot_manager.triggered.connect(self.on_show_plot_manager)

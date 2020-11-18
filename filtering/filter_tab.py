@@ -106,7 +106,6 @@ class FilterTab(QtWidgets.QWidget):
     def check_for_filtered_traces(self):
         # scan path of current file, if the desired .h5 file exists
         filtered = self.mea_file[:-3] + '_filtered.h5'
-        print(filtered)
         if os.path.exists(filtered):
             # if this file already exists, set it as filter_mat
             filter_mat = self.open_filter_file(filtered)
@@ -157,7 +156,6 @@ class FilterTab(QtWidgets.QWidget):
     def on_filter_thread_finished(self):
         self.progress_label.setText('Finished :)')
         if self.filtering_thread.filtered_mat:
-            print('copying new filter mat...')
             self.filtered_mat = self.filtering_thread.filtered_mat.copy()
         self.filtering_thread = None
 

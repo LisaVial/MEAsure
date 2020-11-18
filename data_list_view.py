@@ -70,7 +70,7 @@ class DataListView(QtWidgets.QWidget):
                 relative_path = os.path.relpath(absolute_path, self.current_folder)
                 if relative_path.startswith('$RECYCLE.BIN'):
                     continue
-                if file.endswith(".h5") or file.endswith('result.hdf5'):
+                if file.endswith(".h5"):
                     found_files.append(relative_path)
                 if file.endswith(".meae"):
                     meae_files.append(relative_path)
