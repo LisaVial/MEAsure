@@ -73,7 +73,6 @@ class MeaGrid(QWidget):
         for idx, label in enumerate(ordered_labels):
             if self.label_button_map[label].isChecked():
                 selected_channels.append((self.labels[idx], self.label_indices_map[self.labels[idx]]['grid index']))
-        print(selected_channels)
         return selected_channels
 
     def select_all(self):
