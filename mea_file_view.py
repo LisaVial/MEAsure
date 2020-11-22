@@ -122,6 +122,7 @@ class MeaFileView(QtWidgets.QWidget):
         self.tab_widget.setTabsClosable(True)
         self.tab_widget.setMovable(True)
         self.tab_widget.setTabBarAutoHide(False)
+        self.tab_widget.tabCloseRequested.connect(self.on_tab_close_requested)
 
         sub_layout.addWidget(self.tab_widget)
         main_layout.addLayout(sub_layout)
@@ -310,17 +311,26 @@ class MeaFileView(QtWidgets.QWidget):
     def on_show_mea_grid(self, is_pressed):
         self.mea_grid.setVisible(is_pressed)
 
-    # def can_be_closed(self):
-    #     if self.filter_tab is None:
-    #     return self.filter_tab.can_be_closed(), self.spike_detection_tab.can_be_closed(), \
-    #            self.csd_plot_tab.can_be_closed(), self.heatmap_tab.can_be_closed(),self.rasterplot_tab.can_be_closed()
-    #
-    # def closeEvent(self, close_event):
-    #     self.filter_tab.close()
-    #     self.spike_detection_tab.close()
-    #
-    #     self.csd_plot_tab.close()
-    #     self.heatmap_tab.close()
-    #     self.rasterplot_tab.close()
-    #
-    #     super().closeEvent(close_event)
+    @QtCore.pyqtSlot(int)
+    def on_tab_close_requested(self, index):
+        # get tab that should be closed
+        tab = self.tab_widget.widget(index)
+        # tab can be FilterTab, FrequencyAnalysisTab, etc.
+        # the important thing is that the tab has a can_be_closed method
+        if tab.can_be_closed():
+            self.tab_widget.removeTab(index)
+        # else: do not close tab because it is busy (= ignore close request)
+
+    def can_be_closed(self):
+        tab_count = self.tab_widget.count()
+
+        # check if all tabs can be closed
+        can_all_tabs_be_closed = True
+        for tab_index in range(tab_count):
+            tab = self.tab_widget.widget(tab_index)
+            if not tab.can_be_closed():
+                can_all_tabs_be_closed = False
+                break
+
+        return can_all_tabs_be_closed
+

@@ -130,4 +130,10 @@ class FrequencyAnalysisTab(QtWidgets.QWidget):
         self.plot_widget.toolbar.hide()
         self.plot_manager.add_plot(self)
 
+    def can_be_closed(self):
+        # only allow closing if not busy
+        is_calculating_ffts = (self.frequency_analysis_thread is not None)
+        is_plotting = (self.plot_thread is not None)
+        return not is_calculating_ffts and not is_plotting
+
 

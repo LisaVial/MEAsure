@@ -63,10 +63,6 @@ class CsdPlotTab(QtWidgets.QWidget):
         ax.set_xlabel('time')
         ax.set_ylabel('MEA channels')
 
-    # @QtCore.pyqtSlot(int)
-    # def on_tab_close_requested(self, index):
-    #     # only close and remove tab if not currently loading/plotting
-    #     plot_widget = self.widget(index)
-    #     if not plot_widget.is_busy_plotting():
-    #         plot_widget.close()
-    #         self.removeTab(index)
+    def can_be_closed(self):
+        # plot is not running a thread => can be always closed
+        return True

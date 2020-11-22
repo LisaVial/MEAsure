@@ -6,6 +6,8 @@ import os.path
 from meae_data_reader import MeaeDataReader
 
 
+# This widget scans for files in different folders via os.path and adds them to a list of which the user can
+# open his/her desired .h5 file
 class DataListView(QtWidgets.QWidget):
     def __init__(self, parent):
         super().__init__(parent)

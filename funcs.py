@@ -1,6 +1,7 @@
 import numpy as np
 
 
+# todo: check if any of the functions are used elsewhere, when not delete the file
 def text_parser(file_path):
     with open(file_path) as file:
         lines = file.readlines()

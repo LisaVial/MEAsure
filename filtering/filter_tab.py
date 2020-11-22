@@ -229,13 +229,9 @@ class FilterTab(QtWidgets.QWidget):
             return None
 
     # todo: make tab closeable
-    # def is_busy_filtering(self):
-    #     return self.filter_thread is not None
-    #
-    # @QtCore.pyqtSlot(int)
-    # def on_tab_close_requested(self, index):
-    #     # only close and remove tab if not currently loading/plotting
-    #     filter_thread = self.filtering_thread
-    #     if not filter_thread.is_busy_filtering():
-    #         filter_thread.close()
-    #         self.removeTab(index)
+    def is_busy_filtering(self):
+        return self.filtering_thread is not None
+
+    def can_be_closed(self):
+        # only allow closing if not busy
+        return not self.is_busy_filtering()

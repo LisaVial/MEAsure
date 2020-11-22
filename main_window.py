@@ -14,6 +14,8 @@ from plot_manager import PlotManager
 from settings import Settings
 
 
+# This script initializes the MainWindow of the MEAsure application. So the dialog the user sees once he or she starts
+# the GUI via the start_gui.py script.
 class MainWindow(QtWidgets.QMainWindow):
     settings_file_name = "local-settings.json"
 
@@ -28,6 +30,9 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.file_list_view = DataListView(self)
 
+        # MainWindow has a different layout style than other widgets...
+        # (https://doc.qt.io/qtforpython/_images/mainwindowlayout.png)
+
         self.data_file_list_dock_widget = QtWidgets.QDockWidget(self)
         self.data_file_list_dock_widget.setWidget(self.file_list_view)
 
@@ -36,8 +41,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.data_file_list_dock_widget.setWindowTitle("Folder selection")
         self.data_file_list_dock_widget.setObjectName("folder-selection")
         self.addDockWidget(QtCore.Qt.LeftDockWidgetArea, self.data_file_list_dock_widget)
-        self.centralwidget = QtWidgets.QWidget(self)
-
+        
         self.plot_list_view = PlotListView(self)
 
         self.plot_list_dock_widget = QtWidgets.QDockWidget(self)
@@ -48,6 +52,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.addDockWidget(QtCore.Qt.RightDockWidgetArea, self.plot_list_dock_widget)
 
         self.mea_tab_widget = MeaFileTabWidget(self)
+        # ...basically you set a centralwidget which will be the focus point of the window
         self.setCentralWidget(self.mea_tab_widget)
 
         self.load_settings()

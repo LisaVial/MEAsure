@@ -2,8 +2,9 @@ from PyQt5 import QtCore, QtWidgets
 import os
 
 
+# This widget enables the user to set paths to .meae files or SpyKING CIRCUS (SC) result files which will then be used
+# for plotting
 class FileManager(QtWidgets.QWidget):
-
     def __init__(self, mea_file_view, mcs_file):
         super().__init__(mea_file_view)
         self.mea_file_view = mea_file_view
@@ -61,6 +62,8 @@ class FileManager(QtWidgets.QWidget):
         self.auto_detect_meae_file()
         self.auto_detect_sc_file()
 
+    # This function automatically detects the .meae file if it is in the same folder as the normal .h5 file (with the
+    # same filename except for the file extension).
     def auto_detect_meae_file(self):
         file = self.mcs_file
         file_without_extension = ".".join(file.split('.')[:-1])
@@ -68,13 +71,16 @@ class FileManager(QtWidgets.QWidget):
         if os.path.exists(file_as_meae):
             self.meae_path_input.setText(file_as_meae)
 
+    # This function automatically detects the SC file if it is in the same folder as the normal .h5 file (with the
+    # same filename except for the file extension).
     def auto_detect_sc_file(self):
         file = self.mcs_file
         file_without_extension = ".".join(file.split('.')[:-1])
-        file_as_sc = file_without_extension + ".result.hdf5"
+        file_as_sc = file_without_extension + ".clusters.hdf5"
         if os.path.exists(file_as_sc):
             self.sc_path_input.setText(file_as_sc)
 
+    # This function verifies if the file with the given filepath really exists
     def get_verified_meae_file(self):
         file = self.meae_path_input.text().strip()
         if os.path.exists(file):
@@ -82,6 +88,7 @@ class FileManager(QtWidgets.QWidget):
         else:
             return None
 
+    # This function verifies if the file with the given filepath really exists
     def get_verified_sc_file(self):
         file = self.sc_path_input.text().strip()
         if os.path.exists(file):
@@ -89,6 +96,7 @@ class FileManager(QtWidgets.QWidget):
         else:
             return None
 
+    # This function allows a filepath selection dialog to open, once the mea_path_change_button is pressed
     @QtCore.pyqtSlot()
     def on_meae_path_change_button_pressed(self):
         selectedFile = QtWidgets.QFileDialog.getOpenFileName(self, "Please select Meae file", self.mcs_file_directory,
@@ -96,10 +104,12 @@ class FileManager(QtWidgets.QWidget):
         if len(selectedFile) > 0:
             self.meae_path_input.setText(selectedFile)
 
+    # This function removes a filepath, once the mea_path_remove_button is pressed
     @QtCore.pyqtSlot()
     def on_meae_path_remove_button_pressed(self):
         self.meae_path_input.setText("")
 
+    # This function allows a filepath selection dialog to open, once the sc_path_change_button is pressed
     @QtCore.pyqtSlot()
     def on_sc_path_change_button_pressed(self):
         selectedFile = QtWidgets.QFileDialog.getOpenFileName(self, "Please select SC file", self.mcs_file_directory,
@@ -107,6 +117,7 @@ class FileManager(QtWidgets.QWidget):
         if len(selectedFile) > 0:
             self.sc_path_input.setText(selectedFile)
 
+    # This function removes a filepath, once the sc_path_remove_button is pressed
     @QtCore.pyqtSlot()
     def on_sc_path_remove_button_pressed(self):
         self.sc_path_input.setText("")

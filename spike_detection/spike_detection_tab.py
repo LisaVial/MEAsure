@@ -221,13 +221,9 @@ class SpikeDetectionTab(QtWidgets.QWidget):
                     dset_5 = hf.create_dataset(indices_key, data=np.array(indices))
         self.label_save_check_box.setText('spike times saved in: ' + analysis_file_path)
 
-    # def is_busy_detecting_spikes(self):
-    #     return self.spike_detection_thread is not None
-    #
-    # @QtCore.pyqtSlot(int)
-    # def on_tab_close_requested(self, index):
-    #     # only close and remove tab if not currently loading/plotting
-    #     spike_detection_thread = self.spike_detection_thread
-    #     if not spike_detection_thread.is_busy_detecting_spikes():
-    #         spike_detection_thread.close()
-    #         self.removeTab(index)
+    def is_busy_detecting_spikes(self):
+        return self.spike_detection_thread is not None
+
+    def can_be_closed(self):
+        # only closeable if spike detection is not running currently
+        return not self.is_busy_detecting_spikes()

@@ -32,6 +32,9 @@ class MeaFileTabWidget(QtWidgets.QTabWidget):
     @QtCore.pyqtSlot(int)
     def on_tab_close_requested(self, index):
         mea_file_view = self.widget(index)
-        self.mea_file_widget_map.pop(mea_file_view.mea_file, None)
-        self.removeTab(index)
-        mea_file_view.close()
+
+        if mea_file_view.can_be_closed():
+            self.mea_file_widget_map.pop(mea_file_view.mea_file, None)
+            self.removeTab(index)
+            mea_file_view.close()
+        #else: at least one tab in mea_file_view is running a thread => ignore close request to avoid crashes
