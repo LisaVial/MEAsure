@@ -46,9 +46,8 @@ class RasterplotTab(QtWidgets.QWidget):
                     if spike > 1000:        # I try this to handle that spikes are stored as indices in SC file
                         spike = spike/fs
                     if (s - self.duration/30) <= spike <= s and spike not in spiketimes_for_plot[j][s_i]:
-                        spiketimes_for_plot[j][s_i].append(spike)
-                    else:
-                        continue
+                        spiketimes_for_plot[j][s_i].append(spike - (s - self.duration/30))
+
         print(spiketimes_for_plot)
         for i in range(len(spiketimes_for_plot)):
             ax = fig.add_subplot(spec[i])
