@@ -1,5 +1,6 @@
 from PyQt5 import QtCore, QtWidgets
 import numpy as np
+import matplotlib.gridspec as gridspec
 
 from plot_manager import PlotManager
 from plots.plot_widget import PlotWidget
@@ -34,36 +35,41 @@ class RasterplotTab(QtWidgets.QWidget):
 
     def plot(self, fig, spike_mat):
         fs = self.fs
-        ax = fig.add_subplot(111)
-        for i in reversed(range(len(spike_mat))):
-            spiketimes_for_plot = []
-            for spike in spike_mat[i]:
-                for s in range(self.duration, int(self.duration/30)):
-                    spiketimes_for_plot.append([])
-                    if spike <= s:
-                        spiketimes_for_plot.append(spike)
-            # embed()
-
-            if i % 2 == 0:
-                c = self.colors[0]
-            else:
-                c = self.colors[1]
-            ax.scatter(spike_mat[i]/fs, np.ones(len(spike_mat[i])) * i, marker='|', color=c)
-        ax.spines['right'].set_visible(False)
-        ax.spines['top'].set_visible(False)
-        labels = [item.get_text() for item in ax.get_yticklabels()]
-        empty_string_labels = [''] * len(labels)
-        ax.set_yticklabels(empty_string_labels)
-        ax.set_ylabel('MEA channels')
-        xlims = ax.get_xlim()
-        ax.set_xticks([0, xlims[1]/2, xlims[1]])
-        ax.set_xlim([0, xlims[1]])
-        ax.set_xticklabels(['0', str(int(np.ceil(self.duration/2))), str(int(np.ceil(self.duration)))])
-        ax.set_xlabel('time [s]')
-        ax.get_xaxis().tick_bottom()
-        ax.get_yaxis().tick_left()
-        ax.tick_params(labelsize=10, direction='out')
-        PlotManager.instance.add_plot(self.plot_widget)
+        rows = int(np.ceil(np.sqrt(len(spike_mat))))
+        spec = gridspec.GridSpec(ncols=rows, nrows=rows, figure=fig)
+        time_bin_range = range(1, int(self.duration) + int(self.duration/30), int(self.duration/30))
+        spiketimes_for_plot = [[[] for j in range(len(time_bin_range))] for i in range(len(spike_mat))]
+        for j in range(len(spike_mat)):
+            for spike in spike_mat[j]:
+                for s_i, s in enumerate(time_bin_range):
+                    if (s - self.duration/30) <= spike <= s and spike not in spiketimes_for_plot[j][s_i]:
+                        spiketimes_for_plot[j][s_i].append(spike)
+                    else:
+                        continue
+        print(spiketimes_for_plot)
+        for i in range(len(spiketimes_for_plot)):
+            ax = fig.add_subplot(spec[i])
+            for idx, spike_sublist in enumerate(reversed(spiketimes_for_plot[i])):
+                if idx % 2 == 0:
+                    c = self.colors[0]
+                else:
+                    c = self.colors[1]
+                ax.scatter(spike_sublist/fs, np.ones(len(spike_sublist)) * idx, marker='|', color=c)
+                ax.spines['right'].set_visible(False)
+                ax.spines['top'].set_visible(False)
+                labels = [item.get_text() for item in ax.get_yticklabels()]
+                empty_string_labels = [''] * len(labels)
+                ax.set_yticklabels(empty_string_labels)
+                ax.set_ylabel('subdivided time of MEA channel')
+                xlims = ax.get_xlim()
+                ax.set_xticks([0, xlims[1]/2, xlims[1]])
+                ax.set_xlim([0, xlims[1]])
+                ax.set_xticklabels(['0', str((int(self.duration/30)/2)), str(int(self.duration/30))])
+                ax.set_xlabel('time [s]')
+                ax.get_xaxis().tick_bottom()
+                ax.get_yaxis().tick_left()
+                ax.tick_params(labelsize=10, direction='out')
+            PlotManager.instance.add_plot(self.plot_widget)
 
     def can_be_closed(self):
         # plot is not running a thread => can be always closed
