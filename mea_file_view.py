@@ -208,9 +208,11 @@ class MeaFileView(QtWidgets.QWidget):
             self.plot_settings = settings_dialog.get_settings()
             # overwrite global settings as well
             if self.plot_settings.channel_selection == RasterplotSettings.ChannelSelection.ALL:
+                grid_labels = self.reader.labels
                 grid_indices = range(len(self.reader.voltage_traces))
             elif self.plot_settings.channel_selection == RasterplotSettings.ChannelSelection.SELECTION:
                 grid_labels_and_indices = self.mea_grid.get_selected_channels()
+                grid_labels = [values[0] for values in grid_labels_and_indices]
                 grid_indices = [values[1] for values in grid_labels_and_indices]
 
             Settings.instance.raserplot_settings = self.plot_settings
@@ -220,19 +222,19 @@ class MeaFileView(QtWidgets.QWidget):
             # initialise plotting
             if self.plot_settings.mode == RasterplotSettings.Mode.MCS:
                 self.rasterplot_tab = RasterplotTab(self, self.reader, self.plot_settings, sampling_rate, duration,
-                                               grid_indices)
+                                               grid_labels, grid_indices)
                 self.tab_widget.addTab(self.rasterplot_tab, "Rasterplot")
             elif self.plot_settings.mode == RasterplotSettings.Mode.MEAE:
                 meae_path = self.file_manager.get_verified_meae_file()
                 meae_reader = MeaeDataReader(meae_path)
                 self.rasterplot_tab = RasterplotTab(self, meae_reader, self.plot_settings, sampling_rate, duration,
-                                               grid_indices)
+                                               grid_labels, grid_indices)
                 self.tab_widget.addTab(self.rasterplot_tab, "Rasterplot")
             elif self.plot_settings.mode == RasterplotSettings.Mode.SC:
                 sc_path = self.file_manager.get_verified_sc_file()
                 sc_reader = SCDataReader(sc_path)
                 self.rasterplot_tab = RasterplotTab(self, sc_reader, self.plot_settings, sampling_rate, duration,
-                                               grid_indices)
+                                               grid_labels, grid_indices)
                 self.tab_widget.addTab(self.rasterplot_tab, "Rasterplot")
 
     @QtCore.pyqtSlot()

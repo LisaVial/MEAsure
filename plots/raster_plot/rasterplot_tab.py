@@ -8,12 +8,13 @@ from IPython import embed
 
 
 class RasterplotTab(QtWidgets.QWidget):
-    def __init__(self, parent, reader, settings, sampling_rate, duration, grid_indices):
+    def __init__(self, parent, reader, settings, sampling_rate, duration, grid_labels, grid_indices):
         super().__init__(parent)
         self.reader = reader
         self.settings = settings
         self.fs = sampling_rate
         self.duration = duration
+        self.grid_labels = grid_labels
         self.grid_indices = grid_indices
         self.colors = ['#749800', '#006d7c']
         if len(grid_indices) > len(self.reader.spiketimes):
@@ -34,12 +35,12 @@ class RasterplotTab(QtWidgets.QWidget):
         self.plot(self.figure, self.spiketimes)
 
     def plot(self, fig, spike_mat):
-        print(spike_mat)
         fs = self.fs
         rows = int(np.ceil(np.sqrt(len(spike_mat))))
         spec = gridspec.GridSpec(ncols=rows, nrows=rows, figure=fig)
         time_bin_range = range(1, int(self.duration) + int(self.duration/30), int(self.duration/30))
         spiketimes_for_plot = [[[] for j in range(len(time_bin_range))] for i in range(len(spike_mat))]
+        to_row_major_order = (lambda idx, rows: ((idx - 1) % rows) * rows + int((idx - 1) / rows) + 1)
         for j in range(len(spike_mat)):
             for spike in spike_mat[j]:
                 for s_i, s in enumerate(time_bin_range):
@@ -48,7 +49,6 @@ class RasterplotTab(QtWidgets.QWidget):
                     if (s - self.duration/30) <= spike <= s and spike not in spiketimes_for_plot[j][s_i]:
                         spiketimes_for_plot[j][s_i].append(spike - (s - self.duration/30))
 
-        print(spiketimes_for_plot)
         for i in range(len(spiketimes_for_plot)):
             ax = fig.add_subplot(spec[i])
             for idx, spike_sublist in enumerate(reversed(spiketimes_for_plot[i])):
@@ -59,6 +59,7 @@ class RasterplotTab(QtWidgets.QWidget):
                 ax.scatter(spike_sublist/fs, np.ones(len(spike_sublist)) * idx, marker='|', color=c)
                 ax.spines['right'].set_visible(False)
                 ax.spines['top'].set_visible(False)
+                # ax.set_title(self.grid_labels[to_row_major_order])
                 labels = [item.get_text() for item in ax.get_yticklabels()]
                 empty_string_labels = [''] * len(labels)
                 ax.set_yticklabels(empty_string_labels)
