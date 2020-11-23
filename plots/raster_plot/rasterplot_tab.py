@@ -34,6 +34,7 @@ class RasterplotTab(QtWidgets.QWidget):
         self.plot(self.figure, self.spiketimes)
 
     def plot(self, fig, spike_mat):
+        print(spike_mat)
         fs = self.fs
         rows = int(np.ceil(np.sqrt(len(spike_mat))))
         spec = gridspec.GridSpec(ncols=rows, nrows=rows, figure=fig)
@@ -42,6 +43,8 @@ class RasterplotTab(QtWidgets.QWidget):
         for j in range(len(spike_mat)):
             for spike in spike_mat[j]:
                 for s_i, s in enumerate(time_bin_range):
+                    if spike > 1000:        # I try this to handle that spikes are stored as indices in SC file
+                        spike = spike/fs
                     if (s - self.duration/30) <= spike <= s and spike not in spiketimes_for_plot[j][s_i]:
                         spiketimes_for_plot[j][s_i].append(spike)
                     else:
