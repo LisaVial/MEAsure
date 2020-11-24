@@ -353,14 +353,17 @@ class MeaFileView(QtWidgets.QWidget):
             # overwrite global settings as well
             if self.csd_plot_settings.channel_selection == CsdPlotSettings.ChannelSelection.ALL:
                 grid_indices = range(len(self.reader.voltage_traces))
+                grid_labels = self.reader.labels
             elif self.csd_plot_settings.channel_selection == CsdPlotSettings.ChannelSelection.SELECTION:
                 grid_labels_and_indices = self.mea_grid.get_selected_channels()
                 grid_indices = [values[1] for values in grid_labels_and_indices]
+                grid_labels = [values[0] for values in grid_labels_and_indices]
 
             Settings.instance.csd_plot_settings = self.csd_plot_settings
-            duration = self.reader.duration
+            fs = self.reader.sampling_frequency
 
-            self.csd_plot_tab = CsdPlotTab(self, self.reader, grid_indices, duration, self.csd_plot_settings)
+            self.csd_plot_tab = CsdPlotTab(self, self.reader, grid_indices, grid_labels, fs,
+                                           self.csd_plot_settings)
             self.tab_widget.addTab(self.csd_plot_tab, "CSD Plot")
 
     def on_show_file_manager(self, is_pressed):

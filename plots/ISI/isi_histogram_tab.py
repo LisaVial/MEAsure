@@ -6,8 +6,6 @@ import matplotlib.gridspec as gridspec
 from plot_manager import PlotManager
 from plots.plot_widget import PlotWidget
 
-from IPython import embed
-
 
 class IsiHistogramTab(QtWidgets.QWidget):
     def __init__(self, parent, reader, settings, sampling_rate, grid_labels, grid_indices):
