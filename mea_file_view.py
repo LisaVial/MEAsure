@@ -25,7 +25,10 @@ from frequency_analysis.frequency_analysis_tab import FrequencyAnalysisTab
 from plots.csd_plot.csd_plot_tab import CsdPlotTab
 from plots.raster_plot.rasterplot_tab import RasterplotTab
 from plots.heatmap.heatmap_tab import HeatmapTab
+from plots.ISI.isi_histogram_tab import IsiHistogramTab
 
+from plots.ISI.isi_histogram_settings import IsiHistogramSettings
+from plots.ISI.isi_histogram_settings_dialog import IsiHistogramSettingsDialog
 from plots.csd_plot.csd_plot_settings import CsdPlotSettings
 from plots.csd_plot.csd_plot_settings_dialog import CsdPlotSettingsDialog
 from plots.raster_plot.rasterplot_settings_dialog import RasterplotSettingsDialog
@@ -46,6 +49,7 @@ class MeaFileView(QtWidgets.QWidget):
         self.plot_settings = Settings.instance.plot_settings
         self.spike_detection_settings = Settings.instance.spike_detection_settings
         self.csd_plot_settings = Settings.instance.csd_plot_settings
+        self.isi_histogram_settings = Settings.instance.isi_histogram_settings
 
         main_layout = QtWidgets.QVBoxLayout(self)
         main_layout.setAlignment(QtCore.Qt.AlignTop | QtCore.Qt.AlignLeft)
@@ -99,6 +103,12 @@ class MeaFileView(QtWidgets.QWidget):
         self.add_rasterplot_tab.triggered.connect(self.open_rasterplot_settings_dialog)
         self.toolbar.addAction(self.add_rasterplot_tab)
 
+        self.add_isi_histogram_tab = QtWidgets.QAction('ISI Histogram', self)
+        isi_histogram_icon = QtGui.QIcon("./icons/isi_histogram_icon.png")
+        self.add_isi_histogram_tab.setIcon(isi_histogram_icon)
+        self.add_isi_histogram_tab.triggered.connect(self.open_isi_histogram_settings_dialog)
+        self.toolbar.addAction(self.add_isi_histogram_tab)
+
         self.add_heatmap_tab = QtWidgets.QAction('Heatmap', self)
         heatmap_icon = QtGui.QIcon("./icons/heatmap_icon.png")
         self.add_heatmap_tab.setIcon(heatmap_icon)
@@ -138,10 +148,56 @@ class MeaFileView(QtWidgets.QWidget):
         self.heatmap_tab = None
         self.rasterplot_tab = None
         self.frequency_analysis_tab = None
+        self.isi_histogram_tab = None
+
+    def open_isi_histogram_settings_dialog(self, is_pressed):
+        channel_labels_and_indices = self.mea_grid.get_selected_channels()
+        allowed_channel_modes = [IsiHistogramSettings.ChannelSelection.ALL]
+        if len(channel_labels_and_indices) > 0:
+            allowed_channel_modes.append(IsiHistogramSettings.ChannelSelection.SELECTION)
+            # determine allowed modes
+        allowed_modes = [IsiHistogramSettings.Mode.MCS]
+        if self.file_manager.get_verified_meae_file() is not None:
+            allowed_modes.append(IsiHistogramSettings.Mode.MEAE)
+        if self.file_manager.get_verified_sc_file() is not None:
+            allowed_modes.append(IsiHistogramSettings.Mode.SC)
+        settings_dialog = IsiHistogramSettingsDialog(self, allowed_modes, allowed_channel_modes,
+                                                     self.isi_histogram_settings)
+        if settings_dialog.exec() == 1:  # 'Execute' clicked
+            self.plot_settings = settings_dialog.get_settings()
+            # overwrite global settings as well
+            if self.plot_settings.channel_selection == IsiHistogramSettings.ChannelSelection.ALL:
+                grid_labels = self.reader.labels
+                grid_indices = range(len(self.reader.voltage_traces))
+            elif self.plot_settings.channel_selection == IsiHistogramSettings.ChannelSelection.SELECTION:
+                grid_labels_and_indices = self.mea_grid.get_selected_channels()
+                grid_labels = [values[0] for values in grid_labels_and_indices]
+                grid_indices = [values[1] for values in grid_labels_and_indices]
+
+            Settings.instance.isi_histogram_settings = self.plot_settings
+            sampling_rate = self.reader.sampling_frequency
+
+            # initialise plotting
+            if self.plot_settings.mode == IsiHistogramSettings.Mode.MCS:
+                self.isi_histogram_tab = IsiHistogramTab(self, self.reader, self.plot_settings, sampling_rate,
+                                                         grid_labels, grid_indices)
+                self.tab_widget.addTab(self.isi_histogram_tab, "ISI Histogram")
+            elif self.plot_settings.mode == IsiHistogramSettings.Mode.MEAE:
+                meae_path = self.file_manager.get_verified_meae_file()
+                meae_reader = MeaeDataReader(meae_path)
+                self.isi_histogram_tab = IsiHistogramTab(self, meae_reader, self.plot_settings, sampling_rate,
+                                                         grid_labels, grid_indices)
+                self.tab_widget.addTab(self.isi_histogram_tab, "ISI Histogram")
+            elif self.plot_settings.mode == IsiHistogramSettings.Mode.SC:
+                sc_path = self.file_manager.get_verified_sc_file()
+                sc_reader = SCDataReader(sc_path)
+                self.isi_histogram_tab = IsiHistogramTab(self, sc_reader, self.plot_settings, sampling_rate,
+                                                    grid_labels, grid_indices)
+                self.tab_widget.addTab(self.isi_histogram_tab, "ISI Histogram")
 
     def open_frequency_analysis_settings(self, is_pressed):
         # for portrayal reasons, there should be a maximum of 16 channels (one column) per plot
-        # if more channels are selected, the whisest thing would be to open several plots simultaneously
+        # if more channels are selected, the wisest thing would be to open several plots simultaneously
         # maybe this approach could also be used for rasterplots and isi histograms
         channel_labels_and_indices = self.mea_grid.get_selected_channels()
         allowed_channel_modes = [RasterplotSettings.ChannelSelection.ALL]

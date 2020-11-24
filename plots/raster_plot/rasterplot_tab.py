@@ -50,7 +50,7 @@ class RasterplotTab(QtWidgets.QWidget):
                         spiketimes_for_plot[j][s_i].append(spike - (s - self.duration/30))
         for i in range(len(spiketimes_for_plot)):
             row_major_order_idx = to_row_major_order(i, rows)
-            ax = fig.add_subplot(spec[row_major_order_idx])
+            ax = fig.add_subplot(spec[i])
             for idx, spike_sublist in enumerate(reversed(spiketimes_for_plot[i])):
                 if idx % 2 == 0:
                     c = self.colors[0]
