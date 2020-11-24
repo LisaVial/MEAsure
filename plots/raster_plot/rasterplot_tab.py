@@ -48,9 +48,9 @@ class RasterplotTab(QtWidgets.QWidget):
                         spike = spike/fs
                     if (s - self.duration/30) <= spike <= s and spike not in spiketimes_for_plot[j][s_i]:
                         spiketimes_for_plot[j][s_i].append(spike - (s - self.duration/30))
-
         for i in range(len(spiketimes_for_plot)):
-            ax = fig.add_subplot(spec[i])
+            row_major_order_idx = to_row_major_order(i, rows)
+            ax = fig.add_subplot(spec[row_major_order_idx])
             for idx, spike_sublist in enumerate(reversed(spiketimes_for_plot[i])):
                 if idx % 2 == 0:
                     c = self.colors[0]
@@ -59,7 +59,7 @@ class RasterplotTab(QtWidgets.QWidget):
                 ax.scatter(spike_sublist/fs, np.ones(len(spike_sublist)) * idx, marker='|', color=c)
                 ax.spines['right'].set_visible(False)
                 ax.spines['top'].set_visible(False)
-                # ax.set_title(self.grid_labels[to_row_major_order])
+                ax.set_title(self.grid_labels[i])
                 labels = [item.get_text() for item in ax.get_yticklabels()]
                 empty_string_labels = [''] * len(labels)
                 ax.set_yticklabels(empty_string_labels)
