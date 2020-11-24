@@ -1,6 +1,5 @@
 from PyQt5 import QtWidgets, QtGui, QtCore
-import pyqtgraph as pg
-
+# all the following imports are script of the MEAsure application
 from mcs_data_reader import McsDataReader
 from meae_data_reader import MeaeDataReader
 from SC_data_reader import SCDataReader
@@ -37,13 +36,19 @@ from plots.heatmap.heatmap_settings_dialog import HeatmapSettingsDialog
 from plots.heatmap.heatmap_settings import HeatmapSettings
 
 
+# the MeaFileView Widget is portraying the currently selected Mea recording and what the user can do with it
 class MeaFileView(QtWidgets.QWidget):
     def __init__(self, parent, mea_file):
         super().__init__(parent)
-        self.reader = McsDataReader(mea_file)
-        self.mea_file = mea_file
+        self.reader = McsDataReader(mea_file)   # in the beginning we will take the mcs python module to look into the
+        # file
+        self.mea_file = mea_file # this is just the path to the current mea recording h5 file
 
-        self.file_manager = FileManager(self, self.reader.filename)
+        self.file_manager = FileManager(self, self.reader.filename)     # this widget handles tasks in respect to
+        # filepaths, with it the user is able to chose the .meae filepath (just .h5 data after analysis) or the
+        # filepath of results of spyking circus
+
+        # here, settings for different tasks which can be carried out by the user are defined
         self.frequency_analysis_settings = Settings.instance.frequency_analysis_settings
         self.filter_settings = Settings.instance.filter_settings
         self.plot_settings = Settings.instance.plot_settings
@@ -51,15 +56,22 @@ class MeaFileView(QtWidgets.QWidget):
         self.csd_plot_settings = Settings.instance.csd_plot_settings
         self.isi_histogram_settings = Settings.instance.isi_histogram_settings
 
+        # setting up the main layout
         main_layout = QtWidgets.QVBoxLayout(self)
         main_layout.setAlignment(QtCore.Qt.AlignTop | QtCore.Qt.AlignLeft)
 
+        # here, we set up a toolbar, which holds different buttons to start executing different tasks
         self.toolbar = QtWidgets.QToolBar(self)
+        # this function only is for bigger icons
         self.toolbar.setIconSize(QtCore.QSize(52, 52))
 
+        # the first task is just to show the file manager
+        # with toolbars we actually have to set up QAction
         self.show_file_manager = QtWidgets.QAction("File manager", self)
+        # here we set the icon for the action
         file_manager_icon = QtGui.QIcon("./icons/file_manager_icon.png")
         self.show_file_manager.setIcon(file_manager_icon)
+        # we have to connect the QAction has to be connected to a function which tells the program what to do
         self.show_file_manager.triggered.connect(self.on_show_file_manager)
         self.show_file_manager.setCheckable(True)
         self.show_file_manager.setChecked(False)

@@ -16,11 +16,13 @@ class DataListView(QtWidgets.QWidget):
         self.selected_folder_label = QtWidgets.QLabel("")
         self.current_folder = ""
 
-        # implementation of button to set folder directory
+        # implementation of button to set folder directory. The directory will be saved, so once its set it will be
+        # shown automatically when the program is opened again
         self.select_folder_button = QtWidgets.QPushButton("...")
         self.select_folder_button.setFixedSize(24, 24)
         self.select_folder_button.pressed.connect(self.on_select_folder_button_pressed)
 
+        # the DataList itself is a QListWidget
         self.file_list = QtWidgets.QListWidget(self)
 
         # layout

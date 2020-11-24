@@ -16,6 +16,12 @@ class FileManager(QtWidgets.QWidget):
         main_layout = QtWidgets.QVBoxLayout(self)
         main_layout.setAlignment(QtCore.Qt.AlignTop | QtCore.Qt.AlignHCenter)
 
+        filename_entry = QtWidgets.QLineEdit(self)
+        filename_entry.setText(self.mcs_file)
+        filename_entry_label = QtWidgets.QLabel('Filename for saving:')
+        main_layout.addWidget(filename_entry_label)
+        main_layout.addWidget(filename_entry)
+
         mcs_layout = QtWidgets.QHBoxLayout()
         mcs_label = QtWidgets.QLabel(self)
         mcs_label.setText("MCS file:")
