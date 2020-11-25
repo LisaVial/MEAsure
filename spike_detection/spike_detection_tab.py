@@ -80,11 +80,11 @@ class SpikeDetectionTab(QtWidgets.QWidget):
 
         # open plot that will portray single spikes that are found, it will be portrayed on the right side of the
         # dialog, this is why it is added to the main layout
-        self.single_spike_plot = pg.PlotWidget()
-        self.single_spike_plot.setBackground('w')
-        self.single_spike_plot.setLabel('left', 'amplitude [&#956;V]', **styles)
-        self.single_spike_plot.setLabel('bottom', 'time [s]', **styles)
-        main_layout.addWidget(self.single_spike_plot)
+        self.voltage_trace_and_spikes_plot = pg.PlotWidget()
+        self.voltage_trace_and_spikes_plot.setBackground('w')
+        self.voltage_trace_and_spikes_plot.setLabel('left', 'amplitude [&#956;V]', **styles)
+        self.voltage_trace_and_spikes_plot.setLabel('bottom', 'time [s]', **styles)
+        main_layout.addWidget(self.voltage_trace_and_spikes_plot)
 
         # set up initial values to plot (everything is set to zero with dimensions according to default values of
         # settings
@@ -98,18 +98,18 @@ class SpikeDetectionTab(QtWidgets.QWidget):
 
         # plot initial values
         pen_spike_voltage = pg.mkPen(color='#006e7d')
-        self.signal_plot = self.single_spike_plot.plot(self.time_vt[-1], self.voltage_trace[-1], pen=pen_spike_voltage,
-                                                       name='voltage trace')
+        self.signal_plot = self.voltage_trace_and_spikes_plot.plot(self.time_vt[-1], self.voltage_trace[-1], pen=pen_spike_voltage,
+                                                                   name='voltage trace')
         pen_thresh = pg.mkPen(color='k')
         self.hLine = pg.InfiniteLine(angle=0, movable=False, pen=pen_thresh)
         self.hLine.setValue(self.threshold)
-        self.single_spike_plot.addItem(self.hLine)
+        self.voltage_trace_and_spikes_plot.addItem(self.hLine)
         self.hLine2 = pg.InfiniteLine(angle=0, movable=False, pen=pen_thresh)
         self.hLine2.setValue(-1 * self.threshold)
-        self.single_spike_plot.addItem(self.hLine2)
+        self.voltage_trace_and_spikes_plot.addItem(self.hLine2)
 
-        self.scatter = self.single_spike_plot.plot(pen=None, symbol='o', name='spiketimes')
-        self.single_spike_plot.addLegend()
+        self.scatter = self.voltage_trace_and_spikes_plot.plot(pen=None, symbol='o', name='spiketimes')
+        self.voltage_trace_and_spikes_plot.addLegend()
 
     def on_channel_data_updated(self, data):
         spiketimes = data[0]
@@ -127,10 +127,10 @@ class SpikeDetectionTab(QtWidgets.QWidget):
             self.spike_detection_thread.progress_made.connect(self.on_progress_made)
             self.spike_detection_thread.operation_changed.connect(self.on_operation_changed)
             self.spike_detection_thread.channel_data_updated.connect(self.on_channel_data_updated)
-            self.spike_detection_thread.single_spike_data_updated.connect(self.on_single_spike_data_updated)
+            self.spike_detection_thread.single_spike_data_updated.connect(self.on_spike_data_updated)
             self.spike_detection_thread.finished.connect(self.on_spike_detection_thread_finished)
 
-            debug_mode = False  # set to 'True' in order to debug plot creation with embed
+            debug_mode = True  # set to 'True' in order to debug plot creation with embed
             if debug_mode:
                 # synchronous plotting (runs in main thread and thus allows debugging)
                 self.spike_detection_thread.run()
@@ -166,15 +166,18 @@ class SpikeDetectionTab(QtWidgets.QWidget):
             self.save_spike_mat(self.spike_mat, self.spike_indices, self.reader.file_path)
 
     @QtCore.pyqtSlot(list)
-    def on_single_spike_data_updated(self, data):
-        signal, spike_time, spike_height, self.threshold = data[0], data[1], data[2], data[3]
+    def on_spike_data_updated(self, data):
+        signal, spiketime_indices, threshold = data[0], data[1], data[2]
         self.voltage_trace.append(signal)
-        self.time_vt.append(list(np.arange(0, len(self.voltage_trace[-1])) / self.fs))
+        self.time_vt.append(list(np.arange(0, (len(signal)*(1/self.fs)), 1/(self.fs))))
+        indices_to_append = spiketime_indices[spiketime_indices < 10000]
+        print(indices_to_append)
+        self.spike_indices.append(indices_to_append)
+        self.spike_height.append(signal[indices_to_append])
+        print(self.spike_indices, self.spike_height)
         # H, edges = np.histogram(signal, bins=1000)
         # centers = edges[:-1] + np.diff(edges)[0] / 2
         # self.signal_plot.setData(centers, H)
-        self.spike_height.append([spike_height])
-        self.spike_indices.append([spike_time / self.fs])
 
     @QtCore.pyqtSlot()
     def on_timer(self):
@@ -184,8 +187,8 @@ class SpikeDetectionTab(QtWidgets.QWidget):
         self.signal_plot.setData(self.time_vt[-1], self.voltage_trace[-1])
         self.hLine.setValue(self.threshold)
         self.hLine2.setValue(-1 * self.threshold)
-
-        self.scatter.setData(self.spike_indices[-1], self.spike_height[-1])
+        print(self.spike_indices[-1], self.spike_height[-1])
+        self.scatter.setData(self.spike_indices[-1][self.spike_indices[-1] < 10000]/self.fs, self.spike_height[-1])
 
     # function to save the found spiketimes stored in spike_mat as .csv file
     def save_spike_mat(self, spike_mat, spike_indices, mea_file):

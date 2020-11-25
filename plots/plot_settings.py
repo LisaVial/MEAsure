@@ -11,16 +11,16 @@ class PlotSettings:
 
     def __init__(self, initial_mode=Mode.MCS):
         self.mode = initial_mode
-        self.channel_selection = PlotSettings.ChannelSelection.ALL
+        # self.channel_selection = PlotSettings.ChannelSelection.ALL
 
     def to_dict(self):
         result = dict()
         result['mode'] = self.mode
-        result["channel selection"] = self.channel_selection
+        # result["channel selection"] = self.channel_selection
         return result
 
     def from_dict(self, dictionary):
         if 'mode' in dictionary.keys():
             self.mode = dictionary['mode']
-        if "channel selection" in dictionary.keys():
-            self.channel_selection = dictionary["channel selection"]
+        # if "channel selection" in dictionary.keys():
+        #     self.channel_selection = dictionary["channel selection"]

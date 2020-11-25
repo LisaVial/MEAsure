@@ -1,5 +1,6 @@
 from PyQt5 import QtCore
 from scipy.signal import filtfilt, butter
+import time
 
 
 # In this script the QThread which handles filtering in the background is set up
@@ -69,7 +70,11 @@ class FilterThread(QtCore.QThread):
             # Right now, all the channels should be loaded and filtered, since the way storing of .meae files is set
             # up it will get very confusing fast.
             # So basically grid_indices should be a list with the length of all channel indices
-            signal = signals[ch_id]
+            t1 = time.clock()
+            signal = reader.file['Data']['Recording_0']['AnalogStream']['Stream_0']['ChannelData'][ch_id]
+            t2 = time.clock() - t1
+            print('Time to load channel data: ', t2)
+            t3 = time.clock()
             # Here the filter is chosen according to the filter mode
             if self.filter_mode == 0:
                 filtered = self.butter_div_filters(signal, self.cut_1, fs, 'low')
@@ -79,7 +84,8 @@ class FilterThread(QtCore.QThread):
                 filtered = self.butter_bandpass_filter(signal, self.cut_1, self.cut_2, fs)
             # Once data is filtered, it is appended to the filter_mat list.
             filter_mat.append(filtered)
-
+            t4 = time.clock() - t3
+            print('Time to filter data:', t4)
             # Here the list of the currently created filtered trace is created. Only every 312th data point of the
             # original signal is sent, to be able to plot the signals, since there are for once not enough pixels on
             # screen to plot all data points correctly and also, for massive data loads also the pyqtgraph plot widget

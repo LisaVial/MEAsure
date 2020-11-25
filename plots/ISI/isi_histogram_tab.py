@@ -50,7 +50,7 @@ class IsiHistogramTab(QtWidgets.QWidget):
         for i, isi_list in enumerate(interspike_intervals):
             ax = fig.add_subplot(spec[i])
             sns.distplot(isi_list, bins=11, color=c, ax=ax)
-            # ax.set_xlim([0, int(np.max(isi_list))])
+            ax.set_xlim([0, int(np.max(isi_list))])
             ax.spines['right'].set_visible(False)
             ax.spines['top'].set_visible(False)
             ax.set_title(self.grid_labels[i])
