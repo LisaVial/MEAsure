@@ -1,6 +1,7 @@
 from PyQt5 import QtCore, QtWidgets
 import numpy as np
 import matplotlib.gridspec as gridspec
+import seaborn as sns
 
 from plot_manager import PlotManager
 from plots.plot_widget import PlotWidget
@@ -35,15 +36,19 @@ class RasterplotTab(QtWidgets.QWidget):
         self.plot(self.figure, self.spiketimes)
 
     def plot(self, fig, spike_mat):
+        sns.set()
         fs = self.fs
         rows = int(np.ceil(np.sqrt(len(spike_mat))))
         spec = gridspec.GridSpec(ncols=rows, nrows=rows, figure=fig)
-        time_bin_range = range(1, int(self.duration) + int(self.duration/30), int(self.duration/30))
+        time_bin_range = range(10, int(self.duration) + int(self.duration/30), int(self.duration/30))
         spiketimes_for_plot = [[[] for j in range(len(time_bin_range))] for i in range(len(spike_mat))]
         to_row_major_order = (lambda idx, rows: ((idx - 1) % rows) * rows + int((idx - 1) / rows) + 1)
+        y_labels = []
         for j in range(len(spike_mat)):
             for spike in spike_mat[j]:
                 for s_i, s in enumerate(time_bin_range):
+                    if s % 10 == 0 and s not in y_labels:
+                        y_labels.append(s)
                     if spike > 1000:        # I try this to handle that spikes are stored as indices in SC file
                         spike = spike/fs
                     if (s - self.duration/30) <= spike <= s and spike not in spiketimes_for_plot[j][s_i]:
@@ -60,10 +65,10 @@ class RasterplotTab(QtWidgets.QWidget):
                 ax.spines['right'].set_visible(False)
                 ax.spines['top'].set_visible(False)
                 ax.set_title(self.grid_labels[i])
-                labels = [item.get_text() for item in ax.get_yticklabels()]
-                empty_string_labels = [''] * len(labels)
-                ax.set_yticklabels(empty_string_labels)
-                ax.set_ylabel('subdivided time of MEA channel')
+                y_lims = ax.get_ylim()
+                ax.set_yticks([y_lims[0], y_lims[1]/2, y_lims[1]])
+                ax.set_yticklabels([y_labels[-1], y_labels[int(len(y_labels)/2)], 0])
+                ax.set_ylabel('time of recording')
                 xlims = ax.get_xlim()
                 ax.set_xticks([0, xlims[1]/2, xlims[1]])
                 ax.set_xlim([0, xlims[1]])

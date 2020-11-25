@@ -1,6 +1,7 @@
 from PyQt5 import QtCore, QtWidgets
 import matplotlib.gridspec as gridspec
 import numpy as np
+import seaborn as sns
 
 from frequency_analysis.frequency_analysis_thread import FrequencyAnalysisThread
 from frequency_analysis.frequency_plot_creation_thread import FrequencyPlotCreationThread
@@ -101,7 +102,7 @@ class FrequencyAnalysisTab(QtWidgets.QWidget):
             self.plot_thread.start()  # start will start thread (and run), but main thread will continue immediately
 
     def plot(self, figure, frequencies):
-
+        sns.set()
         # determine optimal number of rows for quadratic diagram
         rows = int(np.ceil(np.sqrt(len(frequencies))))
 
