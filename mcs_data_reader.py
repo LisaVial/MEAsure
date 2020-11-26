@@ -17,10 +17,6 @@ class McsDataReader:
         t3 = time.clock() - t2
         print("Time elapsed for opening vts (old): ", t3)
         self.channel_indices, self.labels = self.get_channel_indices(self.file)
-        # t4 = time.clock()
-        # self.signal = self.get_signal()
-        # t5 = time.clock() - t4
-        # print("Time elapsed for opening vts (new): ", t5)
 
     def open_mea_file(self, path):
         file = h5py.File(path, 'r')
@@ -28,7 +24,6 @@ class McsDataReader:
 
     def get_data_of_file(self):
         voltage_traces = self.file['Data']['Recording_0']['AnalogStream']['Stream_0']['ChannelData']
-        print(voltage_traces)
         sampling_frequency = 1000000/self.file['Data']['Recording_0']['AnalogStream']['Stream_0']['InfoChannel']['Tick'][0]
         duration_index = self.file['Data']['Recording_0']['AnalogStream']['Stream_0']['ChannelDataTimeStamps'][0][2]
         duration = duration_index * (1/sampling_frequency)

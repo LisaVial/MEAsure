@@ -7,7 +7,7 @@ from .spike_detection_settings import SpikeDetectionSettings
 
 class SpikeDetectionSettingsWidget(QtWidgets.QGroupBox):
 
-    def __init__(self, parent, allowed_modes, settings=None):
+    def __init__(self, parent, allowed_file_modes, allowed_modes, settings=None):
         super().__init__(parent)
 
         self.setTitle("Settings")
@@ -18,11 +18,25 @@ class SpikeDetectionSettingsWidget(QtWidgets.QGroupBox):
         valid_number_regex = QtCore.QRegExp(valid_number_pattern)
         number_validator = QtGui.QRegExpValidator(valid_number_regex)
 
+        group_box_file_mode = QtWidgets.QGroupBox(self)
+        group_box_file_mode.setTitle('Select a file for plot:')
+
+        group_layout_file_mode = QtWidgets.QVBoxLayout(group_box_file_mode)
+
+        self.mcs_file_button = QtWidgets.QRadioButton('MCS file')
+        self.mcs_file_button.setEnabled(SpikeDetectionSettings.FileMode.MCS in allowed_file_modes)
+        group_layout_file_mode.addWidget(self.mcs_file_button)
+
+        self.meae_file_button = QtWidgets.QRadioButton('MEAE file')
+        self.meae_file_button.setEnabled(SpikeDetectionSettings.FileMode.MEAE in allowed_file_modes)
+        group_layout_file_mode.addWidget(self.meae_file_button)
+        group_layout_file_mode.addWidget(group_box_file_mode)
+
         group_box = QtWidgets.QGroupBox(self)
         group_box.setTitle('Which channels should be used?')
 
         group_layout = QtWidgets.QVBoxLayout(group_box)
-
+        group_layout.addWidget(group_box_file_mode)
         self.all_channels_button = QtWidgets.QRadioButton('all MEA channels')
         group_layout.addWidget(self.all_channels_button)
 
@@ -68,6 +82,10 @@ class SpikeDetectionSettingsWidget(QtWidgets.QGroupBox):
         self.save_spiketimes_changed()
 
     def set_settings(self, settings):
+        if settings.file_mode == SpikeDetectionSettings.FileMode.MCS:
+            self.mcs_file_button.setChecked(True)
+        elif settings.file_mode == SpikeDetectionSettings.FileMode.MEAE:
+            self.meae_file_button.setChecked(True)
         self.spike_window_input.setText(str(settings.spike_window))
         self.mode_widget.setCurrentIndex(settings.mode)  # set entry index by reading mode (index) from settings
         self.threshold_factor_input.setText(str(settings.threshold_factor))
@@ -80,6 +98,10 @@ class SpikeDetectionSettingsWidget(QtWidgets.QGroupBox):
     def get_settings(self):
         settings = SpikeDetectionSettings()
         # get settings by reading current values
+        if self.mcs_file_button.isChecked():
+            settings.mode = SpikeDetectionSettings.FileMode.MCS
+        elif self.meae_file_button.isChecked():
+            settings.mode = SpikeDetectionSettings.FileMode.MEAE
 
         try:
             settings.spike_window = float(self.spike_window_input.text())

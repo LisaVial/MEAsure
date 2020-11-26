@@ -308,10 +308,14 @@ class MeaFileView(QtWidgets.QWidget):
     @QtCore.pyqtSlot()
     def open_sd_dialog(self):
         channel_labels_and_indices = self.mea_grid.get_selected_channels()
-        allowed_modes = [FilterSettings.ChannelSelection.ALL]
+        allowed_file_modes = [SpikeDetectionSettings.FileMode.MCS]
+        if self.file_manager.get_verified_meae_file() is not None:
+            allowed_file_modes.append(SpikeDetectionSettings.FileMode.MEAE)
+        allowed_modes = [SpikeDetectionSettings.ChannelSelection.ALL]
         if len(channel_labels_and_indices) > 0:
             allowed_modes.append(SpikeDetectionSettings.ChannelSelection.SELECTION)
-        settings_dialog = SpikeDetectionSettingsDialog(self, self.spike_detection_settings, allowed_modes)
+        settings_dialog = SpikeDetectionSettingsDialog(self, allowed_file_modes,
+                                                       allowed_modes, self.spike_detection_settings)
         if settings_dialog.exec() == 1:  # 'Execute' clicked
             self.spike_detection_settings = settings_dialog.get_settings()
             if self.spike_detection_settings.channel_selection == SpikeDetectionSettings.ChannelSelection.ALL:
@@ -322,12 +326,19 @@ class MeaFileView(QtWidgets.QWidget):
             # overwrite global settings as well
             Settings.instance.spike_detection_settings = self.spike_detection_settings
 
-            # initialise filtering
-            # give FilterThread indices (all is default and if selected, thread has to receive special indices
-            # -> via filter tab?)
-            self.spike_detection_tab = SpikeDetectionTab(self, self.reader, grid_indices, self.spike_detection_settings)
-            self.tab_widget.addTab(self.spike_detection_tab, "Spike detection")
-            self.spike_detection_tab.initialize_spike_detection()
+            # initialise spike detection
+            if self.spike_detection_settings.file_mode == SpikeDetectionSettings.FileMode.MCS:
+                self.spike_detection_tab = SpikeDetectionTab(self, self.reader, grid_indices,
+                                                             self.spike_detection_settings)
+                self.tab_widget.addTab(self.spike_detection_tab, "Spike detection")
+                self.spike_detection_tab.initialize_spike_detection()
+            elif self.spike_detection_settings.mode == SpikeDetectionSettings.FileMode.MEAE:
+                meae_path = self.file_manager.get_verified_meae_file()
+                meae_reader = MeaeDataReader(meae_path)
+                self.spike_detection_tab = SpikeDetectionTab(self, meae_reader, grid_indices,
+                                                             self.spike_detection_settings)
+                self.tab_widget.addTab(self.spike_detection_tab, "Spike detection")
+                self.spike_detection_tab.initialize_spike_detection()
 
     @QtCore.pyqtSlot()
     def open_filter_dialog(self):

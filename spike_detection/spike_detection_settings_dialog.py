@@ -4,7 +4,7 @@ from spike_detection.spike_detection_settings_widget import SpikeDetectionSettin
 
 
 class SpikeDetectionSettingsDialog(QtWidgets.QDialog):
-    def __init__(self, parent, allowed_modes, inital_settings=None):
+    def __init__(self, parent, allowed_file_modes, allowed_modes, inital_settings=None):
         super().__init__(parent)
 
         # basic layout of the new spike_detection_dialog
@@ -21,7 +21,8 @@ class SpikeDetectionSettingsDialog(QtWidgets.QDialog):
         # the main layout (e.g. if single buttons/plots/whatever should have a defined layout)
         main_layout = QtWidgets.QVBoxLayout(self)
         main_layout.setAlignment(QtCore.Qt.AlignTop | QtCore.Qt.AlignCenter)
-        self.spike_detection_settings_widget = SpikeDetectionSettingsWidget(self, inital_settings, allowed_modes)
+        self.spike_detection_settings_widget = SpikeDetectionSettingsWidget(self, allowed_file_modes,
+                                                                            allowed_modes, inital_settings)
         main_layout.addWidget(self.spike_detection_settings_widget)
 
         self.okay_button = QtWidgets.QPushButton(self)

@@ -121,9 +121,9 @@ class SpikeDetectionTab(QtWidgets.QWidget):
             self.progress_bar.setValue(0)
             self.progress_label.setText("")
             self.progress_label.setText("Detecting Spikes")
-            self.spike_detection_thread = SpikeDetectionThread(self, self.reader, self.settings.spike_window,
-                                                               self.settings.mode, self.settings.threshold_factor,
-                                                               self.grid_indices)
+            self.spike_detection_thread = SpikeDetectionThread(self, self.reader, self.settings.file_mode,
+                                                               self.settings.spike_window, self.settings.mode,
+                                                               self.settings.threshold_factor, self.grid_indices)
             self.spike_detection_thread.progress_made.connect(self.on_progress_made)
             self.spike_detection_thread.operation_changed.connect(self.on_operation_changed)
             self.spike_detection_thread.channel_data_updated.connect(self.on_channel_data_updated)
@@ -170,7 +170,7 @@ class SpikeDetectionTab(QtWidgets.QWidget):
         signal, spiketime_indices, threshold = data[0], data[1], data[2]
         self.voltage_trace.append(signal)
         self.time_vt.append(list(np.arange(0, (len(signal)*(1/self.fs)), 1/(self.fs))))
-        indices_to_append = spiketime_indices[spiketime_indices < 10000]
+        indices_to_append = np.asarray(spiketime_indices)[np.asarray(spiketime_indices < 10000)]
         print(indices_to_append)
         self.spike_indices.append(indices_to_append)
         self.spike_height.append(signal[indices_to_append])
