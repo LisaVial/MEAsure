@@ -59,6 +59,8 @@ class FilterSettingsDialog(QtWidgets.QDialog):  # Setting up of a new class. In 
         self.filter_settings_widget = FilterSettingsWidget(self, inital_settings, allowed_channel_modes)
         main_layout.addWidget(self.filter_settings_widget)
 
+        self.meae_filename = None
+
         # Here two small widgets are defined inside of this script. They are a okay and cancel button to execute or
         # abort filtering.
         # Line 61 defines which widget will be used. Here, we use a button.
@@ -92,6 +94,7 @@ class FilterSettingsDialog(QtWidgets.QDialog):  # Setting up of a new class. In 
         checked by the MeaFileView to trigger adding a new tab to the MeaFileView Widget (check this script to see
         more).
         """
+        self.meae_filename = self.filter_settings_widget.get_meae_filename() + '.meae'
         self.accept()
 
     def on_cancel_clicked(self):

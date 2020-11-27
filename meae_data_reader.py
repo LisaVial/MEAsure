@@ -5,18 +5,21 @@ import h5py
 
 class MeaeDataReader:
     def __init__(self, path):
+        self.file_path = path
         self.filename = path.split('/')[-1]
         self.file = h5py.File(path, 'r')
         if 'fs' in list(self.file.keys()):
             self.sampling_frequency = self.file['fs'][()]
-        if 'channel_indices' in list(self.file.keys()):
-            self.channel_indices = self.file['channel_indices']
         if 'channel_labels' in list(self.file.keys()):
             self.channel_labels = self.file['channel_labels']
 
         filtered = "/filter" in self.file
         if filtered:
             self.filtered_traces = self.file['filter']
+        if 'channel_indices' in list(self.file.keys()):
+            self.channel_indices = self.file['channel_indices']
+            if self.channel_indices[0] == 83:
+                self.channel_indices = range(len(self.filtered_traces))
 
         has_spike_times = False
         for key in self.file.keys():

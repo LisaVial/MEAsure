@@ -142,17 +142,16 @@ class SpikeDetectionThread(QtCore.QThread):
                 peaks = signal.find_peaks(ch_signal, height=threshold)
                 channel_spike_indices = peaks[0]
                 indices.append(channel_spike_indices)
-                single_spike_data = [ch_signal, channel_spike_indices, threshold]
-                self.single_spike_data_updated.emit(single_spike_data)
-                print(len(channel_spike_indices))
+                single_spike_data = [ch_signal, indices[-1], threshold]
 
             if collect_troughs:
                 troughs = signal.find_peaks(ch_signal, height=threshold)
                 channel_spike_indices = troughs[0]
                 indices.append(channel_spike_indices)
-                single_spike_data = [ch_signal, channel_spike_indices, threshold]
-                self.single_spike_data_updated.emit(single_spike_data)
-                print(len(channel_spike_indices))
+                single_spike_data = [ch_signal, indices[-1], threshold]
+
+            self.single_spike_data_updated.emit(single_spike_data)
+
             t4 = time.clock() - t3
             print('time for detecting spikes: ', t4)
             spiketimes = channel_spike_indices / fs

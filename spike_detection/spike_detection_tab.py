@@ -3,6 +3,7 @@ import os
 import pyqtgraph as pg
 import numpy as np
 import h5py
+from IPython import embed
 
 from spike_detection.spike_detection_thread import SpikeDetectionThread
 
@@ -92,8 +93,8 @@ class SpikeDetectionTab(QtWidgets.QWidget):
         self.voltage_trace = [[0, 0, 0, 0]]
         # self.time_vt = [np.zeros(self.settings.spike_window * self.reader.fs)]
         self.time_vt = [[0, 0, 0, 0]]
-        self.spike_indices = [[0]]
-        self.spike_height = [[0]]
+        self.spike_indices = [[0, 0, 0, 0]]
+        self.spike_height = [[0, 0, 0, 0]]
         self.threshold = 0
 
         # plot initial values
@@ -172,9 +173,8 @@ class SpikeDetectionTab(QtWidgets.QWidget):
         if len(signal) > 0 and len(spiketime_indices) > 0:
             self.voltage_trace.append(signal)
             self.time_vt.append(list(np.arange(0, len(signal) * (1 / self.fs), 1 / self.fs)))
-            self.spike_indices.append(spiketime_indices)
-            self.spike_height.append(np.asarray(signal)[spiketime_indices[-1]])
-            print(self.spike_height)
+            self.spike_indices.append(list(spiketime_indices))
+            self.spike_height.append(list(np.asarray(signal)[spiketime_indices]))
 
     @QtCore.pyqtSlot()
     def on_timer(self):
@@ -184,7 +184,7 @@ class SpikeDetectionTab(QtWidgets.QWidget):
         self.signal_plot.setData(self.time_vt[-1], self.voltage_trace[-1])
         self.hLine.setValue(self.threshold)
         self.hLine2.setValue(-1 * self.threshold)
-        self.scatter.setData(self.spike_indices[-1] / self.fs, self.spike_height[-1])
+        self.scatter.setData(np.asarray(self.spike_indices[-1]) / self.fs, self.spike_height[-1])
 
     # function to save the found spiketimes stored in spike_mat as .csv file
     def save_spike_mat(self, spike_mat, spike_indices, mea_file):

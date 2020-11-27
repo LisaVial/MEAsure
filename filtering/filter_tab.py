@@ -3,6 +3,7 @@ import h5py
 import os
 import pyqtgraph as pg
 import numpy as np
+from IPython import embed
 
 from filtering.filter_thread import FilterThread
 
@@ -16,10 +17,11 @@ class FilterTab(QtWidgets.QWidget):
     # The FilterTab class receives the MeaFileView as a parent (where it will be embedded), the McsDataReader (another
     # class, which handles the reading of the h5 files of the recordings), the grid  (either all or a selection of grid
     # channels) and the filter settings.
-    def __init__(self, parent, reader, grid_indices, settings):
+    def __init__(self, parent, meae_filename, reader, grid_indices, settings):
         super().__init__(parent)
         # By setting variables to class variables (done with the 'self.' in front of them) it enables you to use them
         # outside this __init__() function. For example in functions you created yourself further down in the script.
+        self.meae_filename = meae_filename
         self.reader = reader
         self.grid_indices = grid_indices
         self.settings = settings
@@ -173,7 +175,11 @@ class FilterTab(QtWidgets.QWidget):
         self.filtering_thread = None
 
         if self.settings.save_filtered_traces:
-            self.save_filter_mat(self.filtered_mat, self.reader.file_path[:-3] + '.meae', self.reader)
+            path = os.path.split(self.reader.file_path)[0]
+            if self.meae_filename is None:
+                self.meae_filename = os.path.split(self.reader.file_path)[-1][:-3] + '.meae'
+            print(self.meae_filename)
+            self.save_filter_mat(self.filtered_mat, os.path.join(path, self.meae_filename), self.reader)
 
     def save_filter_mat(self, filter_mat, filename, reader):
         """

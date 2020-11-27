@@ -86,8 +86,15 @@ class FilterSettingsWidget(QtWidgets.QGroupBox):
         self.save_filtered_traces_box = QtWidgets.QCheckBox('Save filtered traces')
         self.save_filtered_traces_label = QtWidgets.QLabel('')
         group_box_layout.addWidget(self.save_filtered_traces_box)
-        group_box_layout.addWidget(self.save_filtered_traces_label)
+        self.filename_entry_label = QtWidgets.QLabel(self)
+        self.filename_entry_label.setVisible(False)
+        self.filename_entry_label.setText('Enter filename without extension:')
+        self.filename_entry = QtWidgets.QLineEdit(self)
+        self.filename_entry.setVisible(False)
+        group_box_layout.addWidget(self.filename_entry_label)
+        group_box_layout.addWidget(self.filename_entry)
         self.save_filtered_traces_box.stateChanged.connect(self.save_filtered_traces_changed)
+        group_box_layout.addWidget(self.save_filtered_traces_label)
 
         # if there are no changes in the settings the default settings are used
         if not settings:
@@ -98,6 +105,9 @@ class FilterSettingsWidget(QtWidgets.QGroupBox):
         self.set_settings(settings)
         # This function updates the label (info about saving or not saving traces).
         self.save_filtered_traces_changed()
+
+    def get_meae_filename(self):
+        return self.filename_entry.text().strip()
 
     def set_settings(self, settings):
         """
@@ -128,6 +138,11 @@ class FilterSettingsWidget(QtWidgets.QGroupBox):
             self.textbox_label.setText('Lower cutoff frequency [Hz]')
             self.second_cutoff_textbox.setVisible(True)
             self.second_textbox_label.setVisible(True)
+        elif index == 1:
+            self.textbox_label.setText('Upper cutoff frequency [Hz]')
+        else:
+            self.second_cutoff_textbox.setVisible(False)
+            self.second_textbox_label.setVisible(False)
 
     def get_settings(self):
         """
@@ -162,6 +177,10 @@ class FilterSettingsWidget(QtWidgets.QGroupBox):
         :return:
         """
         if self.save_filtered_traces_box.isChecked():
+            self.filename_entry_label.setVisible(True)
+            self.filename_entry.setVisible(True)
             self.save_filtered_traces_label.setText("Saving filtered traces to .meae file at end of filtering")
         else:
+            self.filename_entry_label.setVisible(False)
+            self.filename_entry.setVisible(False)
             self.save_filtered_traces_label.setText("Don\'t save filtered traces")

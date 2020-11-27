@@ -6,6 +6,7 @@ import time
 
 class McsDataReader:
     def __init__(self, path):
+        self.file_path = path
         self.filename = path.split('/')[-1]
         t0 = time.clock()
         self.file = self.open_mea_file(path)
