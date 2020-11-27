@@ -17,13 +17,14 @@ class FilterTab(QtWidgets.QWidget):
     # The FilterTab class receives the MeaFileView as a parent (where it will be embedded), the McsDataReader (another
     # class, which handles the reading of the h5 files of the recordings), the grid  (either all or a selection of grid
     # channels) and the filter settings.
-    def __init__(self, parent, meae_filename, reader, grid_indices, settings):
+    def __init__(self, parent, meae_filename, reader, grid_indices, append, settings):
         super().__init__(parent)
         # By setting variables to class variables (done with the 'self.' in front of them) it enables you to use them
         # outside this __init__() function. For example in functions you created yourself further down in the script.
         self.meae_filename = meae_filename
         self.reader = reader
         self.grid_indices = grid_indices
+        self.append_existing_file = append
         self.settings = settings
 
         # Line 28 and 29 set two class variables to None. This is convenient for the handling of the Thread. As long as
@@ -189,16 +190,24 @@ class FilterTab(QtWidgets.QWidget):
         :param reader: McsReader, currently used to get filename
         :return:
         """
-        # ToDo: handle appending of filtered data on existing .meae file
-        self.operation_label.setText('Saving filtered traces im .meae file...')
-        if reader.voltage_traces and reader.sampling_frequency and reader.channel_indices and reader.labels:
-            with h5py.File(filename, 'w') as hf:
-                dset_1 = hf.create_dataset('filter', data=filter_mat)
-                dset_2 = hf.create_dataset('fs', data=reader.sampling_frequency)
-                dset_3 = hf.create_dataset('channel_indices', data=reader.channel_indices)
-                save_labels = [label.encode('utf-8') for label in reader.labels]
-                dset_3 = hf.create_dataset('channel_labels', data=save_labels)
-        self.operation_label.setText('Filtered traces saved in: ' + filename)
+        if self.append_existing_file:
+            self.operation_label.setText('Saving filtered traces im .meae file...')
+            if reader.voltage_traces and reader.sampling_frequency and reader.channel_indices and reader.labels:
+                with h5py.File(filename, 'a') as hf:
+                    if 'filter' in hf.keys():
+                        hf['filter'].resize((hf['filter'].shape[0] + filter_mat.shape[0]), axis=0)
+                        hf['filter'][-filter_mat.shape[0]:] = filter_mat
+                    self.operation_label.setText('Filtered traces saved in: ' + filename)
+        else:
+            self.operation_label.setText('Saving filtered traces im .meae file...')
+            if reader.voltage_traces and reader.sampling_frequency and reader.channel_indices and reader.labels:
+                with h5py.File(filename, 'w') as hf:
+                    dset_1 = hf.create_dataset('filter', data=filter_mat)
+                    dset_2 = hf.create_dataset('fs', data=reader.sampling_frequency)
+                    dset_3 = hf.create_dataset('channel_indices', data=reader.channel_indices)
+                    save_labels = [label.encode('utf-8') for label in reader.labels]
+                    dset_3 = hf.create_dataset('channel_labels', data=save_labels)
+            self.operation_label.setText('Filtered traces saved in: ' + filename)
 
     def open_filter_file(self, filepath):
         """

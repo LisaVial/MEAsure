@@ -343,10 +343,15 @@ class MeaFileView(QtWidgets.QWidget):
     @QtCore.pyqtSlot()
     def open_filter_dialog(self):
         channel_labels_and_indices = self.mea_grid.get_selected_channels()
+        mea_file_exists = False
+        meae_path = None
+        if self.file_manager.get_verified_meae_file() is not None:
+            mea_file_exists = True
+            meae_path = self.file_manager.get_verified_meae_file()
         allowed_modes = [FilterSettings.ChannelSelection.ALL]
         if len(channel_labels_and_indices) > 0:
             allowed_modes.append(FilterSettings.ChannelSelection.SELECTION)
-        settings_dialog = FilterSettingsDialog(self, self.filter_settings, allowed_modes)
+        settings_dialog = FilterSettingsDialog(self, allowed_modes, mea_file_exists, meae_path, self.filter_settings)
         if settings_dialog.exec() == 1:  # 'Execute' clicked
             self.filter_settings = settings_dialog.get_settings()
             meae_filename = settings_dialog.meae_filename
@@ -361,7 +366,8 @@ class MeaFileView(QtWidgets.QWidget):
             # initialise filtering
             # give FilterThread indices (all is default and if selected, thread has to receive special indices
             # -> via filter tab?)
-            self.filter_tab = FilterTab(self, meae_filename, self.reader,  grid_indices, self.filter_settings)
+            self.filter_tab = FilterTab(self, meae_filename, self.reader, grid_indices,
+                                        settings_dialog.append_to_existing_file, self.filter_settings)
             self.tab_widget.addTab(self.filter_tab, "Filtering")
             self.filter_tab.initialize_filtering()
 

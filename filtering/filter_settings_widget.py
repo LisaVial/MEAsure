@@ -11,12 +11,15 @@ class FilterSettingsWidget(QtWidgets.QGroupBox):
     columns. This object sets up most of the widgets, which are shown in the FilterSettingsDialog.
     """
     # Like before, first we set up the class and tell it, which other class is its parent.
-    def __init__(self, parent, allowed_modes, settings=None):
+    def __init__(self, parent, allowed_modes, mea_file_exists, meae_path, settings=None):
         super().__init__(parent)
 
         # Now, we set up the title of the widget and its layout.
         self.setTitle("Settings")
         group_box_layout = QtWidgets.QGridLayout(self)
+
+        self.mea_file_exists = mea_file_exists
+        self.meae_path = meae_path
 
         # Since the user will be allowed to write something, we have to tell which type of input is allowed.
         valid_number_pattern = "[0-9]*\.{0,1][0-9]*"
@@ -86,6 +89,11 @@ class FilterSettingsWidget(QtWidgets.QGroupBox):
         self.save_filtered_traces_box = QtWidgets.QCheckBox('Save filtered traces')
         self.save_filtered_traces_label = QtWidgets.QLabel('')
         group_box_layout.addWidget(self.save_filtered_traces_box)
+        self.get_existing_file_box = QtWidgets.QCheckBox('Append to existing file')
+        self.append_to_existing_file = False
+        self.get_existing_file_box.setVisible(False)
+        self.get_existing_file_box.stateChanged.connect(self.get_existing_file_box_changed)
+        group_box_layout.addWidget(self.get_existing_file_box)
         self.filename_entry_label = QtWidgets.QLabel(self)
         self.filename_entry_label.setVisible(False)
         self.filename_entry_label.setText('Enter filename without extension:')
@@ -108,6 +116,18 @@ class FilterSettingsWidget(QtWidgets.QGroupBox):
 
     def get_meae_filename(self):
         return self.filename_entry.text().strip()
+
+    def get_existing_file_box_changed(self):
+        if self.get_existing_file_box.isChecked():
+            self.append_to_existing_file = True
+            self.filename_entry_label.setVisible(False)
+            self.filename_entry.setVisible(False)
+
+    def check_appending(self):
+        if self.append_to_existing_file:
+            return self.meae_path
+        else:
+            return None
 
     def set_settings(self, settings):
         """
@@ -177,10 +197,16 @@ class FilterSettingsWidget(QtWidgets.QGroupBox):
         :return:
         """
         if self.save_filtered_traces_box.isChecked():
+            self.get_existing_file_box.setVisible(True)
+            if self.mea_file_exists:
+                self.get_existing_file_box.setCheckable(True)
+            else:
+                self.get_existing_file_box.setCheckable(False)
             self.filename_entry_label.setVisible(True)
             self.filename_entry.setVisible(True)
             self.save_filtered_traces_label.setText("Saving filtered traces to .meae file at end of filtering")
         else:
+            self.get_existing_file_box.setVisible(False)
             self.filename_entry_label.setVisible(False)
             self.filename_entry.setVisible(False)
             self.save_filtered_traces_label.setText("Don\'t save filtered traces")
