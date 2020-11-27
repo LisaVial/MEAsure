@@ -51,7 +51,7 @@ class MeaFileView(QtWidgets.QWidget):
         # here, settings for different tasks which can be carried out by the user are defined
         self.frequency_analysis_settings = Settings.instance.frequency_analysis_settings
         self.filter_settings = Settings.instance.filter_settings
-        self.plot_settings = Settings.instance.plot_settings
+        self.rasterplot_settings = Settings.instance.rasterplot_settings
         self.spike_detection_settings = Settings.instance.spike_detection_settings
         self.csd_plot_settings = Settings.instance.csd_plot_settings
         self.isi_histogram_settings = Settings.instance.isi_histogram_settings
@@ -271,7 +271,7 @@ class MeaFileView(QtWidgets.QWidget):
             allowed_modes.append(RasterplotSettings.Mode.MEAE)
         if self.file_manager.get_verified_sc_file() is not None:
             allowed_modes.append(RasterplotSettings.Mode.SC)
-        settings_dialog = RasterplotSettingsDialog(self, allowed_modes, allowed_channel_modes, self.plot_settings)
+        settings_dialog = RasterplotSettingsDialog(self, allowed_modes, allowed_channel_modes, self.rasterplot_settings)
         if settings_dialog.exec() == 1:  # 'Execute' clicked
             self.plot_settings = settings_dialog.get_settings()
             # overwrite global settings as well

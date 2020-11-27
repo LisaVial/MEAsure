@@ -6,6 +6,7 @@ from spike_detection.spike_detection_settings import SpikeDetectionSettings
 from filtering.filter_settings import FilterSettings
 from plots.csd_plot.csd_plot_settings import CsdPlotSettings
 from plots.ISI.isi_histogram_settings import IsiHistogramSettings
+from plots.raster_plot.rasterplot_settings import RasterplotSettings
 from plots.plot_settings import PlotSettings
 
 
@@ -19,7 +20,7 @@ class Settings:
         self.main_window_state = bytearray()
         self.spike_detection_settings = SpikeDetectionSettings()
         self.filter_settings = FilterSettings()
-        self.plot_settings = PlotSettings()
+        self.rasterplot_settings = RasterplotSettings()
         self.csd_plot_settings = CsdPlotSettings()
         self.frequency_analysis_settings = FrequencyAnalysisSettings()
         self.isi_histogram_settings = IsiHistogramSettings()
@@ -39,7 +40,7 @@ class Settings:
             if "filter_settings" in d.keys():
                 self.filter_settings.from_dict(d["filter_settings"])
             if "rasterplot_settings" in d.keys():
-                self.plot_settings.from_dict(d["rasterplot_settings"])
+                self.rasterplot_settings.from_dict(d["rasterplot_settings"])
             if 'csd_plot_settings' in d.keys():
                 self.csd_plot_settings.from_dict(d['csd_plot_settings'])
             if 'frequency_analysis_settings' in d.keys():
@@ -56,7 +57,7 @@ class Settings:
         d["main_window_state"] = bytearray(self.main_window_state).decode("ascii")
         d["spike_detection_settings"] = self.spike_detection_settings.to_dict()
         d["filter_settings"] = self.filter_settings.to_dict()
-        d["rasterplot_settings"] = self.plot_settings.to_dict()
+        d["rasterplot_settings"] = self.rasterplot_settings.to_dict()
         d["frequency_analysis_settings"] = self.frequency_analysis_settings.to_dict()
         d["frequency_analysis_settings"] = self.frequency_analysis_settings.to_dict()
         d["isi_histogram_settings"] = self.isi_histogram_settings.to_dict()
