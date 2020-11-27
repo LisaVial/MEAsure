@@ -24,8 +24,7 @@ class SpikeDetectionThread(QtCore.QThread):
         self.threshold_factor = threshold_factor
         self.grid_indices = grid_indices
 
-        self.spike_mat = None
-        self.spike_indices = None
+        self.spike_indices, self.spike_mat = None, None
 
     def old_spike_detection(self, mea_data_reader):
         indices = []
@@ -126,35 +125,27 @@ class SpikeDetectionThread(QtCore.QThread):
 
         for idx, ch_id in enumerate(selected_ids):
             # in this case, the whole channel should be loaded, since the filter should be applied at once
-            t0 = time.clock()
             ch_signal = signals[ch_id]
-            print(ch_signal)
-            t1 = time.clock() - t0
-            print('time to load channel data: ', t1)
             threshold = self.threshold_factor * np.median(np.absolute(ch_signal) / 0.6745)
             collect_peaks = (self.mode == SpikeDetectionSettings.Mode.PEAKS or
                              self.mode == SpikeDetectionSettings.Mode.BOTH)
             collect_troughs = (self.mode == SpikeDetectionSettings.Mode.TROUGHS or
                                self.mode == SpikeDetectionSettings.Mode.BOTH)
             channel_spike_indices = []
-            t3 = time.clock()
             if collect_peaks:
                 peaks = signal.find_peaks(ch_signal, height=threshold)
-                channel_spike_indices = peaks[0]
-                indices.append(channel_spike_indices)
-                single_spike_data = [ch_signal, indices[-1], threshold]
+                channel_spike_indices.append(peaks[0])
 
             if collect_troughs:
-                troughs = signal.find_peaks(ch_signal, height=threshold)
-                channel_spike_indices = troughs[0]
-                indices.append(channel_spike_indices)
-                single_spike_data = [ch_signal, indices[-1], threshold]
+                troughs = signal.find_peaks(-ch_signal, height=threshold)
+                channel_spike_indices.append(troughs[0])
 
+            indices.append(channel_spike_indices)
+            single_spike_data = [ch_signal, indices[-1], threshold]
             self.single_spike_data_updated.emit(single_spike_data)
 
-            t4 = time.clock() - t3
-            print('time for detecting spikes: ', t4)
-            spiketimes = channel_spike_indices / fs
+            spiketimes = np.asarray(channel_spike_indices) / fs
+            print(spiketimes)
             spike_mat.append(spiketimes)
             data = [spiketimes]
             self.channel_data_updated.emit(data)

@@ -309,13 +309,18 @@ class MeaFileView(QtWidgets.QWidget):
     def open_sd_dialog(self):
         channel_labels_and_indices = self.mea_grid.get_selected_channels()
         allowed_file_modes = [SpikeDetectionSettings.FileMode.MCS]
+        mea_file_exists = False
+        meae_path = None
+        if self.file_manager.get_verified_meae_file() is not None:
+            mea_file_exists = True
+            meae_path = self.file_manager.get_verified_meae_file()
         if self.file_manager.get_verified_meae_file() is not None:
             allowed_file_modes.append(SpikeDetectionSettings.FileMode.MEAE)
         allowed_modes = [SpikeDetectionSettings.ChannelSelection.ALL]
         if len(channel_labels_and_indices) > 0:
             allowed_modes.append(SpikeDetectionSettings.ChannelSelection.SELECTION)
         settings_dialog = SpikeDetectionSettingsDialog(self, allowed_file_modes,
-                                                       allowed_modes, self.spike_detection_settings)
+                                                       allowed_modes, mea_file_exists, meae_path, self.spike_detection_settings)
         if settings_dialog.exec() == 1:  # 'Execute' clicked
             self.spike_detection_settings = settings_dialog.get_settings()
             if self.spike_detection_settings.channel_selection == SpikeDetectionSettings.ChannelSelection.ALL:
@@ -329,6 +334,7 @@ class MeaFileView(QtWidgets.QWidget):
             # initialise spike detection
             if self.spike_detection_settings.file_mode == SpikeDetectionSettings.FileMode.MCS:
                 self.spike_detection_tab = SpikeDetectionTab(self, self.reader, grid_indices,
+                                                             settings_dialog.append_to_existing_file,
                                                              self.spike_detection_settings)
                 self.tab_widget.addTab(self.spike_detection_tab, "Spike detection")
                 self.spike_detection_tab.initialize_spike_detection()
@@ -336,6 +342,7 @@ class MeaFileView(QtWidgets.QWidget):
                 meae_path = self.file_manager.get_verified_meae_file()
                 meae_reader = MeaeDataReader(meae_path)
                 self.spike_detection_tab = SpikeDetectionTab(self, meae_reader, grid_indices,
+                                                             settings_dialog.append_to_existing_file,
                                                              self.spike_detection_settings)
                 self.tab_widget.addTab(self.spike_detection_tab, "Spike detection")
                 self.spike_detection_tab.initialize_spike_detection()

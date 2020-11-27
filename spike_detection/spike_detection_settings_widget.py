@@ -7,7 +7,7 @@ from .spike_detection_settings import SpikeDetectionSettings
 
 class SpikeDetectionSettingsWidget(QtWidgets.QGroupBox):
 
-    def __init__(self, parent, allowed_file_modes, allowed_modes, settings=None):
+    def __init__(self, parent, allowed_file_modes, allowed_modes, mea_file_exists, meae_path, settings=None):
         super().__init__(parent)
 
         self.setTitle("Settings")
@@ -22,6 +22,9 @@ class SpikeDetectionSettingsWidget(QtWidgets.QGroupBox):
         group_box_file_mode.setTitle('Select a file for plot:')
 
         group_layout_file_mode = QtWidgets.QVBoxLayout(group_box_file_mode)
+
+        self.mea_file_exists = mea_file_exists
+        self.meae_path = meae_path
 
         self.mcs_file_button = QtWidgets.QRadioButton('MCS file')
         self.mcs_file_button.setEnabled(SpikeDetectionSettings.FileMode.MCS in allowed_file_modes)
@@ -66,9 +69,21 @@ class SpikeDetectionSettingsWidget(QtWidgets.QGroupBox):
         main_layout.addWidget(self.threshold_factor_input, 4, 1)
 
         self.save_spiketimes_box = QtWidgets.QCheckBox('Save filtered traces')
+        main_layout.addWidget(self.save_spiketimes_box, 5, 0)
         self.save_spiketimes_label = QtWidgets.QLabel('')
-        main_layout.addWidget(self.save_spiketimes_box)
-        main_layout.addWidget(self.save_spiketimes_label)
+        self.get_existing_file_box = QtWidgets.QCheckBox('Append to existing file')
+        self.append_to_existing_file = False
+        self.get_existing_file_box.setVisible(False)
+        self.get_existing_file_box.stateChanged.connect(self.get_existing_file_box_changed)
+        main_layout.addWidget(self.get_existing_file_box, 6, 0)
+        self.filename_entry_label = QtWidgets.QLabel(self)
+        self.filename_entry_label.setVisible(False)
+        self.filename_entry_label.setText('Enter filename without extension:')
+        self.filename_entry = QtWidgets.QLineEdit(self)
+        self.filename_entry.setVisible(False)
+        main_layout.addWidget(self.filename_entry_label, 7, 0)
+        main_layout.addWidget(self.filename_entry, 7, 1)
+        main_layout.addWidget(self.save_spiketimes_label, 8, 0)
         self.save_spiketimes_box.stateChanged.connect(self.save_spiketimes_changed)
 
         if not settings:
@@ -119,8 +134,34 @@ class SpikeDetectionSettingsWidget(QtWidgets.QGroupBox):
         settings.channel_selection = self.selected_channels_button.isChecked()
         return settings
 
+    def get_meae_filename(self):
+        return self.filename_entry.text().strip()
+
+    def get_existing_file_box_changed(self):
+        if self.get_existing_file_box.isChecked():
+            self.append_to_existing_file = True
+            self.filename_entry_label.setVisible(False)
+            self.filename_entry.setVisible(False)
+
+    def check_appending(self):
+        if self.append_to_existing_file:
+            return self.meae_path
+        else:
+            return None
+
     def save_spiketimes_changed(self):
         if self.save_spiketimes_box.isChecked():
-            self.save_spiketimes_label.setText("Saving spiketimes to .meae file at the end of filtering")
+            self.get_existing_file_box.setVisible(True)
+            if self.mea_file_exists:
+                self.get_existing_file_box.setCheckable(True)
+            else:
+                self.get_existing_file_box.setCheckable(False)
+            self.filename_entry_label.setVisible(True)
+            self.filename_entry.setVisible(True)
+            self.save_spiketimes_label.setText("Saving spiketimesto .meae file at end of spike detection")
+
         else:
+            self.get_existing_file_box.setVisible(False)
+            self.filename_entry_label.setVisible(False)
+            self.filename_entry.setVisible(False)
             self.save_spiketimes_label.setText("Don\'t save spiketimes")

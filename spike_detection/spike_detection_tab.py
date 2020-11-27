@@ -9,11 +9,12 @@ from spike_detection.spike_detection_thread import SpikeDetectionThread
 
 
 class SpikeDetectionTab(QtWidgets.QWidget):
-    def __init__(self, parent, reader, grid_indices, settings):
+    def __init__(self, parent, reader, grid_indices, append, settings):
         super().__init__(parent)
         # set input class variables
         self.reader = reader
         self.grid_indices = grid_indices
+        self.append_existing_file = append
         self.settings = settings
 
         # set spike_detection_thread to none
@@ -115,7 +116,7 @@ class SpikeDetectionTab(QtWidgets.QWidget):
 
     def on_channel_data_updated(self, data):
         spiketimes = data[0]
-        self.spis[-1].setData(spiketimes, 0 + 0.5 + np.zeros((len(spiketimes))))
+        self.spis[-1].setData(spiketimes[-1], 0 + 0.5 + np.zeros((len(spiketimes[-1]))))
 
     @QtCore.pyqtSlot()
     def initialize_spike_detection(self):
@@ -165,16 +166,21 @@ class SpikeDetectionTab(QtWidgets.QWidget):
             self.spike_mat = self.spike_detection_thread.spike_mat.copy()
         self.spike_detection_thread = None
         if self.settings.save_spiketimes:
+            path = os.path.split(self.reader.file_path)[0]
+            if self.meae_filename is None:
+                self.meae_filename = os.path.split(self.reader.file_path)[-1][:-3] + '.meae'
+            print(self.meae_filename)
             self.save_spike_mat(self.spike_mat, self.spike_indices, self.reader.file_path)
 
     @QtCore.pyqtSlot(list)
     def on_spike_data_updated(self, data):
         signal, spiketime_indices, threshold = data[0], data[1], data[2]
         if len(signal) > 0 and len(spiketime_indices) > 0:
+            print(spiketime_indices[-1])
             self.voltage_trace.append(signal)
             self.time_vt.append(list(np.arange(0, len(signal) * (1 / self.fs), 1 / self.fs)))
             self.spike_indices.append(list(spiketime_indices))
-            self.spike_height.append(list(np.asarray(signal)[spiketime_indices]))
+            self.spike_height.append(list(np.asarray(signal)[np.asarray(spiketime_indices[-2:]).flatten()]))
 
     @QtCore.pyqtSlot()
     def on_timer(self):
@@ -184,7 +190,7 @@ class SpikeDetectionTab(QtWidgets.QWidget):
         self.signal_plot.setData(self.time_vt[-1], self.voltage_trace[-1])
         self.hLine.setValue(self.threshold)
         self.hLine2.setValue(-1 * self.threshold)
-        self.scatter.setData(np.asarray(self.spike_indices[-1]) / self.fs, self.spike_height[-1])
+        self.scatter.setData(np.asarray(np.asarray(self.spike_indices[-2:]).flatten()) / self.fs, self.spike_height[-1])
 
     # function to save the found spiketimes stored in spike_mat as .csv file
     def save_spike_mat(self, spike_mat, spike_indices, mea_file):
@@ -197,6 +203,9 @@ class SpikeDetectionTab(QtWidgets.QWidget):
             analysis_filename = filename
         analysis_file_path = os.path.join(overall_path, analysis_filename)
         if os.path.exists(analysis_file_path):
+            if self.append_existing_file:
+                analysis_filename = self.meae_filename
+                analysis_file_path = os.path.join(overall_path, analysis_filename)
             with h5py.File(analysis_file_path, 'a') as hf:
                 for idx, (spikes, indices) in enumerate(zip(spike_mat, spike_indices)):
                     spike_key = 'spiketimes_' + str(idx)

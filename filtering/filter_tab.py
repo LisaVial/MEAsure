@@ -192,12 +192,11 @@ class FilterTab(QtWidgets.QWidget):
         """
         if self.append_existing_file:
             self.operation_label.setText('Saving filtered traces im .meae file...')
-            if reader.voltage_traces and reader.sampling_frequency and reader.channel_indices and reader.labels:
-                with h5py.File(filename, 'a') as hf:
-                    if 'filter' in hf.keys():
-                        hf['filter'].resize((hf['filter'].shape[0] + filter_mat.shape[0]), axis=0)
-                        hf['filter'][-filter_mat.shape[0]:] = filter_mat
-                    self.operation_label.setText('Filtered traces saved in: ' + filename)
+            with h5py.File(filename, 'a') as hf:
+                if 'filter' in hf.keys():
+                    hf['filter'].resize((hf['filter'].shape[0] + filter_mat.shape[0]), axis=0)
+                    hf['filter'][-filter_mat.shape[0]:] = filter_mat
+                self.operation_label.setText('Filtered traces saved in: ' + filename)
         else:
             self.operation_label.setText('Saving filtered traces im .meae file...')
             if reader.voltage_traces and reader.sampling_frequency and reader.channel_indices and reader.labels:

@@ -4,7 +4,7 @@ from spike_detection.spike_detection_settings_widget import SpikeDetectionSettin
 
 
 class SpikeDetectionSettingsDialog(QtWidgets.QDialog):
-    def __init__(self, parent, allowed_file_modes, allowed_modes, inital_settings=None):
+    def __init__(self, parent, allowed_file_modes, allowed_modes, mea_file_exists, meae_path, inital_settings=None):
         super().__init__(parent)
 
         # basic layout of the new spike_detection_dialog
@@ -17,12 +17,16 @@ class SpikeDetectionSettingsDialog(QtWidgets.QDialog):
         self.width = 400
         self.height = 200
 
+        self.meae_filename = None
+        self.append_to_existing_file = False
+
         # main layout is the layout for this specific dialog, sub layouts can also be defined and later on be added to
         # the main layout (e.g. if single buttons/plots/whatever should have a defined layout)
         main_layout = QtWidgets.QVBoxLayout(self)
         main_layout.setAlignment(QtCore.Qt.AlignTop | QtCore.Qt.AlignCenter)
         self.spike_detection_settings_widget = SpikeDetectionSettingsWidget(self, allowed_file_modes,
-                                                                            allowed_modes, inital_settings)
+                                                                            allowed_modes, mea_file_exists, meae_path,
+                                                                            inital_settings)
         main_layout.addWidget(self.spike_detection_settings_widget)
 
         self.okay_button = QtWidgets.QPushButton(self)
@@ -41,7 +45,11 @@ class SpikeDetectionSettingsDialog(QtWidgets.QDialog):
         return self.spike_detection_settings_widget.get_settings()
 
     def on_okay_clicked(self):
-        self.accept()
+        self.meae_filename = self.spike_detection_settings_widget.check_appending()
+        if self.meae_filename is None:
+            self.meae_filename = self.spike_detection_settings_widget.get_meae_filename() + '.meae'
+        else:
+            self.accept()
 
     def on_cancel_clicked(self):
         self.reject()
