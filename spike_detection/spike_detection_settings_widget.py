@@ -11,7 +11,7 @@ class SpikeDetectionSettingsWidget(QtWidgets.QGroupBox):
         super().__init__(parent)
 
         self.setTitle("Settings")
-        group_box_layout = QtWidgets.QGridLayout(self)
+        main_layout = QtWidgets.QGridLayout(self)
 
         # create validator in order to make sure only valid numbers can be entered in specific input fields
         valid_number_pattern = "[0-9]*\.{0,1}[0-9]*"
@@ -30,13 +30,11 @@ class SpikeDetectionSettingsWidget(QtWidgets.QGroupBox):
         self.meae_file_button = QtWidgets.QRadioButton('MEAE file')
         self.meae_file_button.setEnabled(SpikeDetectionSettings.FileMode.MEAE in allowed_file_modes)
         group_layout_file_mode.addWidget(self.meae_file_button)
-        group_layout_file_mode.addWidget(group_box_file_mode)
 
         group_box = QtWidgets.QGroupBox(self)
         group_box.setTitle('Which channels should be used?')
 
         group_layout = QtWidgets.QVBoxLayout(group_box)
-        group_layout.addWidget(group_box_file_mode)
         self.all_channels_button = QtWidgets.QRadioButton('all MEA channels')
         group_layout.addWidget(self.all_channels_button)
 
@@ -45,31 +43,32 @@ class SpikeDetectionSettingsWidget(QtWidgets.QGroupBox):
         self.selected_channels_button.setEnabled(SpikeDetectionSettings.ChannelSelection.SELECTION in allowed_modes)
         group_layout.addWidget(self.selected_channels_button)
 
-        group_box_layout.addWidget(group_box, 0, 0, 1, 2)
+        main_layout.addWidget(group_box_file_mode, 0, 0, 1, 2)
+        main_layout.addWidget(group_box, 1, 0, 1, 2)
 
         # add spike window input field
         self.spike_window_input = QtWidgets.QLineEdit(self)
         self.spike_window_input.setValidator(number_validator)  # set number validator (see above)
-        group_box_layout.addWidget(QtWidgets.QLabel("Spike window in [s]"), 1, 0)
-        group_box_layout.addWidget(self.spike_window_input, 1, 1)
+        main_layout.addWidget(QtWidgets.QLabel("Spike window in [s]"), 2, 0)
+        main_layout.addWidget(self.spike_window_input, 2, 1)
 
         # add mode selection widget
         self.mode_widget = QtWidgets.QComboBox(self)
         self.mode_widget.setEditable(False)  # do not allow entering text
         self.mode_widget.addItems(["Peaks", "Troughs", "Both"])  # items have to be in same order as in Mode definition
-        group_box_layout.addWidget(QtWidgets.QLabel("Mode"), 2, 0)
-        group_box_layout.addWidget(self.mode_widget, 2, 1)
+        main_layout.addWidget(QtWidgets.QLabel("Mode"), 3, 0)
+        main_layout.addWidget(self.mode_widget, 3, 1)
 
         # add threshold factor input field
         self.threshold_factor_input = QtWidgets.QLineEdit(self)
         self.threshold_factor_input.setValidator(number_validator)  # set number validator (see above)
-        group_box_layout.addWidget(QtWidgets.QLabel("Threshold factor"), 3, 0)
-        group_box_layout.addWidget(self.threshold_factor_input, 3, 1)
+        main_layout.addWidget(QtWidgets.QLabel("Threshold factor"), 4, 0)
+        main_layout.addWidget(self.threshold_factor_input, 4, 1)
 
         self.save_spiketimes_box = QtWidgets.QCheckBox('Save filtered traces')
         self.save_spiketimes_label = QtWidgets.QLabel('')
-        group_box_layout.addWidget(self.save_spiketimes_box)
-        group_box_layout.addWidget(self.save_spiketimes_label)
+        main_layout.addWidget(self.save_spiketimes_box)
+        main_layout.addWidget(self.save_spiketimes_label)
         self.save_spiketimes_box.stateChanged.connect(self.save_spiketimes_changed)
 
         if not settings:
@@ -99,9 +98,9 @@ class SpikeDetectionSettingsWidget(QtWidgets.QGroupBox):
         settings = SpikeDetectionSettings()
         # get settings by reading current values
         if self.mcs_file_button.isChecked():
-            settings.mode = SpikeDetectionSettings.FileMode.MCS
+            settings.file_mode = SpikeDetectionSettings.FileMode.MCS
         elif self.meae_file_button.isChecked():
-            settings.mode = SpikeDetectionSettings.FileMode.MEAE
+            settings.file_mode = SpikeDetectionSettings.FileMode.MEAE
 
         try:
             settings.spike_window = float(self.spike_window_input.text())

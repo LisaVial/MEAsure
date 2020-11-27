@@ -332,7 +332,7 @@ class MeaFileView(QtWidgets.QWidget):
                                                              self.spike_detection_settings)
                 self.tab_widget.addTab(self.spike_detection_tab, "Spike detection")
                 self.spike_detection_tab.initialize_spike_detection()
-            elif self.spike_detection_settings.mode == SpikeDetectionSettings.FileMode.MEAE:
+            elif self.spike_detection_settings.file_mode == SpikeDetectionSettings.FileMode.MEAE:
                 meae_path = self.file_manager.get_verified_meae_file()
                 meae_reader = MeaeDataReader(meae_path)
                 self.spike_detection_tab = SpikeDetectionTab(self, meae_reader, grid_indices,

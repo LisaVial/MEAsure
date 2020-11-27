@@ -26,7 +26,6 @@ class SpikeDetectionThread(QtCore.QThread):
 
         self.spike_mat = None
         self.spike_indices = None
-        self.live_plotter = None
 
     def old_spike_detection(self, mea_data_reader):
         indices = []
@@ -117,7 +116,10 @@ class SpikeDetectionThread(QtCore.QThread):
         spike_mat = []
 
         reader = mea_data_reader
-        signals = reader.voltage_traces
+        if self.file_mode == SpikeDetectionSettings.FileMode.MCS:
+            signals = reader.voltage_traces
+        elif self.file_mode == SpikeDetectionSettings.FileMode.MEAE:
+            signals = reader.filtered_traces
         ids = reader.channel_indices
         fs = reader.sampling_frequency
         selected_ids = [ids[g_idx] for g_idx in self.grid_indices]
@@ -126,6 +128,7 @@ class SpikeDetectionThread(QtCore.QThread):
             # in this case, the whole channel should be loaded, since the filter should be applied at once
             t0 = time.clock()
             ch_signal = signals[ch_id]
+            print(ch_signal)
             t1 = time.clock() - t0
             print('time to load channel data: ', t1)
             threshold = self.threshold_factor * np.median(np.absolute(ch_signal) / 0.6745)
@@ -139,7 +142,7 @@ class SpikeDetectionThread(QtCore.QThread):
                 peaks = signal.find_peaks(ch_signal, height=threshold)
                 channel_spike_indices = peaks[0]
                 indices.append(channel_spike_indices)
-                single_spike_data = [ch_signal[::312], channel_spike_indices, threshold]
+                single_spike_data = [ch_signal, channel_spike_indices, threshold]
                 self.single_spike_data_updated.emit(single_spike_data)
                 print(len(channel_spike_indices))
 
@@ -147,7 +150,7 @@ class SpikeDetectionThread(QtCore.QThread):
                 troughs = signal.find_peaks(ch_signal, height=threshold)
                 channel_spike_indices = troughs[0]
                 indices.append(channel_spike_indices)
-                single_spike_data = [ch_signal[:10000], channel_spike_indices, threshold]
+                single_spike_data = [ch_signal, channel_spike_indices, threshold]
                 self.single_spike_data_updated.emit(single_spike_data)
                 print(len(channel_spike_indices))
             t4 = time.clock() - t3

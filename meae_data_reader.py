@@ -8,7 +8,7 @@ class MeaeDataReader:
         self.filename = path.split('/')[-1]
         self.file = h5py.File(path, 'r')
         if 'fs' in list(self.file.keys()):
-            self.sampling_frequency = self.file['fs']
+            self.sampling_frequency = self.file['fs'][()]
         if 'channel_indices' in list(self.file.keys()):
             self.channel_indices = self.file['channel_indices']
         if 'channel_labels' in list(self.file.keys()):
