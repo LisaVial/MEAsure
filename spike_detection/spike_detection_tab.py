@@ -9,11 +9,12 @@ from spike_detection.spike_detection_thread import SpikeDetectionThread
 
 
 class SpikeDetectionTab(QtWidgets.QWidget):
-    def __init__(self, parent, reader, grid_indices, append, settings):
+    def __init__(self, parent, reader, grid_indices, grid_labels, append, settings):
         super().__init__(parent)
         # set input class variables
         self.reader = reader
         self.grid_indices = grid_indices
+        self.grid_labels = grid_labels
         self.append_existing_file = append
         self.settings = settings
 
@@ -27,23 +28,22 @@ class SpikeDetectionTab(QtWidgets.QWidget):
         main_layout = QtWidgets.QVBoxLayout(self)
         main_layout.setAlignment(QtCore.Qt.AlignTop | QtCore.Qt.AlignHCenter)
 
-        spike_detection_settings_layout = QtWidgets.QVBoxLayout(self)
-        spike_detection_settings_layout.setAlignment(QtCore.Qt.AlignTop | QtCore.Qt.AlignCenter)
+        status_update_layout = QtWidgets.QVBoxLayout(self)
+        status_update_layout.setAlignment(QtCore.Qt.AlignTop | QtCore.Qt.AlignCenter)
 
         # operation and progress_label is linked to the progress bar, so that the user sees, what is happening in the
         # background of the GUI
         self.operation_label = QtWidgets.QLabel(self)
         self.operation_label.setText('Nothing happens so far')
-        spike_detection_settings_layout.addWidget(self.operation_label)
+        status_update_layout.addWidget(self.operation_label)
         self.progress_label = QtWidgets.QLabel(self)
-        spike_detection_settings_layout.addWidget(self.progress_label)
+        status_update_layout.addWidget(self.progress_label)
 
         self.progress_bar = QtWidgets.QProgressBar(self)
-        # self.progress_bar.setFixedSize(self.width, 25)
         self.progress_bar.setMinimum(0)
         self.progress_bar.setMaximum(100)
         self.progress_bar.setTextVisible(True)
-        spike_detection_settings_layout.addWidget(self.progress_bar)
+        status_update_layout.addWidget(self.progress_bar)
 
         # set styles for plot
         styles = {'color': 'k', 'font-size': '10px'}
@@ -56,9 +56,12 @@ class SpikeDetectionTab(QtWidgets.QWidget):
         self.channel_raster_plot.useOpenGL(True)
         self.channel_raster_plot.setBackground('w')
 
+        # the timer is needed to draw the plot -> has to be refined
         self.timer = pg.QtCore.QTimer(self)
         self.timer.timeout.connect(self.on_timer)
 
+        # This code block sets the y lims of the Rasterplot, which should appear at the end of the analysis of each
+        # channel
         vtick = QtGui.QPainterPath()
         vtick.moveTo(0, -0.5)
         vtick.lineTo(0, 0.5)
@@ -70,15 +73,15 @@ class SpikeDetectionTab(QtWidgets.QWidget):
         s1 = pg.ScatterPlotItem(pxMode=False)
         s1.setSymbol(vtick)
         s1.setSize(1)
-        s1.setPen(QtGui.QColor('#d0797a'))
+        s1.setPen(QtGui.QColor('black'))
         p1.addItem(s1)
 
         s2 = pg.ScatterPlotItem(pxMode=False, symbol=vtick, size=1,
                                 pen=QtGui.QColor('#d0797a'))
         p1.addItem(s2)
         self.spis = [s1, s2]
-        spike_detection_settings_layout.addWidget(self.channel_raster_plot)
-        main_layout.addLayout(spike_detection_settings_layout)
+        status_update_layout.addWidget(self.channel_raster_plot)
+        main_layout.addLayout(status_update_layout)
 
         # open plot that will portray single spikes that are found, it will be portrayed on the right side of the
         # dialog, this is why it is added to the main layout
@@ -142,7 +145,7 @@ class SpikeDetectionTab(QtWidgets.QWidget):
                 self.spike_detection_thread.start()  # start will start thread (and run),
                 # but main thread will continue immediately
 
-            self.timer.start(1000)  # time in [ms]
+            self.timer.start(500)  # time in [ms]
 
     # this function changes the label of the progress bar to inform the user what happens in the backgound
     @QtCore.pyqtSlot(str)
@@ -166,17 +169,16 @@ class SpikeDetectionTab(QtWidgets.QWidget):
             self.spike_mat = self.spike_detection_thread.spike_mat.copy()
         self.spike_detection_thread = None
         if self.settings.save_spiketimes:
+            self.progress_label.setText("Saving spiketimes...")
             path = os.path.split(self.reader.file_path)[0]
             if self.meae_filename is None:
                 self.meae_filename = os.path.split(self.reader.file_path)[-1][:-3] + '.meae'
-            print(self.meae_filename)
             self.save_spike_mat(self.spike_mat, self.spike_indices, self.reader.file_path)
 
     @QtCore.pyqtSlot(list)
     def on_spike_data_updated(self, data):
         signal, spiketime_indices, threshold = data[0], data[1], data[2]
         if len(signal) > 0 and len(spiketime_indices) > 0:
-            print(spiketime_indices[-1])
             self.voltage_trace.append(signal)
             self.time_vt.append(list(np.arange(0, len(signal) * (1 / self.fs), 1 / self.fs)))
             self.spike_indices.append(list(spiketime_indices))

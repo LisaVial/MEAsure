@@ -325,15 +325,17 @@ class MeaFileView(QtWidgets.QWidget):
             self.spike_detection_settings = settings_dialog.get_settings()
             if self.spike_detection_settings.channel_selection == SpikeDetectionSettings.ChannelSelection.ALL:
                 grid_indices = range(len(self.reader.voltage_traces))
+                grid_labels = self.reader.labels
             elif self.spike_detection_settings.channel_selection == SpikeDetectionSettings.ChannelSelection.SELECTION:
                 grid_labels_and_indices = self.mea_grid.get_selected_channels()
                 grid_indices = [values[1] for values in grid_labels_and_indices]
+                grid_labels = [values[0] for values in grid_labels_and_indices]
             # overwrite global settings as well
             Settings.instance.spike_detection_settings = self.spike_detection_settings
 
             # initialise spike detection
             if self.spike_detection_settings.file_mode == SpikeDetectionSettings.FileMode.MCS:
-                self.spike_detection_tab = SpikeDetectionTab(self, self.reader, grid_indices,
+                self.spike_detection_tab = SpikeDetectionTab(self, self.reader, grid_indices, grid_labels,
                                                              settings_dialog.append_to_existing_file,
                                                              self.spike_detection_settings)
                 self.tab_widget.addTab(self.spike_detection_tab, "Spike detection")
