@@ -8,14 +8,14 @@ class McsDataReader:
     def __init__(self, path):
         self.file_path = path
         self.filename = path.split('/')[-1]
-        t0 = time.clock()
+        t0 = time.time()
         self.file = self.open_mea_file(path)
-        t1 = time.clock() - t0
+        t1 = time.time() - t0
         print("Time elapsed for file opening: ", t1)
-        t2 = time.clock()
+        t2 = time.time()
         self.voltage_traces, self.sampling_frequency, self.duration = self.get_data_of_file()
         print(self.voltage_traces)
-        t3 = time.clock() - t2
+        t3 = time.time() - t2
         print("Time elapsed for opening vts (old): ", t3)
         self.channel_indices, self.labels = self.get_channel_indices(self.file)
 
