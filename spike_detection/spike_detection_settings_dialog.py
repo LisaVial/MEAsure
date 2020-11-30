@@ -48,6 +48,7 @@ class SpikeDetectionSettingsDialog(QtWidgets.QDialog):
         self.meae_filename = self.spike_detection_settings_widget.check_appending()
         if self.meae_filename is None:
             self.meae_filename = self.spike_detection_settings_widget.get_meae_filename() + '.meae'
+            self.accept()
         else:
             self.accept()
 

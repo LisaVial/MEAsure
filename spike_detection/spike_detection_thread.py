@@ -158,8 +158,8 @@ class SpikeDetectionThread(QtCore.QThread):
 
     def run(self):
         self.operation_changed.emit("Detecting spikes")
-        t0 = time.clock()
+        t0 = time.time()
         self.spike_indices, self.spike_mat = self.new_spike_detection(self.reader)
-        t1 = time.clock() - t0
+        t1 = time.time() - t0
         print('time for one channel via new spike detection: ', t1)
         self.finished.emit()
