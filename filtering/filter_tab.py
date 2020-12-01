@@ -3,7 +3,6 @@ import h5py
 import os
 import pyqtgraph as pg
 import numpy as np
-from IPython import embed
 
 from filtering.filter_thread import FilterThread
 

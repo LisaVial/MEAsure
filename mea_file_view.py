@@ -1,8 +1,8 @@
 from PyQt5 import QtWidgets, QtGui, QtCore
 # all the following imports are script of the MEAsure application
-from mcs_data_reader import McsDataReader
-from meae_data_reader import MeaeDataReader
-from SC_data_reader import SCDataReader
+from file_handling.mcs_data_reader import McsDataReader
+from file_handling.meae_data_reader import MeaeDataReader
+from file_handling.SC_data_reader import SCDataReader
 
 from mea_grid import MeaGrid
 

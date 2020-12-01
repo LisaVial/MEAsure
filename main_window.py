@@ -7,7 +7,7 @@ import PyQt5.QtGui as QtGui
 from data_list_view import DataListView
 from plot_list_view import PlotListView
 
-from mcs_data_reader import McsDataReader
+from file_handling.mcs_data_reader import McsDataReader
 from mea_file_tab_widget import MeaFileTabWidget
 
 from plot_manager import PlotManager

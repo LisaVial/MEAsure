@@ -85,7 +85,6 @@ class FilterSettingsWidget(QtWidgets.QGroupBox):
 
         # This last widget handles the information whether or not the filtered traces should be stored to a new
         # .h5 at the end of the filtering process.
-        # todo: think of a widget to enable the user to set the name of the saved .h5 file
         self.save_filtered_traces_box = QtWidgets.QCheckBox('Save filtered traces')
         self.save_filtered_traces_label = QtWidgets.QLabel('')
         group_box_layout.addWidget(self.save_filtered_traces_box)
