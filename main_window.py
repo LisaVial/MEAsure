@@ -23,7 +23,6 @@ class MainWindow(QtWidgets.QMainWindow):
         super().__init__(parent)
 
         self.setWindowTitle(title)
-        self.mcs_reader = None
 
         app_icon = QtGui.QIcon("icon.png")
         self.setWindowIcon(app_icon)
@@ -106,7 +105,6 @@ class MainWindow(QtWidgets.QMainWindow):
     @QtCore.pyqtSlot(QtWidgets.QListWidgetItem)
     def on_file_double_clicked(self, item):
         absolute_path = os.path.join(self.file_list_view.current_folder, item.text())
-        self.mcs_reader = McsDataReader(absolute_path)
         self.mea_tab_widget.show_mea_file_view(absolute_path)
 
     def save_settings(self):
