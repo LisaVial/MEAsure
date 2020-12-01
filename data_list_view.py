@@ -2,6 +2,8 @@ import PyQt5.QtCore as QtCore
 import PyQt5.QtWidgets as QtWidgets
 import PyQt5.QtGui as QtGui
 import os.path
+from IPython import embed
+import numpy as np
 
 from meae_data_reader import MeaeDataReader
 
@@ -59,9 +61,25 @@ class DataListView(QtWidgets.QWidget):
                 if os.path.exists(mea_file):
                     reader = MeaeDataReader(mea_file)
                     keys = list(reader.file.keys())
-                    # todo: think of portrayal of keys when there are a lot of keys
-                    tool_tip = "Keys: " + ", ".join(keys)
-                    self.file_list.item(idx).setToolTip(tool_tip)
+                    spiketimes_indices_key_indices = [int(i) for i, key in enumerate(keys) if 'spiketimes_indices' in
+                                                      key]
+                    spiketimes_indices_keys = [keys[idx] for idx in spiketimes_indices_key_indices]
+                    spiketimes_key_indices = np.asarray(spiketimes_indices_key_indices) - 2
+                    spiketimes_keys = [keys[idx] for idx in spiketimes_key_indices]
+                    if len(spiketimes_keys) > 1:
+                        for k_idx, key in enumerate(keys):
+                            if key in spiketimes_keys or key in spiketimes_indices_keys and k_idx == 0:
+                                num_of_spiketimes = len(spiketimes_keys)
+                                tool_tip_keys = [key for key in keys if 'spiketimes' not in key]
+                                tool_tip_keys.append(str(int(num_of_spiketimes)) +
+                                                     ' spiketimes and spike indices found')
+                                tool_tip = "Keys: " + ", ".join(tool_tip_keys)
+                                self.file_list.item(idx).setToolTip(tool_tip)
+                            else:
+                                continue
+                    else:
+                        tool_tip = "Keys: " + ", ".join(keys)
+                        self.file_list.item(idx).setToolTip(tool_tip)
 
     # function that scans absolute and relative paths of data
     def get_data(self):
@@ -88,6 +106,3 @@ class DataListView(QtWidgets.QWidget):
                     mea_indices.append(index)
 
         return found_files, mea_indices
-
-
-
