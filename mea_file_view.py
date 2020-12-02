@@ -1,4 +1,6 @@
 from PyQt5 import QtWidgets, QtGui, QtCore
+import time
+
 # all the following imports are script of the MEAsure application
 from file_handling.mcs_data_reader import McsDataReader
 from file_handling.meae_data_reader import MeaeDataReader
@@ -35,6 +37,8 @@ from plots.raster_plot.rasterplot_settings import RasterplotSettings
 from plots.heatmap.heatmap_settings_dialog import HeatmapSettingsDialog
 from plots.heatmap.heatmap_settings import HeatmapSettings
 
+from file_handling.hdf5_dataset_loader_thread import Worker
+
 
 # the MeaFileView Widget is portraying the currently selected Mea recording and what the user can do with it
 class MeaFileView(QtWidgets.QWidget):
@@ -43,6 +47,7 @@ class MeaFileView(QtWidgets.QWidget):
         self.reader = McsDataReader(mea_file)   # in the beginning we will take the mcs python module to look into the
         # file
         self.mea_file = mea_file # this is just the path to the current mea recording h5 file
+
 
         self.file_manager = FileManager(self, self.reader.filename)     # this widget handles tasks in respect to
         # filepaths, with it the user is able to chose the .meae filepath (just .h5 data after analysis) or the
@@ -161,6 +166,49 @@ class MeaFileView(QtWidgets.QWidget):
         self.rasterplot_tab = None
         self.frequency_analysis_tab = None
         self.isi_histogram_tab = None
+
+        # start reader thread
+        self.worker = None
+        self.worker_thread = None
+        self.thread_start_time = None  # for performance testing
+        self.start_hdf5_dataset_loader_thread()
+
+    def start_hdf5_dataset_loader_thread(self):
+
+        # setup worker and its thread
+        thread_name = self.reader.filename[:-3]
+        self.worker = Worker(thread_name, self.reader)
+        self.worker_thread = QtCore.QThread(self)
+        self.worker.moveToThread(self.worker_thread)
+
+        # connect to worker signals
+        self.worker.signal_message.connect(self.on_worker_message)
+        self.worker.signal_step.connect(self.on_worker_step)
+        self.worker.signal_done.connect(self.on_worker_done)
+
+        # let worker start once its thread is starting
+        self.worker_thread.started.connect(self.worker.work)
+
+        # start thread (and thus the worker)
+        self.thread_start_time = time.time()
+        self.worker_thread.start()
+
+    @QtCore.pyqtSlot(str)
+    def on_worker_message(self, message):
+        print("Message:", message)
+
+    @QtCore.pyqtSlot(str, str)
+    def on_worker_step(self, name, message):
+        print("Worker '" + name + "': " + message)
+
+    @QtCore.pyqtSlot(list)
+    def on_worker_done(self, name_and_traces):
+        thread_end_time = time.time()
+        print("Worker '" + name_and_traces[0] + "' is done!")
+        print("Duration:", (thread_end_time - self.thread_start_time), "s")
+        self.reader.raw_voltage_traces = name_and_traces[1]
+        self.worker = None
+        self.worker_thread = None
 
     def open_isi_histogram_settings_dialog(self, is_pressed):
         channel_labels_and_indices = self.mea_grid.get_selected_channels()

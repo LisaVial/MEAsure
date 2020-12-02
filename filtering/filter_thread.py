@@ -71,7 +71,7 @@ class FilterThread(QtCore.QThread):
             # up it will get very confusing fast.
             # So basically grid_indices should be a list with the length of all channel indices
             t1 = time.clock()
-            signal = reader.file['Data']['Recording_0']['AnalogStream']['Stream_0']['ChannelData'][ch_id]
+            signal = reader.raw_voltage_traces[ch_id]
             t2 = time.clock() - t1
             print('Time to load channel data: ', t2)
             t3 = time.clock()

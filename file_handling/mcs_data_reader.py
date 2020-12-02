@@ -12,12 +12,8 @@ class McsDataReader:
         self.file = self.open_mea_file(path)
         t1 = time.time() - t0
         print("Time elapsed for file opening: ", t1)
-        t2 = time.time()
-        self.voltage_traces, self.sampling_frequency, self.duration = self.get_data_of_file()
-        print(self.voltage_traces)
-        print(self.voltage_traces.shape)
-        t3 = time.time() - t2
-        print("Time elapsed for opening vts (old): ", t3)
+        self.voltage_traces_dataset, self.sampling_frequency, self.duration = self.get_data_of_file()
+        self.raw_voltage_traces = None
         self.channel_indices, self.labels = self.get_channel_indices(self.file)
 
     def open_mea_file(self, path):
@@ -25,7 +21,7 @@ class McsDataReader:
         return file
 
     def get_data_of_file(self):
-        voltage_traces = self.file['Data']['Recording_0']['AnalogStream']['Stream_0']['ChannelData'][()]
+        voltage_traces = self.file['Data']['Recording_0']['AnalogStream']['Stream_0']['ChannelData']
         sampling_frequency = 1000000/self.file['Data']['Recording_0']['AnalogStream']['Stream_0']['InfoChannel']['Tick'][0]
         duration_index = self.file['Data']['Recording_0']['AnalogStream']['Stream_0']['ChannelDataTimeStamps'][0][2]
         duration = duration_index * (1/sampling_frequency)
