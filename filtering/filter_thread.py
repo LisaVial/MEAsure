@@ -59,7 +59,7 @@ class FilterThread(QtCore.QThread):
         # Set up filter_mat to store filtered traces in and get all necessary variables
         filter_mat = []
         reader = mea_data_reader
-        signals = reader.voltage_traces
+        signals = reader.raw_voltage_traces
         ids = reader.channel_indices
         labels = reader.labels
         fs = reader.sampling_frequency
@@ -70,11 +70,11 @@ class FilterThread(QtCore.QThread):
             # Right now, all the channels should be loaded and filtered, since the way storing of .meae files is set
             # up it will get very confusing fast.
             # So basically grid_indices should be a list with the length of all channel indices
-            t1 = time.clock()
+            t1 = time.time()
             signal = reader.raw_voltage_traces[ch_id]
-            t2 = time.clock() - t1
+            t2 = time.time() - t1
             print('Time to load channel data: ', t2)
-            t3 = time.clock()
+            t3 = time.time()
             # Here the filter is chosen according to the filter mode
             if self.filter_mode == 0:
                 filtered = self.butter_div_filters(signal, self.cut_1, fs, 'low')
@@ -84,13 +84,13 @@ class FilterThread(QtCore.QThread):
                 filtered = self.butter_bandpass_filter(signal, self.cut_1, self.cut_2, fs)
             # Once data is filtered, it is appended to the filter_mat list.
             filter_mat.append(filtered)
-            t4 = time.clock() - t3
+            t4 = time.time() - t3
             print('Time to filter data:', t4)
             # Here the list of the currently created filtered trace is created. Only every 312th data point of the
             # original signal is sent, to be able to plot the signals, since there are for once not enough pixels on
             # screen to plot all data points correctly and also, for massive data loads also the pyqtgraph plot widget
             # starts lagging.
-            data = [list(signal[::312]), list(filtered[::312]), str(labels[self.grid_indices[idx]])]
+            data = [list(signal), list(filtered), str(labels[self.grid_indices[idx]])]
             self.data_updated.emit(data)    # Here, the signal is sent to the FilterTav
 
             # Here, the progress signal is calculated and then sent to the FilterTab

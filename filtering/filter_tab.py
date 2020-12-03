@@ -198,7 +198,7 @@ class FilterTab(QtWidgets.QWidget):
                 self.operation_label.setText('Filtered traces saved in: ' + filename)
         else:
             self.operation_label.setText('Saving filtered traces im .meae file...')
-            if reader.voltage_traces and reader.sampling_frequency and reader.channel_indices and reader.labels:
+            if reader.sampling_frequency and reader.channel_indices and reader.labels:
                 with h5py.File(filename, 'w') as hf:
                     dset_1 = hf.create_dataset('filter', data=filter_mat)
                     dset_2 = hf.create_dataset('fs', data=reader.sampling_frequency)

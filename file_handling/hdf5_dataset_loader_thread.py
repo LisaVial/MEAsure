@@ -6,7 +6,7 @@ from IPython import embed
 
 class Worker(QtCore.QObject):
     # worker_id, step_description: emitted every step through work() loop
-    signal_step = QtCore.pyqtSignal(str, str)
+    signal_step = QtCore.pyqtSignal(float)
     # worker id: emitted at the end of work()
     signal_done = QtCore.pyqtSignal(list)
     # message to be shown to the user:
@@ -37,26 +37,42 @@ class Worker(QtCore.QObject):
         # hopefully s will be shape-like tuple/list, then, the assignment to the np.empty-matrix
         # should be accessible through s
         shape_of_vt_dataset = self.voltage_traces_dataset.shape
-        self.voltage_traces = np.empty(shape_of_vt_dataset)
-        chunk_size = self.voltage_traces_dataset.chunks[1]
-        steps = int(np.ceil(shape_of_vt_dataset[1] / chunk_size))
-        chunk_iterator = np.linspace(0, chunk_size * steps, chunk_size)
-        max_index = shape_of_vt_dataset[1] - 1
-        for i, chunk_index in enumerate(chunk_iterator):  # dset = voltage_traces
-            next_index = min((chunk_index + chunk_size), max_index)
-            self.voltage_traces[:, int(chunk_index):int(next_index)] = self.voltage_traces_dataset[:,
-                                                                       int(chunk_index):
-                                                                       int(next_index)]
-            time.sleep(0.1)
-            self.signal_step.emit(self.__name, 'step ' + str(i))
+        try:
+            self.voltage_traces = np.empty(shape_of_vt_dataset)
+            chunk_lens = []
+            chunk_size = self.voltage_traces_dataset.chunks[1]
+            print('chunk size:', chunk_size)
+            steps = int(np.ceil(shape_of_vt_dataset[1] / chunk_size))
+            print('steps:', steps)
+            chunk_iterator = np.linspace(0, chunk_size * steps, steps)
+            print('len of chunk iterator:', len(chunk_iterator), 'second chunk index:', chunk_iterator[1], '\n',
+                  'last chunk index:', chunk_iterator[-1], '\n',)
+            max_index = shape_of_vt_dataset[1] - 1
+            for i, chunk_index in enumerate(chunk_iterator):  # dset = voltage_traces
+                next_index = min((chunk_index + chunk_size), max_index)
+                self.voltage_traces[:, int(chunk_index):int(next_index)] = self.voltage_traces_dataset[:,
+                                                                           int(chunk_index):
+                                                                           int(next_index)]
+                chunk_lens.append(len(self.voltage_traces_dataset[:, int(chunk_index): int(next_index)]))
+                time.sleep(0.1)
+                # Here, the progress signal is calculated and then sent to the FilterTab
+                progress = round(((i + 1) / len(chunk_iterator)) * 100.0, 2)
+                self.signal_step.emit(progress)
 
-            # check if we need to abort the loop; need to process events to receive signals;
-            self.app.processEvents()  # this could cause change to self.__abort
-            if self.__abort:
-                # note that "step" value will not necessarily be same for every thread
-                self.sig_msg.emit('Worker #{} aborting work at step {}'.format(self.__name, i))
-                break
+                # check if we need to abort the loop; need to process events to receive signals;
+                self.app.processEvents()  # this could cause change to self.__abort
 
+        except MemoryError:
+            print('cannot load the whole trace at once, processing time will be slower than usual')
+            self.abort()
+
+        if self.__abort:
+            # note that "step" value will not necessarily be same for every thread
+            try:
+                self.signal_message.emit('Worker #{} aborting work at step {}'.format(self.__name, i))
+            except UnboundLocalError:
+                self.signal_message.emit('Worker #{} aborting work at step {}'.format(self.__name, 0))
+        print(np.sum(chunk_lens), shape_of_vt_dataset[1])
         self.signal_done.emit([self.__name, self.voltage_traces])
 
     def abort(self):

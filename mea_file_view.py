@@ -48,7 +48,6 @@ class MeaFileView(QtWidgets.QWidget):
         # file
         self.mea_file = mea_file # this is just the path to the current mea recording h5 file
 
-
         self.file_manager = FileManager(self, self.reader.filename)     # this widget handles tasks in respect to
         # filepaths, with it the user is able to chose the .meae filepath (just .h5 data after analysis) or the
         # filepath of results of spyking circus
@@ -134,6 +133,22 @@ class MeaFileView(QtWidgets.QWidget):
 
         main_layout.addWidget(self.toolbar)
 
+        operation_layout = QtWidgets.QVBoxLayout(self)
+        operation_layout.setAlignment(QtCore.Qt.AlignTop | QtCore.Qt.AlignLeft)
+        self.operation_label = QtWidgets.QLabel(self)
+        self.operation_label.setText('Nothing happens so far')
+        operation_layout.addWidget(self.operation_label)
+        self.progress_label = QtWidgets.QLabel(self)
+        operation_layout.addWidget(self.progress_label)
+
+        self.progress_bar = QtWidgets.QProgressBar(self)
+        self.progress_bar.setMinimum(0)
+        self.progress_bar.setMaximum(100)
+        self.progress_bar.setTextVisible(True)
+        operation_layout.addWidget(self.progress_bar)
+
+        main_layout.addLayout(operation_layout)
+
         sub_layout = QtWidgets.QHBoxLayout(self)
         sub_layout.setAlignment(QtCore.Qt.AlignCenter | QtCore.Qt.AlignTop)
 
@@ -174,7 +189,9 @@ class MeaFileView(QtWidgets.QWidget):
         self.start_hdf5_dataset_loader_thread()
 
     def start_hdf5_dataset_loader_thread(self):
-
+        self.progress_bar.setValue(0)
+        self.progress_label.setText('')
+        self.operation_label.setText('Loading raw traces of recording')
         # setup worker and its thread
         thread_name = self.reader.filename[:-3]
         self.worker = Worker(thread_name, self.reader)
@@ -197,16 +214,17 @@ class MeaFileView(QtWidgets.QWidget):
     def on_worker_message(self, message):
         print("Message:", message)
 
-    @QtCore.pyqtSlot(str, str)
-    def on_worker_step(self, name, message):
-        print("Worker '" + name + "': " + message)
+    @QtCore.pyqtSlot(float)
+    def on_worker_step(self, progress):
+        self.progress_bar.setValue(int(progress))
+        self.progress_label.setText(str(progress) + "%")
 
     @QtCore.pyqtSlot(list)
     def on_worker_done(self, name_and_traces):
         thread_end_time = time.time()
-        print("Worker '" + name_and_traces[0] + "' is done!")
         print("Duration:", (thread_end_time - self.thread_start_time), "s")
         self.reader.raw_voltage_traces = name_and_traces[1]
+        self.progress_label.setText('Finished loading data, you can analyze it now :)')
         self.worker = None
         self.worker_thread = None
 
@@ -413,7 +431,7 @@ class MeaFileView(QtWidgets.QWidget):
             self.filter_settings = settings_dialog.get_settings()
             meae_filename = settings_dialog.meae_filename
             if self.filter_settings.channel_selection == FilterSettings.ChannelSelection.ALL:
-                grid_indices = range(len(self.reader.voltage_traces))
+                grid_indices = range(len(self.reader.raw_voltage_traces))
             elif self.filter_settings.channel_selection == FilterSettings.ChannelSelection.SELECTION:
                 grid_labels_and_indices = self.mea_grid.get_selected_channels()
                 grid_indices = [values[1] for values in grid_labels_and_indices]

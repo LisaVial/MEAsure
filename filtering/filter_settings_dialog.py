@@ -99,6 +99,7 @@ class FilterSettingsDialog(QtWidgets.QDialog):  # Setting up of a new class. In 
         self.meae_filename = self.filter_settings_widget.check_appending()
         if self.meae_filename is None:
             self.meae_filename = self.filter_settings_widget.get_meae_filename() + '.meae'
+            self.accept()
         else:
             self.accept()
 
