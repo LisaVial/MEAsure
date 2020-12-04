@@ -9,15 +9,24 @@ class McsDataReader:
         self.file_path = path
         self.filename = path.split('/')[-1]
         t0 = time.time()
-        self.file = self.open_mea_file(path)
+        self.file = self.open_mea_file()
         t1 = time.time() - t0
         print("Time elapsed for file opening: ", t1)
         self.voltage_traces_dataset, self.sampling_frequency, self.duration = self.get_data_of_file()
+        self.current_file = dict()
+        self.current_file['sampling rate'] = self.sampling_frequency
+        self.current_file['duration'] = self.duration
+        self.current_file['channels'] = dict()
         self.raw_voltage_traces = None
-        self.channel_indices, self.labels = self.get_channel_indices(self.file)
+        self.channel_ids, self.labels = self.get_channel_indices(self.file)
+        for label in self.labels:
+            self.current_file['channels'][str(label)] = dict()
+            self.current_file['channels'][str(label)]['channel id'] = self.channel_ids
+            self.current_file['channels'][str(label)]['raw trace'] = np.empty(int(self.duration *
+                                                                                  self.sampling_frequency))
 
-    def open_mea_file(self, path):
-        file = h5py.File(path, 'r')
+    def open_mea_file(self):
+        file = h5py.File(self.file_path, 'r')
         return file
 
     def get_data_of_file(self):
@@ -48,7 +57,7 @@ class McsDataReader:
 
     def get_signal(self, chunk_size=1000):
         min_index = 0
-        max_index = self.file['Data']['Recording_0']['AnalogStream']['Stream_0']['ChannelData'][self.channel_indices[0]].shape[0]
+        max_index = self.file['Data']['Recording_0']['AnalogStream']['Stream_0']['ChannelData'][self.channel_ids[0]].shape[0]
         length = (max_index - min_index)
         signal = np.empty(shape=(length,))  # create empty numpy ndarray with shape already set
 
@@ -57,7 +66,7 @@ class McsDataReader:
         while current_start_index < length:
             current_end_index = min(current_start_index + chunk_size - 1, max_index)
             for i in range(max_index):
-                chunk = self.file['Data']['Recording_0']['AnalogStream']['Stream_0']['ChannelData'][self.channel_indices[i]][current_start_index:current_end_index]
+                chunk = self.file['Data']['Recording_0']['AnalogStream']['Stream_0']['ChannelData'][self.channel_ids[i]][current_start_index:current_end_index]
                 signal[current_start_index:(current_start_index + len(chunk))] = chunk
                 current_start_index = current_end_index + 1
 

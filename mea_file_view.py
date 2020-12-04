@@ -216,6 +216,7 @@ class MeaFileView(QtWidgets.QWidget):
 
     @QtCore.pyqtSlot(float)
     def on_worker_step(self, progress):
+        # ToDo: update dictionary of mcs reader in the background ->
         self.progress_bar.setValue(int(progress))
         self.progress_label.setText(str(progress) + "%")
 

@@ -202,7 +202,7 @@ class FilterTab(QtWidgets.QWidget):
                 with h5py.File(filename, 'w') as hf:
                     dset_1 = hf.create_dataset('filter', data=filter_mat)
                     dset_2 = hf.create_dataset('fs', data=reader.sampling_frequency)
-                    dset_3 = hf.create_dataset('channel_indices', data=reader.channel_indices)
+                    dset_3 = hf.create_dataset('channel_ids', data=reader.channel_indices)
                     save_labels = [label.encode('utf-8') for label in reader.labels]
                     dset_3 = hf.create_dataset('channel_labels', data=save_labels)
             self.operation_label.setText('Filtered traces saved in: ' + filename)

@@ -16,8 +16,8 @@ class MeaeDataReader:
         filtered = "/filter" in self.file
         if filtered:
             self.filtered_traces = self.file['filter']
-        if 'channel_indices' in list(self.file.keys()):
-            self.channel_indices = self.file['channel_indices']
+        if 'channel_ids' in list(self.file.keys()):
+            self.channel_indices = self.file['channel_ids']
             if self.channel_indices[0] == 83:
                 self.channel_indices = range(len(self.filtered_traces))
 
