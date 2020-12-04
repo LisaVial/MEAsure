@@ -1,4 +1,4 @@
-import os
+from IPython import embed
 import numpy as np
 import h5py
 import time
@@ -19,11 +19,21 @@ class McsDataReader:
         self.current_file['channels'] = dict()
         self.raw_voltage_traces = None
         self.channel_ids, self.labels = self.get_channel_indices(self.file)
+        # embed()
         for label in self.labels:
             self.current_file['channels'][str(label)] = dict()
             self.current_file['channels'][str(label)]['channel id'] = self.channel_ids
             self.current_file['channels'][str(label)]['raw trace'] = np.empty(int(self.duration *
                                                                                   self.sampling_frequency))
+
+    def get_traces_with_label(self):
+        pass
+            
+    def assign_chunks(self, step_signal):
+        # step signal will be an array with the dimension 252 x chunk_size
+        for idx, channel_id in enumerate(self.channel_ids):
+            self.current_file['channels'][str(self.labels[idx])]['raw trace'][int(step_signal[1]):int(step_signal[2])] \
+                = step_signal[3][channel_id, :]
 
     def open_mea_file(self):
         file = h5py.File(self.file_path, 'r')

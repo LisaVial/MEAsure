@@ -6,7 +6,7 @@ from IPython import embed
 
 class Worker(QtCore.QObject):
     # worker_id, step_description: emitted every step through work() loop
-    signal_step = QtCore.pyqtSignal(float)
+    signal_step = QtCore.pyqtSignal(list)
     # worker id: emitted at the end of work()
     signal_done = QtCore.pyqtSignal(list)
     # message to be shown to the user:
@@ -41,23 +41,18 @@ class Worker(QtCore.QObject):
             self.voltage_traces = np.empty(shape_of_vt_dataset)
             chunk_lens = []
             chunk_size = self.voltage_traces_dataset.chunks[1]
-            print('chunk size:', chunk_size)
             steps = int(np.ceil(shape_of_vt_dataset[1] / chunk_size))
-            print('steps:', steps)
             chunk_iterator = np.linspace(0, chunk_size * steps, steps)
-            print('len of chunk iterator:', len(chunk_iterator), 'second chunk index:', chunk_iterator[1], '\n',
-                  'last chunk index:', chunk_iterator[-1], '\n',)
             max_index = shape_of_vt_dataset[1] - 1
             for i, chunk_index in enumerate(chunk_iterator):  # dset = voltage_traces
                 next_index = min((chunk_index + chunk_size), max_index)
-                self.voltage_traces[:, int(chunk_index):int(next_index)] = self.voltage_traces_dataset[:,
-                                                                           int(chunk_index):
-                                                                           int(next_index)]
+                chunk = self.voltage_traces_dataset[:, int(chunk_index): int(next_index)]
+                self.voltage_traces[:, int(chunk_index):int(next_index)] = chunk
                 chunk_lens.append(len(self.voltage_traces_dataset[:, int(chunk_index): int(next_index)]))
                 time.sleep(0.1)
                 # Here, the progress signal is calculated and then sent to the FilterTab
                 progress = round(((i + 1) / len(chunk_iterator)) * 100.0, 2)
-                self.signal_step.emit(progress)
+                self.signal_step.emit([progress, chunk_index, next_index, chunk])
 
                 # check if we need to abort the loop; need to process events to receive signals;
                 self.app.processEvents()  # this could cause change to self.__abort
