@@ -26,6 +26,10 @@ class McsDataReader:
             self.current_file['channels'][str(label)]['raw trace'] = np.empty(int(self.duration *
                                                                                   self.sampling_frequency))
 
+    # for Danielas data the raw traces take almost 6 GB working memory, if stored in a dictionary. So, think of a way
+    # how to make further analysis feasible
+    # this function has to get back the respective trace of the dictionary, then, think about how to call it in the
+    # different scripts
     def get_traces_with_label(self):
         pass
             

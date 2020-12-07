@@ -219,10 +219,8 @@ class MeaFileView(QtWidgets.QWidget):
         # ToDo: update dictionary of mcs reader in the background ->
         self.progress_bar.setValue(int(step_list[0]))
         self.progress_label.setText(str(step_list[0]) + "%")
-        t0 = time.time()
         self.reader.assign_chunks(step_list)
-        t1 = time.time() - t0
-        print('time to assign chunks:', t1)
+
 
     @QtCore.pyqtSlot(list)
     def on_worker_done(self, name_and_traces):
