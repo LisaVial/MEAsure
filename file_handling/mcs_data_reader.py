@@ -20,9 +20,9 @@ class McsDataReader:
         self.raw_voltage_traces = None
         self.channel_ids, self.labels = self.get_channel_indices(self.file)
         # embed()
-        for label in self.labels:
+        for idx, label in enumerate(self.labels):
             self.current_file['channels'][str(label)] = dict()
-            self.current_file['channels'][str(label)]['channel id'] = self.channel_ids
+            self.current_file['channels'][str(label)]['channel id'] = self.channel_ids[idx]
             self.current_file['channels'][str(label)]['raw trace'] = np.empty(int(self.duration *
                                                                                   self.sampling_frequency))
 
@@ -30,8 +30,8 @@ class McsDataReader:
     # how to make further analysis feasible
     # this function has to get back the respective trace of the dictionary, then, think about how to call it in the
     # different scripts
-    def get_traces_with_label(self):
-        pass
+    def get_traces_with_label(self, label):
+        return self.current_file['channels'][str(label)]['raw trace']
             
     def assign_chunks(self, step_signal):
         # step signal will be an array with the dimension 252 x chunk_size

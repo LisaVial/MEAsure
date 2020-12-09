@@ -67,7 +67,6 @@ class Worker(QtCore.QObject):
                 self.signal_message.emit('Worker #{} aborting work at step {}'.format(self.__name, i))
             except UnboundLocalError:
                 self.signal_message.emit('Worker #{} aborting work at step {}'.format(self.__name, 0))
-        print(np.sum(chunk_lens), shape_of_vt_dataset[1])
         self.signal_done.emit([self.__name, self.voltage_traces])
 
     def abort(self):
