@@ -18,9 +18,9 @@ class PlotWidget(QtWidgets.QWidget):
         self.plot_thread = None
 
         self.figure = Figure(figsize=(18, 12))
-        self.figure.subplots_adjust(left=0.1, right=0.9,
-                                    bottom=0.1, top=0.9,
-                                    hspace=0.3, wspace=0.3)
+        # self.figure.subplots_adjust(left=0.1, right=0.9,
+        #                             bottom=0.1, top=0.9,
+        #                             hspace=0.3, wspace=0.3)
 
         self.canvas = FigureCanvas(self.figure)
 

@@ -1,8 +1,10 @@
 from PyQt5 import QtWidgets, QtCore
 import numpy as np
-import seaborn as sns
+from scipy.signal import filtfilt, butter, find_peaks, peak_prominences
+import matplotlib.gridspec as gridspec
 import matplotlib.pyplot as plt
-import pandas as pd
+import matplotlib.colors as colors
+import matplotlib.cm as cmx
 from IPython import embed
 
 from plot_manager import PlotManager
@@ -11,7 +13,7 @@ from plots.plot_widget import PlotWidget
 
 class CsdPlotTab(QtWidgets.QWidget):
     def __init__(self, parent, reader, grid_channel_indices, grid_labels, fs, settings):
-        sns.set_theme(style="white", rc={"axes.facecolor": (0, 0, 0, 0)})
+        # sns.set_theme(style="white", rc={"axes.facecolor": (0, 0, 0, 0)})
         super().__init__(parent)
         self.reader = reader
         self.grid_channel_indices = grid_channel_indices
@@ -29,69 +31,52 @@ class CsdPlotTab(QtWidgets.QWidget):
         self.figure = self.plot_widget.figure
         main_layout.addWidget(self.plot_widget)
 
-        self.signal = self.reader.voltage_traces[:]
-        self.ch_ids = self.reader.channel_indices
+        self.ch_ids = self.reader.channel_ids
         self.labels = self.reader.labels
         self.fs = self.reader.sampling_frequency
+        self.duration = self.reader.current_file['duration']
 
-        # voltage_traces = [list(self.reader.voltage_traces[g_idx]) for g_idx in grid_channel_indices]
-        # channel_labels =[self.reader.labels[g_idx] for g_idx in grid_channel_indices]
-        # # time = np.arange(0, len(voltage_traces[0]) * (1/self.fs), 1/self.fs)
-        # # time = np.repeat(time, len(voltage_traces))
-        # # time = np.reshape(time, np.asarray(voltage_traces).shape)
-        # self.df = pd.DataFrame(dict(x=voltage_traces, g=channel_labels))
-        # pal = sns.cubehelix_palette(10, rot=-.25, light=.7)
-        # self.g = sns.FacetGrid(self.df, row="g", hue="g", aspect=15, height=.5, palette=pal)
-        # # embed()
         self.plot(self.figure)
 
     def plot(self, figure):
-        # self.g.map(sns.lineplot(self.df['x']))
-        # # self.g.map(sns.kdeplot, self.df['x'])
-        # self.g.map(plt.axhline, y=0, lw=2, clip_on=False)
-        #
-        # def label(x, color, label):
-        #     ax = plt.gca()
-        #     ax.text(0, .2, label, fontweight="bold", color=color, ha="left", va="center", transform=ax.transAxes)
-        #
-        # self.g.map(label, "x")
-        #
-        # # Set the subplots to overlap
-        # self.g.fig.subplots_adjust(hspace=-.25)
-        #
-        # # Remove axes details that don't play well with overlap
-        # self.g.set_titles("")
-        # self.g.set(yticks=[])
-        # self.g.despine(bottom=True, left=True)
+        time = np.arange(0, self.reader.voltage_traces_dataset.shape[1]/self.fs, 1/self.fs)
 
-        time = np.arange(0, self.duration + 1/self.fs, 1/self.fs)
-        color_count = 8
-        colors = [plt.cm.Pastel2(x) for x in np.linspace(0.0, 1.0, color_count)]
+        big_proms = []
+        channel_order = []
+        filtered = []
+        for idx, label in enumerate(self.grid_labels):
+            signal = self.reader.get_traces_with_label(label)
+            fs = self.reader.sampling_frequency
 
-        # selected_ids = [self.ch_ids[g_idx] for g_idx in self.grid_channel_indices]
+            nyq = 0.5 * fs
+            normal_cutoff = 10 / nyq
+            b, a = butter(2, normal_cutoff, btype='low', analog=False)
+            y = filtfilt(b, a, signal)
 
-        # ax = figure.add_subplot(111)
-        # if self.ch_ids is not None:
-        #     for idx, ch_id in enumerate(reversed(selected_ids)):
-        #         if len(self.labels[idx]) < 3:
-        #             ax.plot(time, self.signal[ch_id] + idx*10000, color=colors[idx % color_count], lw=4)
-        #
-        #     ax.spines['right'].set_visible(False)
-        #     ax.spines['top'].set_visible(False)
-        # else:
-        #     for idx in range(len(self.signal)):
-        #         ax.plot(time, self.signal[idx]-1 + idx*10000, color=colors[idx % color_count], lw=4)
-        #     ax.spines['right'].set_visible(False)
-        #     ax.spines['top'].set_visible(False)
-        # labels = self.reader.labels
-        # label_locs = [item.get_text() for item in ax.get_yticklabels()]
-        # empty_string_labels = [''] * len(label_locs)
-        # for idx in range(len(empty_string_labels)):
-        #     if idx % 12 == 0:
-        #         empty_string_labels[idx] = empty_string_labels[idx].replace('', labels[ch_id])
-        # ax.set_yticklabels(empty_string_labels)
-        # ax.set_xlabel('time')
-        # ax.set_ylabel('MEA channels')
+            peaks, _ = find_peaks(y, threshold=(5*np.mean(y)))
+            proms, left_bases, right_bases = peak_prominences(y, peaks)
+            if 200 < proms[0] < 500:
+                filtered.append(y)
+                big_proms.append(proms[0])
+                channel_order.append(idx)
+
+        spec = gridspec.GridSpec(ncols=1, nrows=len(big_proms), figure=figure)
+        cNorm = colors.Normalize(vmin=0, vmax=len(big_proms))
+        scalarMap = cmx.ScalarMappable(norm=cNorm, cmap='bone')
+        for i, prom_idx in enumerate(reversed(np.argsort(big_proms))):
+            colorVal = scalarMap.to_rgba(filtered[prom_idx][10000:100001])
+            ax = figure.add_subplot(spec[i])
+            ax.plot(time[10000:100001], filtered[prom_idx][10000:100001], color='white')
+            ax.fill_between(time[10000:100001], np.zeros(len(filtered[prom_idx][10000:100001])),
+                              filtered[prom_idx][10000:100001], alpha=0.75, color=colorVal)
+            ax.spines['right'].set_visible(False)
+            ax.spines['top'].set_visible(False)
+            ax.spines['left'].set_visible(False)
+            ax.spines['bottom'].set_visible(False)
+            # ax.get_xaxis().tick_bottom()
+            # ax.get_yaxis().tick_left()
+            ax.tick_params(labelsize=10, direction='out')
+
 
     def can_be_closed(self):
         # plot is not running a thread => can be always closed

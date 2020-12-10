@@ -226,7 +226,6 @@ class MeaFileView(QtWidgets.QWidget):
     def on_worker_done(self, name_and_traces):
         thread_end_time = time.time()
         print("Duration:", (thread_end_time - self.thread_start_time), "s")
-        print(self.reader.current_file)
         self.progress_label.setText('Finished loading data, you can analyze it now :)')
         self.worker = None
         self.worker_thread = None
@@ -460,7 +459,7 @@ class MeaFileView(QtWidgets.QWidget):
             self.csd_plot_settings = settings_dialog.get_settings()
             # overwrite global settings as well
             if self.csd_plot_settings.channel_selection == CsdPlotSettings.ChannelSelection.ALL:
-                grid_indices = range(len(self.reader.voltage_traces))
+                grid_indices = range(self.reader.voltage_traces_dataset.shape[0])
                 grid_labels = self.reader.labels
             elif self.csd_plot_settings.channel_selection == CsdPlotSettings.ChannelSelection.SELECTION:
                 grid_labels_and_indices = self.mea_grid.get_selected_channels()
