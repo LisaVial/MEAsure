@@ -1,11 +1,9 @@
 from PyQt5 import QtWidgets, QtCore
 import numpy as np
 from scipy.signal import filtfilt, butter, find_peaks, peak_prominences
-import matplotlib.gridspec as gridspec
 import matplotlib.pyplot as plt
-import matplotlib.colors as colors
-import matplotlib.cm as cmx
-from IPython import embed
+import pandas as pd
+import seaborn as sns
 
 from plot_manager import PlotManager
 from plots.plot_widget import PlotWidget
@@ -53,29 +51,50 @@ class CsdPlotTab(QtWidgets.QWidget):
             b, a = butter(2, normal_cutoff, btype='low', analog=False)
             y = filtfilt(b, a, signal)
 
-            peaks, _ = find_peaks(y, threshold=(5*np.mean(y)))
-            proms, left_bases, right_bases = peak_prominences(y, peaks)
+            peaks, _ = find_peaks(y, threshold=np.mean(y))
+            print(peaks)
+            proms = peak_prominences(y, peaks)[0]
+            labels = []
             if 200 < proms[0] < 500:
-                filtered.append(y)
+                for char in str(self.grid_labels[idx]):
+                    print(ord(char))
+                    # ord(char) method to check for char elements by their ascii value
+                    # checking for char elements with upper case
+                    if 65 <= ord(char) <= 90:
+                        labels.append(char)
+                    # checking for char elements with lower case
+                    elif 97 <= ord(char) <= 122:
+                        labels.append(char)
+                filtered.append(y[10000:100001])
                 big_proms.append(proms[0])
                 channel_order.append(idx)
 
-        spec = gridspec.GridSpec(ncols=1, nrows=len(big_proms), figure=figure)
-        cNorm = colors.Normalize(vmin=0, vmax=len(big_proms))
-        scalarMap = cmx.ScalarMappable(norm=cNorm, cmap='bone')
-        for i, prom_idx in enumerate(reversed(np.argsort(big_proms))):
-            colorVal = scalarMap.to_rgba(filtered[prom_idx][10000:100001])
-            ax = figure.add_subplot(spec[i])
-            ax.plot(time[10000:100001], filtered[prom_idx][10000:100001], color='white')
-            ax.fill_between(time[10000:100001], np.zeros(len(filtered[prom_idx][10000:100001])),
-                              filtered[prom_idx][10000:100001], alpha=0.75, color=colorVal)
-            ax.spines['right'].set_visible(False)
-            ax.spines['top'].set_visible(False)
-            ax.spines['left'].set_visible(False)
-            ax.spines['bottom'].set_visible(False)
-            # ax.get_xaxis().tick_bottom()
-            # ax.get_yaxis().tick_left()
-            ax.tick_params(labelsize=10, direction='out')
+        print(labels)
+        df = pd.DataFrame(dict(x=filtered, g=labels))
+        m = df.g.map(ord)
+        df["x"] += m
+
+        pal = sns.cubehelix_palette(10, rot=-.25, light=.7)
+        g = sns.FacetGrid(df, row="g", hue="g", aspect=15, height=.5, palette=pal)
+
+        g.map(sns.lineplot, data='x', clip_on=False, fill=True, alpha=1, linewidth=1.5)
+        g.map(plt.axhline, y=0, lw=2, clip_on=False)
+
+        # Define and use a simple function to label the plot in axes coordinates
+        def label(x, color, label):
+            ax = plt.gca()
+            ax.text(0, .2, label, fontweight="bold", color=color,
+                    ha="left", va="center", transform=ax.transAxes)
+
+        g.map(label, "x")
+
+        # Set the subplots to overlap
+        g.fig.subplots_adjust(hspace=-.25)
+
+        # Remove axes details that don't play well with overlap
+        g.set_titles("")
+        g.set(yticks=[])
+        g.despine(bottom=True, left=True)
 
 
     def can_be_closed(self):

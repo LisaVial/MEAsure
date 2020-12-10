@@ -44,7 +44,7 @@ class Worker(QtCore.QObject):
             steps = int(np.ceil(shape_of_vt_dataset[1] / chunk_size))
             chunk_iterator = np.linspace(0, chunk_size * steps, steps)
             max_index = shape_of_vt_dataset[1] - 1
-            for i, chunk_index in enumerate(chunk_iterator):  # dset = voltage_traces
+            for i, chunk_index in enumerate(chunk_iterator[:200]):  # dset = voltage_traces
                 next_index = min((chunk_index + chunk_size), max_index)
                 chunk = self.voltage_traces_dataset[:, int(chunk_index): int(next_index)]
                 self.voltage_traces[:, int(chunk_index):int(next_index)] = chunk
