@@ -4,6 +4,7 @@ from scipy.signal import filtfilt, butter, find_peaks, peak_prominences
 import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
+from IPython import embed
 
 from plot_manager import PlotManager
 from plots.plot_widget import PlotWidget
@@ -11,8 +12,8 @@ from plots.plot_widget import PlotWidget
 
 class CsdPlotTab(QtWidgets.QWidget):
     def __init__(self, parent, reader, grid_channel_indices, grid_labels, fs, settings):
-        # sns.set_theme(style="white", rc={"axes.facecolor": (0, 0, 0, 0)})
         super().__init__(parent)
+        sns.set_theme(style="white", rc={"axes.facecolor": (0, 0, 0, 0)})
         self.reader = reader
         self.grid_channel_indices = grid_channel_indices
         self.grid_labels = grid_labels
@@ -42,6 +43,7 @@ class CsdPlotTab(QtWidgets.QWidget):
         big_proms = []
         channel_order = []
         filtered = []
+        labels = []
         for idx, label in enumerate(self.grid_labels):
             signal = self.reader.get_traces_with_label(label)
             fs = self.reader.sampling_frequency
@@ -52,32 +54,28 @@ class CsdPlotTab(QtWidgets.QWidget):
             y = filtfilt(b, a, signal)
 
             peaks, _ = find_peaks(y, threshold=np.mean(y))
-            print(peaks)
             proms = peak_prominences(y, peaks)[0]
-            labels = []
-            if 200 < proms[0] < 500:
-                for char in str(self.grid_labels[idx]):
-                    print(ord(char))
-                    # ord(char) method to check for char elements by their ascii value
-                    # checking for char elements with upper case
-                    if 65 <= ord(char) <= 90:
-                        labels.append(char)
-                    # checking for char elements with lower case
-                    elif 97 <= ord(char) <= 122:
-                        labels.append(char)
-                filtered.append(y[10000:100001])
-                big_proms.append(proms[0])
-                channel_order.append(idx)
+            if len(proms) > 1:
+                if 200 < proms[0] < 500:
+                    labels.append(label)
+                    filtered.append(y[10000:100001])
+                    big_proms.append(proms[0])
+                    channel_order.append(idx)
 
-        print(labels)
-        df = pd.DataFrame(dict(x=filtered, g=labels))
-        m = df.g.map(ord)
-        df["x"] += m
+        dfl = list()
+        for j, f in enumerate(filtered):
+            print(f, [f][0])
+            v = pd.DataFrame([f[:]], columns=list(str(labels[j])))
+            dfl.append(v)
+        df = pd.concat(dfl)
+        print(df)
 
+        # df = pd.DataFrame(dict(x=filtered, g=labels))
+        # df["x"] += m
+        # m = df.g.map(ord)
         pal = sns.cubehelix_palette(10, rot=-.25, light=.7)
         g = sns.FacetGrid(df, row="g", hue="g", aspect=15, height=.5, palette=pal)
-
-        g.map(sns.lineplot, data='x', clip_on=False, fill=True, alpha=1, linewidth=1.5)
+        g.map(sns.kdeplot, "x", clip_on=False, color="w", lw=2, bw_adjust=.5)
         g.map(plt.axhline, y=0, lw=2, clip_on=False)
 
         # Define and use a simple function to label the plot in axes coordinates
@@ -95,7 +93,6 @@ class CsdPlotTab(QtWidgets.QWidget):
         g.set_titles("")
         g.set(yticks=[])
         g.despine(bottom=True, left=True)
-
 
     def can_be_closed(self):
         # plot is not running a thread => can be always closed
