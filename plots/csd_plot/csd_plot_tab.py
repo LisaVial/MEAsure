@@ -1,10 +1,9 @@
 from PyQt5 import QtWidgets, QtCore
 import numpy as np
 from scipy.signal import filtfilt, butter, find_peaks, peak_prominences
-import matplotlib.gridspec as gridspec
 import matplotlib.pyplot as plt
-import matplotlib.colors as colors
-import matplotlib.cm as cmx
+import pandas as pd
+import seaborn as sns
 from IPython import embed
 
 from plot_manager import PlotManager
@@ -13,8 +12,8 @@ from plots.plot_widget import PlotWidget
 
 class CsdPlotTab(QtWidgets.QWidget):
     def __init__(self, parent, reader, grid_channel_indices, grid_labels, fs, settings):
-        # sns.set_theme(style="white", rc={"axes.facecolor": (0, 0, 0, 0)})
         super().__init__(parent)
+        sns.set_theme(style="white", rc={"axes.facecolor": (0, 0, 0, 0)})
         self.reader = reader
         self.grid_channel_indices = grid_channel_indices
         self.grid_labels = grid_labels
@@ -44,6 +43,7 @@ class CsdPlotTab(QtWidgets.QWidget):
         big_proms = []
         channel_order = []
         filtered = []
+        labels = []
         for idx, label in enumerate(self.grid_labels):
             signal = self.reader.get_traces_with_label(label)
             fs = self.reader.sampling_frequency
@@ -85,6 +85,22 @@ class CsdPlotTab(QtWidgets.QWidget):
         spec.update(hspace=-0.5)
         rect = axs_objs[-1].patch
         rect.set_alpha(0)
+
+        # Define and use a simple function to label the plot in axes coordinates
+        def label(x, color, label):
+            ax = plt.gca()
+            ax.text(0, .2, label, fontweight="bold", color=color,
+                    ha="left", va="center", transform=ax.transAxes)
+
+        g.map(label, "x")
+
+        # Set the subplots to overlap
+        g.fig.subplots_adjust(hspace=-.25)
+
+        # Remove axes details that don't play well with overlap
+        g.set_titles("")
+        g.set(yticks=[])
+        g.despine(bottom=True, left=True)
 
     def can_be_closed(self):
         # plot is not running a thread => can be always closed
