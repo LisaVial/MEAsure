@@ -53,30 +53,38 @@ class CsdPlotTab(QtWidgets.QWidget):
             b, a = butter(2, normal_cutoff, btype='low', analog=False)
             y = filtfilt(b, a, signal)
 
-            peaks, _ = find_peaks(y, threshold=(5*np.mean(y)))
-            proms, left_bases, right_bases = peak_prominences(y, peaks)
-            if 200 < proms[0] < 500:
-                filtered.append(y)
-                big_proms.append(proms[0])
-                channel_order.append(idx)
+            peaks, _ = find_peaks(y[:100001], threshold=(2.5*np.mean(y[:100001])))
+            proms = peak_prominences(y[:100001], peaks)
+            for pi, prom in enumerate(proms):
+                for p in prom:
+                    if 1000 < p < 1500:
+                        filtered.append(y[:100001])
+                        big_proms.append(p)
+                        break
 
         spec = gridspec.GridSpec(ncols=1, nrows=len(big_proms), figure=figure)
         cNorm = colors.Normalize(vmin=0, vmax=len(big_proms))
         scalarMap = cmx.ScalarMappable(norm=cNorm, cmap='bone')
-        for i, prom_idx in enumerate(reversed(np.argsort(big_proms))):
-            colorVal = scalarMap.to_rgba(filtered[prom_idx][10000:100001])
+        axs_objs = []
+        for i, prom_idx in enumerate(np.argsort(big_proms)):
+            colorVal = scalarMap.to_rgba(filtered[prom_idx])
             ax = figure.add_subplot(spec[i])
-            ax.plot(time[10000:100001], filtered[prom_idx][10000:100001], color='white')
-            ax.fill_between(time[10000:100001], np.zeros(len(filtered[prom_idx][10000:100001])),
-                              filtered[prom_idx][10000:100001], alpha=0.75, color=colorVal)
+            ax.plot(time[:100001], filtered[prom_idx], color='white')
+            ax.fill_between(time[:100001], np.zeros(len(filtered[prom_idx])), filtered[prom_idx], alpha=0.75,
+                            color=colorVal)
             ax.spines['right'].set_visible(False)
             ax.spines['top'].set_visible(False)
             ax.spines['left'].set_visible(False)
             ax.spines['bottom'].set_visible(False)
-            # ax.get_xaxis().tick_bottom()
-            # ax.get_yaxis().tick_left()
+            ax.axes.get_xaxis().set_visible(False)
+            ax.axes.get_yaxis().set_visible(False)
+            ax.axes.get_xaxis().set_ticks([])
+            ax.axes.get_yaxis().set_ticks([])
             ax.tick_params(labelsize=10, direction='out')
-
+            axs_objs.append(ax)
+        spec.update(hspace=-0.5)
+        rect = axs_objs[-1].patch
+        rect.set_alpha(0)
 
     def can_be_closed(self):
         # plot is not running a thread => can be always closed
