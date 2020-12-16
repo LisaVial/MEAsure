@@ -2,6 +2,8 @@ from PyQt5 import QtWidgets, QtCore
 import numpy as np
 from scipy.signal import filtfilt, butter, find_peaks, peak_prominences
 import matplotlib.pyplot as plt
+from matplotlib import gridspec
+import matplotlib.pylab as pl
 import pandas as pd
 import seaborn as sns
 from IPython import embed
@@ -40,38 +42,35 @@ class CsdPlotTab(QtWidgets.QWidget):
     def plot(self, figure):
         time = np.arange(0, self.reader.voltage_traces_dataset.shape[1]/self.fs, 1/self.fs)
 
-        big_proms = []
-        channel_order = []
+        maxima = []
         filtered = []
         labels = []
         for idx, label in enumerate(self.grid_labels):
+            if len(label) > 2:
+                continue
             signal = self.reader.get_traces_with_label(label)
             fs = self.reader.sampling_frequency
 
             nyq = 0.5 * fs
             normal_cutoff = 10 / nyq
             b, a = butter(2, normal_cutoff, btype='low', analog=False)
-            y = filtfilt(b, a, signal)
+            y = filtfilt(b, a, signal[:20001])
+            max = np.argmax(y)
+            if signal[max] > 1000:
+                filtered.append(y)
+                labels.append(label)
+                maxima.append(max)
 
-            peaks, _ = find_peaks(y[:100001], threshold=(2.5*np.mean(y[:100001])))
-            proms = peak_prominences(y[:100001], peaks)
-            for pi, prom in enumerate(proms):
-                for p in prom:
-                    if 1000 < p < 1500:
-                        filtered.append(y[:100001])
-                        big_proms.append(p)
-                        break
-
-        spec = gridspec.GridSpec(ncols=1, nrows=len(big_proms), figure=figure)
-        cNorm = colors.Normalize(vmin=0, vmax=len(big_proms))
-        scalarMap = cmx.ScalarMappable(norm=cNorm, cmap='bone')
+        spec = gridspec.GridSpec(ncols=1, nrows=len(filtered), figure=figure)
+        colors = plt.cm.tab20b(np.linspace(0, 1, len(filtered)))
         axs_objs = []
-        for i, prom_idx in enumerate(np.argsort(big_proms)):
-            colorVal = scalarMap.to_rgba(filtered[prom_idx])
+        sorted_maxima = np.array(maxima)[np.argsort(maxima)]
+        for i, maxi in enumerate(sorted_maxima):
+
             ax = figure.add_subplot(spec[i])
-            ax.plot(time[:100001], filtered[prom_idx], color='white')
-            ax.fill_between(time[:100001], np.zeros(len(filtered[prom_idx])), filtered[prom_idx], alpha=0.75,
-                            color=colorVal)
+            ax.plot(time[:20001], filtered[i], color='white')
+            ax.fill_between(time[:20001], np.zeros(len(filtered[i])), filtered[i], color=colors[i])
+            ax.text(2, 0.9, str(labels[i]), color=colors[i])
             ax.spines['right'].set_visible(False)
             ax.spines['top'].set_visible(False)
             ax.spines['left'].set_visible(False)
@@ -91,16 +90,6 @@ class CsdPlotTab(QtWidgets.QWidget):
             ax = plt.gca()
             ax.text(0, .2, label, fontweight="bold", color=color,
                     ha="left", va="center", transform=ax.transAxes)
-
-        g.map(label, "x")
-
-        # Set the subplots to overlap
-        g.fig.subplots_adjust(hspace=-.25)
-
-        # Remove axes details that don't play well with overlap
-        g.set_titles("")
-        g.set(yticks=[])
-        g.despine(bottom=True, left=True)
 
     def can_be_closed(self):
         # plot is not running a thread => can be always closed

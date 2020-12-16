@@ -1,4 +1,5 @@
 from PyQt5.QtWidgets import QWidget, QGridLayout, QPushButton
+from PyQt5 import QtGui
 import PyQt5.QtCore as QtCore
 import PyQt5.QtWidgets as QtWidgets
 
@@ -44,6 +45,7 @@ class MeaGrid(QWidget):
                 label = (c + number_str)
 
                 button = QPushButton(c + str(n))
+                button.setFont(QtGui.QFont('Arial', 9))
                 button.setFixedSize(26, 26)
                 button.setStyleSheet(button_style)
                 button.setCheckable(True)
