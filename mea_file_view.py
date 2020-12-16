@@ -221,7 +221,6 @@ class MeaFileView(QtWidgets.QWidget):
         self.progress_label.setText(str(step_list[0]) + "%")
         self.reader.assign_chunks(step_list)
 
-
     @QtCore.pyqtSlot(list)
     def on_worker_done(self, name_and_traces):
         thread_end_time = time.time()

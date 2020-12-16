@@ -54,31 +54,40 @@ class CsdPlotTab(QtWidgets.QWidget):
             nyq = 0.5 * fs
             normal_cutoff = 10 / nyq
             b, a = butter(2, normal_cutoff, btype='low', analog=False)
-            y = filtfilt(b, a, signal[:20001])
+            y = filtfilt(b, a, signal)
             max = np.argmax(y)
-            if signal[max] > 1000:
+            max_timepoint = max/fs
+            print('Maxima timepoint:', max/fs, '\n', 'and their respective values:', signal[max])
+            if max_timepoint > 5 and signal[max] > 50 or signal[max] < -50:
                 filtered.append(y)
                 labels.append(label)
                 maxima.append(max)
 
-        spec = gridspec.GridSpec(ncols=1, nrows=len(filtered), figure=figure)
-        colors = plt.cm.tab20b(np.linspace(0, 1, len(filtered)))
+        spec = gridspec.GridSpec(ncols=1, nrows=len(filtered[:5]), figure=figure)
+        colors = plt.cm.tab20b(np.linspace(0, 1, len(filtered[:5])))
         axs_objs = []
         sorted_maxima = np.array(maxima)[np.argsort(maxima)]
-        for i, maxi in enumerate(sorted_maxima):
-
+        for i, maxi in enumerate(sorted_maxima[:5]):
+            max_index = len(filtered[i])
+            if maxi > 5000:
+                start_index = maxi - 5000
+                end_index = min((maxi + 5000), max_index)
+            else:
+                start_index = 0
+                end_index = min((maxi + 10000), max_index)
             ax = figure.add_subplot(spec[i])
-            ax.plot(time[:20001], filtered[i], color='white')
-            ax.fill_between(time[:20001], np.zeros(len(filtered[i])), filtered[i], color=colors[i])
-            ax.text(2, 0.9, str(labels[i]), color=colors[i])
+            # ax.plot(time[start_index:end_index], filtered[i][start_index:end_index], color='white')
+            ax.fill_between(time[start_index:end_index], np.zeros(len(filtered[i][start_index:end_index])),
+                            filtered[i][start_index:end_index], color=colors[i])
+            ax.text(1.5, 0.9, str(labels[i]), color=colors[i])
             ax.spines['right'].set_visible(False)
             ax.spines['top'].set_visible(False)
-            ax.spines['left'].set_visible(False)
-            ax.spines['bottom'].set_visible(False)
-            ax.axes.get_xaxis().set_visible(False)
-            ax.axes.get_yaxis().set_visible(False)
-            ax.axes.get_xaxis().set_ticks([])
-            ax.axes.get_yaxis().set_ticks([])
+            # ax.spines['left'].set_visible(False)
+            # ax.spines['bottom'].set_visible(False)
+            # ax.axes.get_xaxis().set_visible(False)
+            # ax.axes.get_yaxis().set_visible(False)
+            # ax.axes.get_xaxis().set_ticks([])
+            # ax.axes.get_yaxis().set_ticks([])
             ax.tick_params(labelsize=10, direction='out')
             axs_objs.append(ax)
         spec.update(hspace=-0.5)

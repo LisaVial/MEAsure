@@ -13,6 +13,10 @@ class McsDataReader:
         t1 = time.time() - t0
         print("Time elapsed for file opening: ", t1)
         self.voltage_traces_dataset, self.sampling_frequency, self.duration = self.get_data_of_file()
+        # t0 = time.time()
+        # voltage_traces_test = self.read_voltage_traces_from_file()
+        # t1 = time.time() - t0
+        # print('time to load the whole recording of all electrodes:', t1)
         self.current_file = dict()
         self.current_file['sampling rate'] = self.sampling_frequency
         self.current_file['duration'] = self.duration
@@ -25,6 +29,9 @@ class McsDataReader:
             self.current_file['channels'][str(label)]['channel id'] = self.channel_ids[idx]
             self.current_file['channels'][str(label)]['raw trace'] = np.empty(int(self.duration *
                                                                                   self.sampling_frequency))
+
+    def read_voltage_traces_from_file(self):
+        return self.file['Data']['Recording_0']['AnalogStream']['Stream_0']['ChannelData'][:]
 
     # for Danielas data the raw traces take almost 6 GB working memory, if stored in a dictionary. So, think of a way
     # how to make further analysis feasible

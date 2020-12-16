@@ -44,14 +44,14 @@ class Worker(QtCore.QObject):
             steps = int(np.ceil(shape_of_vt_dataset[1] / chunk_size))
             chunk_iterator = np.linspace(0, chunk_size * steps, steps)
             max_index = shape_of_vt_dataset[1] - 1
-            for i, chunk_index in enumerate(chunk_iterator[:200]):  # dset = voltage_traces
+            for i, chunk_index in enumerate(chunk_iterator):  # dset = voltage_traces
                 next_index = min((chunk_index + chunk_size), max_index)
                 chunk = self.voltage_traces_dataset[:, int(chunk_index): int(next_index)]
                 self.voltage_traces[:, int(chunk_index):int(next_index)] = chunk
                 chunk_lens.append(len(self.voltage_traces_dataset[:, int(chunk_index): int(next_index)]))
                 time.sleep(0.1)
                 # Here, the progress signal is calculated and then sent to the FilterTab
-                progress = round(((i + 1) / len(chunk_iterator[:200])) * 100.0, 2)
+                progress = round(((i + 1) / len(chunk_iterator)) * 100.0, 2)
                 self.signal_step.emit([progress, chunk_index, next_index, chunk])
 
                 # check if we need to abort the loop; need to process events to receive signals;
