@@ -1,4 +1,3 @@
-from IPython import embed
 import numpy as np
 import h5py
 import time
