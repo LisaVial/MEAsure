@@ -182,52 +182,52 @@ class MeaFileView(QtWidgets.QWidget):
         self.frequency_analysis_tab = None
         self.isi_histogram_tab = None
 
-        # start reader thread
-        self.worker = None
-        self.worker_thread = None
-        self.thread_start_time = None  # for performance testing
-        self.start_hdf5_dataset_loader_thread()
+        # # start reader thread
+        # self.worker = None
+        # self.worker_thread = None
+        # self.thread_start_time = None  # for performance testing
+        # self.start_hdf5_dataset_loader_thread()
 
-    def start_hdf5_dataset_loader_thread(self):
-        self.progress_bar.setValue(0)
-        self.progress_label.setText('')
-        self.operation_label.setText('Loading raw traces of recording')
-        # setup worker and its thread
-        thread_name = self.reader.filename[:-3]
-        self.worker = Worker(thread_name, self.reader)
-        self.worker_thread = QtCore.QThread(self)
-        self.worker.moveToThread(self.worker_thread)
-
-        # connect to worker signals
-        self.worker.signal_message.connect(self.on_worker_message)
-        self.worker.signal_step.connect(self.on_worker_step)
-        self.worker.signal_done.connect(self.on_worker_done)
-
-        # let worker start once its thread is starting
-        self.worker_thread.started.connect(self.worker.work)
-
-        # start thread (and thus the worker)
-        self.thread_start_time = time.time()
-        self.worker_thread.start()
-
-    @QtCore.pyqtSlot(str)
-    def on_worker_message(self, message):
-        print("Message:", message)
-
-    @QtCore.pyqtSlot(list)
-    def on_worker_step(self, step_list):
-        # ToDo: update dictionary of mcs reader in the background ->
-        self.progress_bar.setValue(int(step_list[0]))
-        self.progress_label.setText(str(step_list[0]) + "%")
-        self.reader.assign_chunks(step_list)
-
-    @QtCore.pyqtSlot(list)
-    def on_worker_done(self, name_and_traces):
-        thread_end_time = time.time()
-        print("Duration:", (thread_end_time - self.thread_start_time), "s")
-        self.progress_label.setText('Finished loading data, you can analyze it now :)')
-        self.worker = None
-        self.worker_thread = None
+    # def start_hdf5_dataset_loader_thread(self):
+    #     self.progress_bar.setValue(0)
+    #     self.progress_label.setText('')
+    #     self.operation_label.setText('Loading raw traces of recording')
+    #     # setup worker and its thread
+    #     thread_name = self.reader.filename[:-3]
+    #     self.worker = Worker(thread_name, self.reader)
+    #     self.worker_thread = QtCore.QThread(self)
+    #     self.worker.moveToThread(self.worker_thread)
+    #
+    #     # connect to worker signals
+    #     self.worker.signal_message.connect(self.on_worker_message)
+    #     self.worker.signal_step.connect(self.on_worker_step)
+    #     self.worker.signal_done.connect(self.on_worker_done)
+    #
+    #     # let worker start once its thread is starting
+    #     self.worker_thread.started.connect(self.worker.work)
+    #
+    #     # start thread (and thus the worker)
+    #     self.thread_start_time = time.time()
+    #     self.worker_thread.start()
+    #
+    # @QtCore.pyqtSlot(str)
+    # def on_worker_message(self, message):
+    #     print("Message:", message)
+    #
+    # @QtCore.pyqtSlot(list)
+    # def on_worker_step(self, step_list):
+    #     # ToDo: update dictionary of mcs reader in the background ->
+    #     self.progress_bar.setValue(int(step_list[0]))
+    #     self.progress_label.setText(str(step_list[0]) + "%")
+    #     self.reader.assign_chunks(step_list)
+    #
+    # @QtCore.pyqtSlot(list)
+    # def on_worker_done(self, name_and_traces):
+    #     thread_end_time = time.time()
+    #     print("Duration:", (thread_end_time - self.thread_start_time), "s")
+    #     self.progress_label.setText('Finished loading data, you can analyze it now :)')
+    #     self.worker = None
+    #     self.worker_thread = None
 
     def open_isi_histogram_settings_dialog(self, is_pressed):
         channel_labels_and_indices = self.mea_grid.get_selected_channels()
@@ -432,7 +432,7 @@ class MeaFileView(QtWidgets.QWidget):
             self.filter_settings = settings_dialog.get_settings()
             meae_filename = settings_dialog.meae_filename
             if self.filter_settings.channel_selection == FilterSettings.ChannelSelection.ALL:
-                grid_indices = range(len(self.reader.raw_voltage_traces))
+                grid_indices = range(len(self.reader.voltage_traces))
             elif self.filter_settings.channel_selection == FilterSettings.ChannelSelection.SELECTION:
                 grid_labels_and_indices = self.mea_grid.get_selected_channels()
                 grid_indices = [values[1] for values in grid_labels_and_indices]

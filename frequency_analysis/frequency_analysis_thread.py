@@ -20,7 +20,7 @@ class FrequencyAnalysisThread(QtCore.QThread):
         # effects
         frequencies = []
         signals = reader.voltage_traces
-        ids = reader.channel_indices
+        ids = reader.channel_ids
         selected_ids = [ids[g_idx] for g_idx in self.grid_indices]
         for idx, ch_id in enumerate(selected_ids):
             signal = signals[ch_id]

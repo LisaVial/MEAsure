@@ -119,7 +119,7 @@ class SpikeDetectionThread(QtCore.QThread):
             signals = reader.voltage_traces
         elif self.file_mode == SpikeDetectionSettings.FileMode.MEAE:
             signals = reader.filtered_traces
-        ids = reader.channel_indices
+        ids = reader.channel_ids
         fs = reader.sampling_frequency
         selected_ids = [ids[g_idx] for g_idx in self.grid_indices]
 

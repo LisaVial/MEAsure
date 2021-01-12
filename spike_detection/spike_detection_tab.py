@@ -182,6 +182,7 @@ class SpikeDetectionTab(QtWidgets.QWidget):
             self.voltage_trace.append(signal)
             self.time_vt.append(list(np.arange(0, len(signal) * (1 / self.fs), 1 / self.fs)))
             self.spike_indices.append(list(spiketime_indices))
+            # ToDo: next line causes a bug:
             self.spike_height.append(list(np.asarray(signal)[np.asarray(spiketime_indices[-2:]).flatten()]))
 
     @QtCore.pyqtSlot()
