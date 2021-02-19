@@ -1,4 +1,4 @@
-from PyQt5.QtWidgets import QWidget, QGridLayout, QPushButton
+from PyQt5.QtWidgets import QWidget, QGridLayout, QPushButton, QTableWidget, QTableWidgetItem
 from PyQt5 import QtGui
 import PyQt5.QtCore as QtCore
 import PyQt5.QtWidgets as QtWidgets
@@ -26,33 +26,36 @@ class MeaGrid(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
 
-        self.grid_layout = QGridLayout(self)
-        self.grid_layout.setSpacing(2)
-        self.grid_layout.setVerticalSpacing(0)
+        self.layout = QtWidgets.QVBoxLayout(self)
 
-        self.label_button_map = dict()
+        self.grid_table = QTableWidget(self)
+        self.grid_table.setRowCount(16)
+        self.grid_table.setColumnCount(16)
+        self.grid_table.horizontalHeader().setVisible(False)
+        self.grid_table.verticalHeader().setVisible(False)
+        self.layout.addWidget(self.grid_table)
+
         self.labels = []
         self.label_indices_map = dict()
         for col, c in enumerate(['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'R']):
             for row, n in enumerate(range(1, 17)):
                 if c == 'A' and n == 1 or c == 'A' and n == 16 or c == 'R' and n == 1 or c == 'R' and n == 16:
+                    self.grid_table.setColumnWidth(col, 35)
+                    self.grid_table.setItem(row, col, QTableWidgetItem(''))
+                    self.grid_table.item(row, col).setFlags(QtCore.Qt.NoItemFlags)
                     continue
 
                 number_str = str(n)
                 self.labels.append(c + number_str)
-                if n < 10:
-                    number_str = "0" + number_str
+                # if n < 10:
+                #     number_str = "0" + number_str
                 label = (c + number_str)
 
-                button = QPushButton(c + str(n))
-                button.setFont(QtGui.QFont('Arial', 9))
-                button.setFixedSize(26, 26)
-                button.setStyleSheet(button_style)
-                button.setCheckable(True)
-                button.setChecked(False)
-                id = c + str(n)
+                self.grid_table.setColumnWidth(col, 35)
+                self.grid_table.setItem(row, col, QTableWidgetItem(label))
 
                 # creation of dictionary
+                id = c + str(n)
 
                 self.label_indices_map[id] = {}
                 if col == 0:
@@ -62,40 +65,35 @@ class MeaGrid(QWidget):
                 else:
                     self.label_indices_map[id]['grid index'] = row + (col*16) - 3
 
-                self.label_button_map[label] = button
-                self.grid_layout.addWidget(button, row, col)
         self.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
         self.customContextMenuRequested.connect(self.on_context_menu)
 
     def get_selected_channels(self):
-        ordered_labels = list(self.label_button_map.keys())
-        ordered_labels.sort()
-
         selected_channels = []
-        for idx, label in enumerate(ordered_labels):
-            if self.label_button_map[label].isChecked():
-                selected_channels.append((self.labels[idx], self.label_indices_map[self.labels[idx]]['grid index']))
+        for item in self.grid_table.selectedItems():
+            label = item.text()
+            selected_channels.append((label, self.label_indices_map[label]['grid index']))
+
         return selected_channels
 
     def select_all(self):
-        for label in self.label_button_map.keys():
-            self.label_button_map[label].setChecked(True)
+        self.grid_table.selectAll()
 
     def select_none(self):
-        for label in self.label_button_map.keys():
-            self.label_button_map[label].setChecked(False)
+        self.grid_table.clearSelection()
 
     def invert_selection(self):
-        for label in self.label_button_map.keys():
-            is_checked = self.label_button_map[label].isChecked()
-            self.label_button_map[label].setChecked(not is_checked)
+        for row in range(self.grid_table.rowCount()):
+            for column in range(self.grid_table.columnCount()):
+                is_selected = self.grid_table.item(row, column).isSelected()
+                self.grid_table.item(row, column).setSelected(not is_selected)
 
     def are_all_selected(self):
-        channel_count = len(self.label_button_map.keys())
-        return (len(self.get_selected_channels()) == channel_count)
+        channel_count = len(self.labels)
+        return len(self.grid_table.selectedItems()) == channel_count
 
     def is_none_selected(self):
-        return (len(self.get_selected_channels()) == 0)
+        return len(self.grid_table.selectedItems()) == 0
 
     @QtCore.pyqtSlot(QtCore.QPoint)
     def on_context_menu(self, point):

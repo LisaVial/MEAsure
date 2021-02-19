@@ -59,29 +59,32 @@ class FilterThread(QtCore.QThread):
         # Set up filter_mat to store filtered traces in and get all necessary variables
         filter_mat = []
         reader = mea_data_reader
-        signals = reader.raw_voltage_traces
-        ids = reader.channel_indices
+        signals = reader.voltage_traces
+        ids = reader.channel_ids
         labels = reader.labels
         fs = reader.sampling_frequency
         # With this one liner (list comprehension) only selected channel ids are selected according to chosen
         # grid_indices
         selected_ids = [ids[g_idx] for g_idx in self.grid_indices]
+
         for idx, ch_id in enumerate(selected_ids):
             # Right now, all the channels should be loaded and filtered, since the way storing of .meae files is set
             # up it will get very confusing fast.
             # So basically grid_indices should be a list with the length of all channel indices
             t1 = time.time()
-            signal = reader.raw_voltage_traces[ch_id]
+            # function to get the scaling right
+            label = labels[ch_id]
+            scaled_signal = reader.get_scaled_channel(label)
             t2 = time.time() - t1
             print('Time to load channel data: ', t2)
             t3 = time.time()
             # Here the filter is chosen according to the filter mode
             if self.filter_mode == 0:
-                filtered = self.butter_div_filters(signal, self.cut_1, fs, 'low')
+                filtered = self.butter_div_filters(scaled_signal, self.cut_1, fs, 'low')
             elif self.filter_mode == 1:
-                filtered = self.butter_div_filters(signal, self.cut_1, fs, 'high')
+                filtered = self.butter_div_filters(scaled_signal, self.cut_1, fs, 'high')
             elif self.filter_mode == 2:
-                filtered = self.butter_bandpass_filter(signal, self.cut_1, self.cut_2, fs)
+                filtered = self.butter_bandpass_filter(scaled_signal, self.cut_1, self.cut_2, fs)
             # Once data is filtered, it is appended to the filter_mat list.
             filter_mat.append(filtered)
             t4 = time.time() - t3
@@ -90,7 +93,7 @@ class FilterThread(QtCore.QThread):
             # original signal is sent, to be able to plot the signals, since there are for once not enough pixels on
             # screen to plot all data points correctly and also, for massive data loads also the pyqtgraph plot widget
             # starts lagging.
-            data = [list(signal), list(filtered), str(labels[self.grid_indices[idx]])]
+            data = [list(scaled_signal[::312]), list(filtered[::312]), str(labels[self.grid_indices[idx]])]
             self.data_updated.emit(data)    # Here, the signal is sent to the FilterTav
 
             # Here, the progress signal is calculated and then sent to the FilterTab

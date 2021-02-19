@@ -4,6 +4,7 @@ import os
 import pyqtgraph as pg
 import numpy as np
 
+from results import ResultStoring
 from filtering.filter_thread import FilterThread
 
 
@@ -25,6 +26,7 @@ class FilterTab(QtWidgets.QWidget):
         self.grid_indices = grid_indices
         self.append_existing_file = append
         self.settings = settings
+        self.mea_file_view = parent
 
         # Line 28 and 29 set two class variables to None. This is convenient for the handling of the Thread. As long as
         # the filtering_thread is None, there is no Thread running.
@@ -172,13 +174,13 @@ class FilterTab(QtWidgets.QWidget):
         self.progress_label.setText('Finished :)')
         if self.filtering_thread.filtered_mat:
             self.filtered_mat = self.filtering_thread.filtered_mat.copy()
+            self.mea_file_view.results.set_filter_mat(self.filtering_thread.filtered_mat)
         self.filtering_thread = None
 
         if self.settings.save_filtered_traces:
             path = os.path.split(self.reader.file_path)[0]
             if self.meae_filename is None:
                 self.meae_filename = os.path.split(self.reader.file_path)[-1][:-3] + '.meae'
-            print(self.meae_filename)
             self.save_filter_mat(self.filtered_mat, os.path.join(path, self.meae_filename), self.reader)
 
     def save_filter_mat(self, filter_mat, filename, reader):
@@ -198,14 +200,15 @@ class FilterTab(QtWidgets.QWidget):
                 self.operation_label.setText('Filtered traces saved in: ' + filename)
         else:
             self.operation_label.setText('Saving filtered traces im .meae file...')
-            if reader.sampling_frequency and reader.channel_indices and reader.labels:
+            if reader.sampling_frequency and reader.channel_ids and reader.labels:
                 with h5py.File(filename, 'w') as hf:
                     dset_1 = hf.create_dataset('filter', data=filter_mat)
                     dset_2 = hf.create_dataset('fs', data=reader.sampling_frequency)
-                    dset_3 = hf.create_dataset('channel_ids', data=reader.channel_indices)
-                    save_labels = [label.encode('utf-8') for label in reader.labels]
-                    dset_3 = hf.create_dataset('channel_labels', data=save_labels)
+                    # dset_3 = hf.create_dataset('channel_ids', data=reader.channel_ids)
+                    # save_labels = [label.encode('utf-8') for label in reader.labels]
+                    # dset_3 = hf.create_dataset('channel_labels', data=save_labels)
             self.operation_label.setText('Filtered traces saved in: ' + filename)
+
 
     def open_filter_file(self, filepath):
         """

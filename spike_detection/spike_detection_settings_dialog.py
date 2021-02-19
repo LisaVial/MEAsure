@@ -45,7 +45,6 @@ class SpikeDetectionSettingsDialog(QtWidgets.QDialog):
         return self.spike_detection_settings_widget.get_settings()
 
     def on_okay_clicked(self):
-        self.meae_filename = self.spike_detection_settings_widget.check_appending()
         if self.meae_filename is None:
             self.meae_filename = self.spike_detection_settings_widget.get_meae_filename() + '.meae'
             self.accept()

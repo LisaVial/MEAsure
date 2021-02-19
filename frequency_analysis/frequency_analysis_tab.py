@@ -18,6 +18,7 @@ class FrequencyAnalysisTab(QtWidgets.QWidget):
         self.grid_labels = grid_labels
         self.settings = settings
         self.plot_manager = PlotManager()
+        self.mea_file_view = parent
 
         main_layout = QtWidgets.QVBoxLayout(self)
         main_layout.setAlignment(QtCore.Qt.AlignTop | QtCore.Qt.AlignCenter)
@@ -85,6 +86,7 @@ class FrequencyAnalysisTab(QtWidgets.QWidget):
         # self.frequencies = frequencies
         if self.frequency_analysis_thread.frequencies:
             self.frequencies = self.frequency_analysis_thread.frequencies.copy()
+            self.mea_file_view.results.set_frequency_mat(self.frequency_analysis_thread.frequencies)
         self.frequency_analysis_thread = None
         self.initialize_plotting()
 

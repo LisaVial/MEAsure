@@ -23,7 +23,6 @@ class RasterplotTab(QtWidgets.QWidget):
         else:
             self.spiketimes = self.reader.spiketimes
             self.spiketimes = [self.spiketimes[g_idx] for g_idx in self.grid_indices]
-        self.plot_thread = None
 
         main_layout = QtWidgets.QVBoxLayout(self)
         main_layout.setAlignment(QtCore.Qt.AlignTop | QtCore.Qt.AlignHCenter)

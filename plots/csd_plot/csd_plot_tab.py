@@ -49,6 +49,7 @@ class CsdPlotTab(QtWidgets.QWidget):
             if len(label) > 2:
                 continue
             signal = self.reader.get_traces_with_label(label)
+            # function to scale voltage trace
             fs = self.reader.sampling_frequency
 
             nyq = 0.5 * fs

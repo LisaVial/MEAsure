@@ -19,6 +19,7 @@ class SpikeDetectionSettings:
         self.mode = SpikeDetectionSettings.Mode.BOTH
         self.threshold_factor = 5
         self.save_spiketimes = False
+        self.append_to_file = False
         self.channel_selection = SpikeDetectionSettings.ChannelSelection.ALL
 
     def to_dict(self):
@@ -28,6 +29,7 @@ class SpikeDetectionSettings:
         result["mode"] = self.mode
         result["threshold_factor"] = self.threshold_factor
         result["save spiketimes"] = self.save_spiketimes
+        result["append to file"] = self.append_to_file
         result["channel selection"] = self.channel_selection
         return result
 
@@ -42,5 +44,7 @@ class SpikeDetectionSettings:
             self.threshold_factor = dictionary["threshold_factor"]
         if "save spiketimes" in dictionary.keys():
             self.save_spiketimes = dictionary["save spiketimes"]
+        if "append to file" in dictionary.keys():
+            self.append_to_file = dictionary["append to file"]
         if "channel selection" in dictionary.keys():
             self.channel_selection = dictionary["channel selection"]

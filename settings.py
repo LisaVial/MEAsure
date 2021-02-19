@@ -2,11 +2,13 @@ import PyQt5.QtCore as QtCore
 import json
 
 from frequency_analysis.frequency_analysis_settings import FrequencyAnalysisSettings
+from frequency_bands_analysis.frequency_bands_analysis_settings import FrequencyBandsAnalysisSettings
 from spike_detection.spike_detection_settings import SpikeDetectionSettings
 from filtering.filter_settings import FilterSettings
 from plots.csd_plot.csd_plot_settings import CsdPlotSettings
 from plots.ISI.isi_histogram_settings import IsiHistogramSettings
 from plots.raster_plot.rasterplot_settings import RasterplotSettings
+from spectrograms.spectrograms_settings import SpectrogramsSettings
 from plots.plot_settings import PlotSettings
 
 
@@ -23,7 +25,9 @@ class Settings:
         self.rasterplot_settings = RasterplotSettings()
         self.csd_plot_settings = CsdPlotSettings()
         self.frequency_analysis_settings = FrequencyAnalysisSettings()
+        self.frequency_bands_analysis_settings = FrequencyBandsAnalysisSettings()
         self.isi_histogram_settings = IsiHistogramSettings()
+        self.spectrograms_settings = SpectrogramsSettings()
         Settings.instance = self
 
     def load_settings_from_file(self, path):
@@ -45,8 +49,12 @@ class Settings:
                 self.csd_plot_settings.from_dict(d['csd_plot_settings'])
             if 'frequency_analysis_settings' in d.keys():
                 self.frequency_analysis_settings.from_dict(d['frequency_analysis_settings'])
+            if 'frequency_bands_analysis_settings' in d.keys():
+                self.frequency_bands_analysis_settings.from_dict(d['frequency_bands_analysis_settings'])
             if 'isi_histogram_settings' in d.keys():
                 self.frequency_analysis_settings.from_dict(d['frequency_analysis_settings'])
+            if 'spectrograms_settings' in d.keys():
+                self.spectrograms_settings.from_dict(d['spectrograms_settings'])
         except:
             pass
 
@@ -59,8 +67,9 @@ class Settings:
         d["filter_settings"] = self.filter_settings.to_dict()
         d["rasterplot_settings"] = self.rasterplot_settings.to_dict()
         d["frequency_analysis_settings"] = self.frequency_analysis_settings.to_dict()
-        d["frequency_analysis_settings"] = self.frequency_analysis_settings.to_dict()
+        d["frequency_bands_analysis_settings"] = self.frequency_bands_analysis_settings.to_dict()
         d["isi_histogram_settings"] = self.isi_histogram_settings.to_dict()
+        d["spectrograms_settings"] = self.spectrograms_settings.to_dict()
         return d
 
     def save(self, path):

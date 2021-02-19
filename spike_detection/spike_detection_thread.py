@@ -35,9 +35,12 @@ class SpikeDetectionThread(QtCore.QThread):
             signals = reader.voltage_traces
         elif self.file_mode == SpikeDetectionSettings.FileMode.MEAE:
             signals = reader.filtered_traces
-        ids = reader.channel_indices
+        ids = reader.channel_ids
         fs = reader.sampling_frequency
-        selected_ids = [ids[g_idx] for g_idx in self.grid_indices]
+
+        # To Do: get this right and think of how to solve it, when a already analysed file comes in
+        selected_ids = range(3)
+        # selected_ids = [ids[g_idx] for g_idx in self.grid_indices]
 
         above_upper_threshold = False
         below_lower_threshold = False
@@ -47,6 +50,7 @@ class SpikeDetectionThread(QtCore.QThread):
             # in this case, the whole channel should be loaded, since the filter should be applied at once
             signal = signals[ch_id]
             threshold = self.threshold_factor * np.median(np.absolute(signal) / 0.6745)
+            print(threshold)
             collect_peaks = (self.mode == SpikeDetectionSettings.Mode.PEAKS or
                              self.mode == SpikeDetectionSettings.Mode.BOTH)
             collect_troughs = (self.mode == SpikeDetectionSettings.Mode.TROUGHS or
@@ -121,11 +125,16 @@ class SpikeDetectionThread(QtCore.QThread):
             signals = reader.filtered_traces
         ids = reader.channel_ids
         fs = reader.sampling_frequency
-        selected_ids = [ids[g_idx] for g_idx in self.grid_indices]
+        print('grid indices:', self.grid_indices, '\n', 'channel ids:', ids)
+        if self.grid_indices in ids:
+            selected_ids = [ids[g_idx] for g_idx in self.grid_indices]
+        else:
+            selected_ids = ids
 
         for idx, ch_id in enumerate(selected_ids):
             # in this case, the whole channel should be loaded, since the filter should be applied at once
             ch_signal = signals[ch_id]
+            print(ch_id, ch_signal)
             threshold = self.threshold_factor * np.median(np.absolute(ch_signal) / 0.6745)
             collect_peaks = (self.mode == SpikeDetectionSettings.Mode.PEAKS or
                              self.mode == SpikeDetectionSettings.Mode.BOTH)
@@ -137,7 +146,7 @@ class SpikeDetectionThread(QtCore.QThread):
                 channel_spike_indices.append(peaks[0])
 
             if collect_troughs:
-                troughs = signal.find_peaks(-ch_signal, height=threshold)
+                troughs = signal.find_peaks(ch_signal, height=-threshold)
                 channel_spike_indices.append(troughs[0])
 
             indices.append(channel_spike_indices)
@@ -150,8 +159,6 @@ class SpikeDetectionThread(QtCore.QThread):
             data = [spiketimes]
             self.channel_data_updated.emit(data)
 
-            indices.append(np.asarray(channel_spike_indices))
-
             progress = round(((idx + 1) / len(selected_ids)) * 100.0, 2)
             self.progress_made.emit(progress)
         return indices, spike_mat
@@ -159,7 +166,7 @@ class SpikeDetectionThread(QtCore.QThread):
     def run(self):
         self.operation_changed.emit("Detecting spikes")
         t0 = time.time()
-        self.spike_indices, self.spike_mat = self.new_spike_detection(self.reader)
+        self.spike_indices, self.spike_mat = self.old_spike_detection(self.reader)
         t1 = time.time() - t0
         print('time for one channel via new spike detection: ', t1)
         self.finished.emit()

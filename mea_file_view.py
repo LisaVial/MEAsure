@@ -6,6 +6,7 @@ from file_handling.mcs_data_reader import McsDataReader
 from file_handling.meae_data_reader import MeaeDataReader
 from file_handling.SC_data_reader import SCDataReader
 
+from results import ResultStoring
 from mea_grid import MeaGrid
 
 from settings import Settings
@@ -23,6 +24,10 @@ from frequency_analysis.frequency_analysis_settings_dialog import FrequencyAnaly
 from frequency_analysis.frequency_analysis_settings import FrequencyAnalysisSettings
 from frequency_analysis.frequency_analysis_tab import FrequencyAnalysisTab
 
+from frequency_bands_analysis.frequency_bands_analysis_settings_dialog import FrequencyBandsAnalysisSettingsDialog
+from frequency_bands_analysis.frequency_bands_analysis_settings import FrequencyBandsAnalysisSettings
+from frequency_bands_analysis.frequency_bands_tab import FrequencyBandsTab
+
 from plots.csd_plot.csd_plot_tab import CsdPlotTab
 from plots.raster_plot.rasterplot_tab import RasterplotTab
 from plots.heatmap.heatmap_tab import HeatmapTab
@@ -37,6 +42,10 @@ from plots.raster_plot.rasterplot_settings import RasterplotSettings
 from plots.heatmap.heatmap_settings_dialog import HeatmapSettingsDialog
 from plots.heatmap.heatmap_settings import HeatmapSettings
 
+from spectrograms.spectrograms_tab import SpectrogramsTab
+from spectrograms.spectrograms_settings import SpectrogramsSettings
+from spectrograms.spectrograms_settings_dialog import SpectrogramsSettingsDialog
+
 from file_handling.hdf5_dataset_loader_thread import Worker
 
 
@@ -44,21 +53,24 @@ from file_handling.hdf5_dataset_loader_thread import Worker
 class MeaFileView(QtWidgets.QWidget):
     def __init__(self, parent, mea_file):
         super().__init__(parent)
-        self.reader = McsDataReader(mea_file)   # in the beginning we will take the mcs python module to look into the
+        self.results = ResultStoring()
+        self.reader = McsDataReader(mea_file)  # in the beginning we will take the mcs python module to look into the
         # file
-        self.mea_file = mea_file # this is just the path to the current mea recording h5 file
+        self.mea_file = mea_file  # this is just the path to the current mea recording h5 file
 
-        self.file_manager = FileManager(self, self.reader.filename)     # this widget handles tasks in respect to
+        self.file_manager = FileManager(self, self.reader.filename)  # this widget handles tasks in respect to
         # filepaths, with it the user is able to chose the .meae filepath (just .h5 data after analysis) or the
         # filepath of results of spyking circus
 
         # here, settings for different tasks which can be carried out by the user are defined
         self.frequency_analysis_settings = Settings.instance.frequency_analysis_settings
+        self.frequency_band_analysis_settings = Settings.instance.frequency_bands_analysis_settings
         self.filter_settings = Settings.instance.filter_settings
         self.rasterplot_settings = Settings.instance.rasterplot_settings
         self.spike_detection_settings = Settings.instance.spike_detection_settings
         self.csd_plot_settings = Settings.instance.csd_plot_settings
         self.isi_histogram_settings = Settings.instance.isi_histogram_settings
+        self.spectrograms_settings = Settings.instance.spectrograms_settings
 
         # setting up the main layout
         main_layout = QtWidgets.QVBoxLayout(self)
@@ -106,6 +118,18 @@ class MeaFileView(QtWidgets.QWidget):
         self.add_frequency_analysis_tab.setIcon(frequency_analysis_icon)
         self.add_frequency_analysis_tab.triggered.connect(self.open_frequency_analysis_settings)
         self.toolbar.addAction(self.add_frequency_analysis_tab)
+
+        self.add_frequency_bands_analysis_tab = QtWidgets.QAction('Analysis of cortical frequency bands', self)
+        cortical_bands_analysis_icon = QtGui.QIcon("./icons/frequency_bands_analysis_icon.png")
+        self.add_frequency_bands_analysis_tab.setIcon(cortical_bands_analysis_icon)
+        self.add_frequency_bands_analysis_tab.triggered.connect(self.open_frequency_bands_analysis_tab_settings)
+        self.toolbar.addAction(self.add_frequency_bands_analysis_tab)
+
+        self.add_spectrogram_tab = QtWidgets.QAction('Spectrograms', self)
+        spectrograms_icon = QtGui.QIcon("./icons/spectrograms_icon.png")
+        self.add_spectrogram_tab.setIcon(spectrograms_icon)
+        self.add_spectrogram_tab.triggered.connect(self.open_spectograms_settings_dialog)
+        self.toolbar.addAction(self.add_spectrogram_tab)
 
         self.add_csd_plot_tab = QtWidgets.QAction('CSD plot', self)
         csd_plot_icon = QtGui.QIcon("./icons/csd_plot_icon.png")
@@ -180,54 +204,9 @@ class MeaFileView(QtWidgets.QWidget):
         self.heatmap_tab = None
         self.rasterplot_tab = None
         self.frequency_analysis_tab = None
+        self.frequency_bands_analysis_tab = None
         self.isi_histogram_tab = None
-
-        # # start reader thread
-        # self.worker = None
-        # self.worker_thread = None
-        # self.thread_start_time = None  # for performance testing
-        # self.start_hdf5_dataset_loader_thread()
-
-    # def start_hdf5_dataset_loader_thread(self):
-    #     self.progress_bar.setValue(0)
-    #     self.progress_label.setText('')
-    #     self.operation_label.setText('Loading raw traces of recording')
-    #     # setup worker and its thread
-    #     thread_name = self.reader.filename[:-3]
-    #     self.worker = Worker(thread_name, self.reader)
-    #     self.worker_thread = QtCore.QThread(self)
-    #     self.worker.moveToThread(self.worker_thread)
-    #
-    #     # connect to worker signals
-    #     self.worker.signal_message.connect(self.on_worker_message)
-    #     self.worker.signal_step.connect(self.on_worker_step)
-    #     self.worker.signal_done.connect(self.on_worker_done)
-    #
-    #     # let worker start once its thread is starting
-    #     self.worker_thread.started.connect(self.worker.work)
-    #
-    #     # start thread (and thus the worker)
-    #     self.thread_start_time = time.time()
-    #     self.worker_thread.start()
-    #
-    # @QtCore.pyqtSlot(str)
-    # def on_worker_message(self, message):
-    #     print("Message:", message)
-    #
-    # @QtCore.pyqtSlot(list)
-    # def on_worker_step(self, step_list):
-    #     # ToDo: update dictionary of mcs reader in the background ->
-    #     self.progress_bar.setValue(int(step_list[0]))
-    #     self.progress_label.setText(str(step_list[0]) + "%")
-    #     self.reader.assign_chunks(step_list)
-    #
-    # @QtCore.pyqtSlot(list)
-    # def on_worker_done(self, name_and_traces):
-    #     thread_end_time = time.time()
-    #     print("Duration:", (thread_end_time - self.thread_start_time), "s")
-    #     self.progress_label.setText('Finished loading data, you can analyze it now :)')
-    #     self.worker = None
-    #     self.worker_thread = None
+        self.spectrograms_tab = None
 
     def open_isi_histogram_settings_dialog(self, is_pressed):
         channel_labels_and_indices = self.mea_grid.get_selected_channels()
@@ -271,7 +250,7 @@ class MeaFileView(QtWidgets.QWidget):
                 sc_path = self.file_manager.get_verified_sc_file()
                 sc_reader = SCDataReader(sc_path)
                 self.isi_histogram_tab = IsiHistogramTab(self, sc_reader, self.plot_settings, sampling_rate,
-                                                    grid_labels, grid_indices)
+                                                         grid_labels, grid_indices)
                 self.tab_widget.addTab(self.isi_histogram_tab, "ISI Histogram")
 
     def open_frequency_analysis_settings(self, is_pressed):
@@ -279,9 +258,9 @@ class MeaFileView(QtWidgets.QWidget):
         # if more channels are selected, the wisest thing would be to open several plots simultaneously
         # maybe this approach could also be used for rasterplots and isi histograms
         channel_labels_and_indices = self.mea_grid.get_selected_channels()
-        allowed_channel_modes = [RasterplotSettings.ChannelSelection.ALL]
+        allowed_channel_modes = [FrequencyAnalysisSettings.ChannelSelection.ALL]
         if len(channel_labels_and_indices) > 0:
-            allowed_channel_modes.append(RasterplotSettings.ChannelSelection.SELECTION)
+            allowed_channel_modes.append(FrequencyAnalysisSettings.ChannelSelection.SELECTION)
         settings_dialog = FrequencyAnalysisSettingsDialog(self, allowed_channel_modes, self.frequency_analysis_settings)
         if settings_dialog.exec() == 1:
             self.frequency_analysis_settings = settings_dialog.get_settings()
@@ -298,6 +277,53 @@ class MeaFileView(QtWidgets.QWidget):
             # todo: solve plotting of all channels
             self.tab_widget.addTab(self.frequency_analysis_tab, "Frequency Analysis")
             self.frequency_analysis_tab.initialize_frequency_analysis()
+
+    def open_frequency_bands_analysis_tab_settings(self, is_pressed):
+        channel_labels_and_indices = self.mea_grid.get_selected_channels()
+        allowed_channel_modes = [FrequencyBandsAnalysisSettings.ChannelSelection.ALL]
+
+        if len(channel_labels_and_indices) > 0:
+            allowed_channel_modes.append(FrequencyBandsAnalysisSettings.ChannelSelection.SELECTION)
+        settings_dialog = FrequencyBandsAnalysisSettingsDialog(self, allowed_channel_modes,
+                                                          self.frequency_band_analysis_settings)
+        if settings_dialog.exec() == 1:
+            self.frequency_band_analysis_settings = settings_dialog.get_settings()
+            Settings.instance.frequency_band_analysis_settings = self.frequency_band_analysis_settings
+            if self.frequency_band_analysis_settings.channel_selection == FrequencyBandsAnalysisSettings.ChannelSelection.ALL:
+                grid_indices = range(len(self.reader.voltage_traces))
+                grid_labels = self.reader.labels
+            elif self.frequency_band_analysis_settings.channel_selection == FrequencyBandsAnalysisSettings.ChannelSelection.SELECTION:
+                grid_labels_and_indices = self.mea_grid.get_selected_channels()
+                grid_indices = [values[1] for values in grid_labels_and_indices]
+                grid_labels = [values[0] for values in grid_labels_and_indices]
+            self.frequency_bands_analysis_tab = FrequencyBandsTab(self, self.reader, grid_indices, grid_labels,
+                                                                  self.frequency_band_analysis_settings)
+            # todo: solve plotting of all channels
+            self.tab_widget.addTab(self.frequency_bands_analysis_tab, "Frequency Analysis")
+            self.frequency_bands_analysis_tab.initialize_frequency_bands_analysis()
+
+    def open_spectograms_settings_dialog(self, is_pressed):
+        channel_labels_and_indices = self.mea_grid.get_selected_channels()
+        allowed_channel_modes = [SpectrogramsSettings.ChannelSelection.ALL]
+
+        if len(channel_labels_and_indices) > 0:
+            allowed_channel_modes.append(SpectrogramsSettings.ChannelSelection.SELECTION)
+        settings_dialog = SpectrogramsSettingsDialog(self, allowed_channel_modes, self.spectrograms_settings)
+
+        if settings_dialog.exec() == 1:
+            self.spectrograms_settings = settings_dialog.get_settings()
+            Settings.instance.spectrograms_settings = self.spectrograms_settings
+        if self.spectrograms_settings.channel_selection == SpectrogramsSettings.ChannelSelection.ALL:
+            grid_indices = range(len(self.reader.voltage_traces))
+            grid_labels = self.reader.labels
+        elif self.spectrograms_settings.channel_selection == SpectrogramsSettings.ChannelSelection.SELECTION:
+            grid_labels_and_indices = self.mea_grid.get_selected_channels()
+            grid_indices = [values[1] for values in grid_labels_and_indices]
+            grid_labels = [values[0] for values in grid_labels_and_indices]
+        self.spectrograms_tab = SpectrogramsTab(self, self.reader, grid_indices, grid_labels,
+                                                self.spectrograms_settings)
+        self.spectrograms_tab.initialize_spectrogram_calculation()
+        self.tab_widget.addTab(self.spectrograms_tab, "Spectrograms")
 
     def open_heatmap_settings_dialog(self, is_pressed):
         allowed_modes = [HeatmapSettings.Mode.MCS]
@@ -357,19 +383,19 @@ class MeaFileView(QtWidgets.QWidget):
             # initialise plotting
             if self.plot_settings.mode == RasterplotSettings.Mode.MCS:
                 self.rasterplot_tab = RasterplotTab(self, self.reader, self.plot_settings, sampling_rate, duration,
-                                               grid_labels, grid_indices)
+                                                    grid_labels, grid_indices)
                 self.tab_widget.addTab(self.rasterplot_tab, "Rasterplot")
             elif self.plot_settings.mode == RasterplotSettings.Mode.MEAE:
                 meae_path = self.file_manager.get_verified_meae_file()
                 meae_reader = MeaeDataReader(meae_path)
                 self.rasterplot_tab = RasterplotTab(self, meae_reader, self.plot_settings, sampling_rate, duration,
-                                               grid_labels, grid_indices)
+                                                    grid_labels, grid_indices)
                 self.tab_widget.addTab(self.rasterplot_tab, "Rasterplot")
             elif self.plot_settings.mode == RasterplotSettings.Mode.SC:
                 sc_path = self.file_manager.get_verified_sc_file()
                 sc_reader = SCDataReader(sc_path)
                 self.rasterplot_tab = RasterplotTab(self, sc_reader, self.plot_settings, sampling_rate, duration,
-                                               grid_labels, grid_indices)
+                                                    grid_labels, grid_indices)
                 self.tab_widget.addTab(self.rasterplot_tab, "Rasterplot")
 
     @QtCore.pyqtSlot()
@@ -387,9 +413,11 @@ class MeaFileView(QtWidgets.QWidget):
         if len(channel_labels_and_indices) > 0:
             allowed_modes.append(SpikeDetectionSettings.ChannelSelection.SELECTION)
         settings_dialog = SpikeDetectionSettingsDialog(self, allowed_file_modes,
-                                                       allowed_modes, mea_file_exists, meae_path, self.spike_detection_settings)
+                                                       allowed_modes, mea_file_exists, meae_path,
+                                                       self.spike_detection_settings)
         if settings_dialog.exec() == 1:  # 'Execute' clicked
             self.spike_detection_settings = settings_dialog.get_settings()
+            meae_filename = settings_dialog.meae_filename
             if self.spike_detection_settings.channel_selection == SpikeDetectionSettings.ChannelSelection.ALL:
                 grid_indices = range(len(self.reader.voltage_traces))
                 grid_labels = self.reader.labels
@@ -402,16 +430,16 @@ class MeaFileView(QtWidgets.QWidget):
 
             # initialise spike detection
             if self.spike_detection_settings.file_mode == SpikeDetectionSettings.FileMode.MCS:
-                self.spike_detection_tab = SpikeDetectionTab(self, self.reader, grid_indices, grid_labels,
-                                                             settings_dialog.append_to_existing_file,
+                self.spike_detection_tab = SpikeDetectionTab(self, meae_filename, self.reader, grid_indices,
+                                                             grid_labels,
                                                              self.spike_detection_settings)
                 self.tab_widget.addTab(self.spike_detection_tab, "Spike detection")
                 self.spike_detection_tab.initialize_spike_detection()
             elif self.spike_detection_settings.file_mode == SpikeDetectionSettings.FileMode.MEAE:
                 meae_path = self.file_manager.get_verified_meae_file()
                 meae_reader = MeaeDataReader(meae_path)
-                self.spike_detection_tab = SpikeDetectionTab(self, meae_reader, grid_indices,
-                                                             settings_dialog.append_to_existing_file,
+                self.spike_detection_tab = SpikeDetectionTab(self, meae_filename, meae_reader, grid_indices,
+                                                             grid_labels,
                                                              self.spike_detection_settings)
                 self.tab_widget.addTab(self.spike_detection_tab, "Spike detection")
                 self.spike_detection_tab.initialize_spike_detection()
@@ -500,4 +528,3 @@ class MeaFileView(QtWidgets.QWidget):
                 break
 
         return can_all_tabs_be_closed
-

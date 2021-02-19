@@ -72,7 +72,6 @@ class SpikeDetectionSettingsWidget(QtWidgets.QGroupBox):
         main_layout.addWidget(self.save_spiketimes_box, 5, 0)
         self.save_spiketimes_label = QtWidgets.QLabel('')
         self.get_existing_file_box = QtWidgets.QCheckBox('Append to existing file')
-        self.append_to_existing_file = False
         self.get_existing_file_box.setVisible(False)
         self.get_existing_file_box.stateChanged.connect(self.get_existing_file_box_changed)
         main_layout.addWidget(self.get_existing_file_box, 6, 0)
@@ -130,7 +129,8 @@ class SpikeDetectionSettingsWidget(QtWidgets.QGroupBox):
         except ValueError:
             # not a float
             pass
-        settings.save_filtered_traces = self.save_spiketimes_box.isChecked()
+        settings.save_spiketimes = self.save_spiketimes_box.isChecked()
+        settings.append_to_file = self.get_existing_file_box.isChecked()
         settings.channel_selection = self.selected_channels_button.isChecked()
         return settings
 
@@ -139,15 +139,8 @@ class SpikeDetectionSettingsWidget(QtWidgets.QGroupBox):
 
     def get_existing_file_box_changed(self):
         if self.get_existing_file_box.isChecked():
-            self.append_to_existing_file = True
             self.filename_entry_label.setVisible(False)
             self.filename_entry.setVisible(False)
-
-    def check_appending(self):
-        if self.append_to_existing_file:
-            return self.meae_path
-        else:
-            return None
 
     def save_spiketimes_changed(self):
         if self.save_spiketimes_box.isChecked():
