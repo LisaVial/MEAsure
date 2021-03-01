@@ -28,11 +28,14 @@ from frequency_bands_analysis.frequency_bands_analysis_settings_dialog import Fr
 from frequency_bands_analysis.frequency_bands_analysis_settings import FrequencyBandsAnalysisSettings
 from frequency_bands_analysis.frequency_bands_tab import FrequencyBandsTab
 
+from plots.raw_trace_plot.raw_trace_plot_tab import RawTracePlotTab
 from plots.csd_plot.csd_plot_tab import CsdPlotTab
 from plots.raster_plot.rasterplot_tab import RasterplotTab
 from plots.heatmap.heatmap_tab import HeatmapTab
 from plots.ISI.isi_histogram_tab import IsiHistogramTab
 
+from plots.raw_trace_plot.raw_trace_settings import RawTraceSettings
+from plots.raw_trace_plot.raw_trace_settings_dialog import RawTraceSettingsDialog
 from plots.ISI.isi_histogram_settings import IsiHistogramSettings
 from plots.ISI.isi_histogram_settings_dialog import IsiHistogramSettingsDialog
 from plots.csd_plot.csd_plot_settings import CsdPlotSettings
@@ -45,8 +48,6 @@ from plots.heatmap.heatmap_settings import HeatmapSettings
 from spectrograms.spectrograms_tab import SpectrogramsTab
 from spectrograms.spectrograms_settings import SpectrogramsSettings
 from spectrograms.spectrograms_settings_dialog import SpectrogramsSettingsDialog
-
-from file_handling.hdf5_dataset_loader_thread import Worker
 
 
 # the MeaFileView Widget is portraying the currently selected Mea recording and what the user can do with it
@@ -71,6 +72,7 @@ class MeaFileView(QtWidgets.QWidget):
         self.csd_plot_settings = Settings.instance.csd_plot_settings
         self.isi_histogram_settings = Settings.instance.isi_histogram_settings
         self.spectrograms_settings = Settings.instance.spectrograms_settings
+        self.raw_trace_plot_settings = Settings.instance.raw_trace_plot_settings
 
         # setting up the main layout
         main_layout = QtWidgets.QVBoxLayout(self)
@@ -100,6 +102,12 @@ class MeaFileView(QtWidgets.QWidget):
         self.show_mea_grid.setCheckable(True)
         self.show_mea_grid.setChecked(True)
         self.toolbar.addAction(self.show_mea_grid)
+
+        self.show_raw_trace_plot_dialog = QtWidgets.QAction('Raw trace plot', self)
+        self.show_raw_trace_plot_dialog.triggered.connect(self.open_raw_trace_plot_dialog)
+        raw_trace_plot_icon = QtGui.QIcon('./icons/raw_trace_icon.png')
+        self.show_raw_trace_plot_dialog.setIcon(raw_trace_plot_icon)
+        self.toolbar.addAction(self.show_raw_trace_plot_dialog)
 
         self.show_filter_dialog = QtWidgets.QAction("Filtering", self)
         self.show_filter_dialog.triggered.connect(self.open_filter_dialog)
@@ -157,22 +165,6 @@ class MeaFileView(QtWidgets.QWidget):
 
         main_layout.addWidget(self.toolbar)
 
-        operation_layout = QtWidgets.QVBoxLayout(self)
-        operation_layout.setAlignment(QtCore.Qt.AlignTop | QtCore.Qt.AlignLeft)
-        self.operation_label = QtWidgets.QLabel(self)
-        self.operation_label.setText('Nothing happens so far')
-        operation_layout.addWidget(self.operation_label)
-        self.progress_label = QtWidgets.QLabel(self)
-        operation_layout.addWidget(self.progress_label)
-
-        self.progress_bar = QtWidgets.QProgressBar(self)
-        self.progress_bar.setMinimum(0)
-        self.progress_bar.setMaximum(100)
-        self.progress_bar.setTextVisible(True)
-        operation_layout.addWidget(self.progress_bar)
-
-        main_layout.addLayout(operation_layout)
-
         sub_layout = QtWidgets.QHBoxLayout(self)
         sub_layout.setAlignment(QtCore.Qt.AlignCenter | QtCore.Qt.AlignTop)
 
@@ -197,6 +189,7 @@ class MeaFileView(QtWidgets.QWidget):
         self.file_manager.setVisible(self.show_file_manager.isChecked())
         self.mea_grid.setVisible(self.show_mea_grid.isChecked())
 
+        self.raw_trace_tab = None
         self.filter_tab = None
         self.spike_detection_tab = None
 
@@ -207,6 +200,27 @@ class MeaFileView(QtWidgets.QWidget):
         self.frequency_bands_analysis_tab = None
         self.isi_histogram_tab = None
         self.spectrograms_tab = None
+
+    def open_raw_trace_plot_dialog(self, is_pressed):
+        channel_labels_and_indices = self.mea_grid.get_selected_channels()
+        allowed_channel_modes = [RawTraceSettings.ChannelSelection.ALL]
+        if len(channel_labels_and_indices) > 0:
+            allowed_channel_modes.append(RawTraceSettings.ChannelSelection.SELECTION)
+        settings_dialog = RawTraceSettingsDialog(self, allowed_channel_modes, self.raw_trace_plot_settings)
+        if settings_dialog.exec() == 1:
+            self.raw_trace_plot_settings = settings_dialog.get_settings()
+            if self.raw_trace_plot_settings.channel_selection == RawTraceSettings.ChannelSelection.ALL:
+                grid_labels = self.reader.labels
+                grid_indices = range(len(self.reader.voltage_traces))
+            elif self.raw_trace_plot_settings.channel_selection == RawTraceSettings.ChannelSelection.SELECTION:
+                grid_labels_and_indices = self.mea_grid.get_selected_channels()
+                grid_labels = [values[0] for values in grid_labels_and_indices]
+                grid_indices = [values[1] for values in grid_labels_and_indices]
+            Settings.instance.raw_trace_plot_settings = self.raw_trace_plot_settings
+            sampling_rate = self.reader.sampling_frequency
+            self.raw_trace_tab = RawTracePlotTab(self, self.reader, self.raw_trace_plot_settings, grid_labels,
+                                                 grid_indices, sampling_rate)
+            self.tab_widget.addTab(self.raw_trace_tab, 'Raw trace plot')
 
     def open_isi_histogram_settings_dialog(self, is_pressed):
         channel_labels_and_indices = self.mea_grid.get_selected_channels()
@@ -461,16 +475,18 @@ class MeaFileView(QtWidgets.QWidget):
             meae_filename = settings_dialog.meae_filename
             if self.filter_settings.channel_selection == FilterSettings.ChannelSelection.ALL:
                 grid_indices = range(len(self.reader.voltage_traces))
+                grid_labels = self.reader.labels
             elif self.filter_settings.channel_selection == FilterSettings.ChannelSelection.SELECTION:
                 grid_labels_and_indices = self.mea_grid.get_selected_channels()
                 grid_indices = [values[1] for values in grid_labels_and_indices]
+                grid_labels = [values[0] for values in grid_labels_and_indices]
             # overwrite global settings as well
             Settings.instance.filter_settings = self.filter_settings
 
             # initialise filtering
             # give FilterThread indices (all is default and if selected, thread has to receive special indices
             # -> via filter tab?)
-            self.filter_tab = FilterTab(self, meae_filename, self.reader, grid_indices,
+            self.filter_tab = FilterTab(self, meae_filename, self.reader, grid_indices, grid_labels,
                                         settings_dialog.append_to_existing_file, self.filter_settings)
             self.tab_widget.addTab(self.filter_tab, "Filtering")
             self.filter_tab.initialize_filtering()

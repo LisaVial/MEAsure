@@ -31,7 +31,7 @@ class FrequencyBandAnalysisThread(QtCore.QThread):
             # scaled_signal = reader.get_scaled_channel(label)
             filtered_trace = self.filtered[idx]
             # freqs, Pxx = signal.welch(scaled_signal, self.reader.sampling_frequency, nperseg=2**14)
-            freqs, Pxx = signal.welch(filtered_trace, self.reader.sampling_frequency, nperseg=2**14)
+            freqs, Pxx = signal.welch(filtered_trace[60000:], self.reader.sampling_frequency, nperseg=2**14)
             frequencies.append(freqs)
             powers.append(Pxx)
             data = [label, freqs, Pxx]

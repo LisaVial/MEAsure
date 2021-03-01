@@ -50,11 +50,11 @@ class FrequencyBandsTab(QtWidgets.QWidget):
 
         main_layout.addLayout(tool_button_layout)
 
-        plot_name = 'Analysis_of_frequency_bands_' + self.reader.filename
-
-        self.plot_widget = PlotWidget(self, plot_name)
-        self.figure = self.plot_widget.figure
-        main_layout.addWidget(self.plot_widget)
+        self.plot_tab_widget = QtWidgets.QTabWidget(self)
+        self.plot_tab_widget.setMovable(True)
+        self.plot_tab_widget.setTabsClosable(False)
+        self.plot_tab_widget.setUsesScrollButtons(True)
+        main_layout.addWidget(self.plot_tab_widget)
 
     def initialize_frequency_bands_analysis(self):
         if self.frequency_bands_matrix is None:
@@ -143,41 +143,109 @@ class FrequencyBandsTab(QtWidgets.QWidget):
 
     def plot(self):
         sns.set()
-        # determine optimal number of rows for quadratic diagram
-        # embed()
-        rows = int(np.ceil(np.sqrt(len(self.mea_file_view.results.frequency_analysis_results))))
+        for plot_idx, plot_type_str in enumerate(['Histogram', 'Row comparison']):
+            if plot_idx == 0:
+                self.create_plot_tab(plot_type_str)
+                plot_widget = self.get_plot_widget(plot_type_str)
+                sns.set()
+                fig = plot_widget.figure
+                rows = int(np.ceil(np.sqrt(len(self.mea_file_view.results.frequency_analysis_results))))
 
-        spec = gridspec.GridSpec(ncols=rows, nrows=rows, figure=self.figure, hspace=0.1, wspace=0.25)
+                spec = gridspec.GridSpec(ncols=rows, nrows=rows, figure=fig, hspace=0.1, wspace=0.25)
 
-        # iterate through all channels
-        for idx, result in enumerate(sorted(self.mea_file_view.results.frequency_analysis_results,
-                                            key=lambda r: r.label)):
-            ax = self.figure.add_subplot(spec[idx])
+                # iterate through all channels
+                for idx, result in enumerate(sorted(self.mea_file_view.results.frequency_analysis_results,
+                                                    key=lambda r: r.label)):
+                    ax = fig.add_subplot(spec[idx])
 
-            if self.settings.analysis_mode == 0:
-                band_names = 'delta', 'theta', 'alpha', 'smr', 'beta', 'gamma'
-            elif self.settings.analysis_mode == 1:
-                band_names = '50 Hz', '350 Hz'
-            means = []
-            for band in band_names:
-                mean = result.band_map[band]
-                means.append(mean)
+                    if self.settings.analysis_mode == 0:
+                        band_names = 'delta', 'theta', 'alpha', 'smr', 'beta', 'gamma'
+                    elif self.settings.analysis_mode == 1:
+                        band_names = '50 Hz', '350 Hz'
+                    means = []
+                    for band in band_names:
+                        mean = result.band_map[band]
+                        means.append(mean)
 
-            # calculate sum of amplitudes
-            if self.settings.analysis_mode == 0:
-                xticklabels = [r'$\delta$', r'$\theta$', r'$\alpha$', 'SMR', r'$\beta$', r'$\gamma$']
-            elif self.settings.analysis_mode == 1:
-                xticklabels = ['50 Hz', '350 Hz']
+                    # calculate sum of amplitudes
+                    if self.settings.analysis_mode == 0:
+                        xticklabels = [r'$\delta$', r'$\theta$', r'$\alpha$', 'SMR', r'$\beta$', r'$\gamma$']
+                    elif self.settings.analysis_mode == 1:
+                        xticklabels = ['50 Hz', '350 Hz']
+                    ax.bar(range(len(means)), means, align='center')
+                    ax.set_xticks(range(len(means)))
+                    ax.set_xticklabels(xticklabels)
+                    # ax.set_ylim(0, max)
 
-            ax.bar(range(len(means)), means, align='center')
-            ax.set_xticks(range(len(means)))
-            ax.set_xticklabels(xticklabels)
-        self.figure.text(0.5, 0.01, 'frequency bands', ha='center')
-        self.figure.text(0.01, 0.5, r'mean power [$\mu V^{2}/$Hz]', va='center', rotation='vertical')
-        self.figure.tight_layout(h_pad=0.2, w_pad=0.4)
-        PlotManager.instance.add_plot(self.plot_widget)
-        # enable save button only after plotting
-        self.save_button.setEnabled(True)
+                # embed()
+                fig.text(0.5, 0.01, 'frequency bands', ha='center')
+                fig.text(0.01, 0.5, r'mean power [$\mu V^{2}/$Hz]', va='center', rotation='vertical')
+                fig.tight_layout(h_pad=0.2, w_pad=0.4)
+                PlotManager.instance.add_plot(plot_widget)
+                # enable save button only after plotting
+                self.save_button.setEnabled(True)
+
+            elif plot_idx == 1:
+                self.create_plot_tab(plot_type_str)
+                plot_widget = self.get_plot_widget(plot_type_str)
+                sns.set()
+                fig = plot_widget.figure
+                key_ints = range(round(len(self.grid_labels) / 16))
+                rows = int(round(len(self.grid_labels) / 16))
+                spec = gridspec.GridSpec(ncols=1, nrows=rows, figure=fig, hspace=0.9)
+
+                rows = dict()
+
+                if self.settings.analysis_mode == 0:
+                    band_names = 'delta', 'theta', 'alpha', 'smr', 'beta', 'gamma'
+                    xticklabels = [r'$\delta$', r'$\theta$', r'$\alpha$', 'SMR', r'$\beta$', r'$\gamma$']
+                elif self.settings.analysis_mode == 1:
+                    band_names = '50 Hz', '350 Hz'
+                    xticklabels = ['50 Hz', '350 Hz']
+                for key_int in key_ints:
+                    rows[key_int] = dict()
+                    for band in band_names:
+                        rows[key_int][band] = []
+                x_labels = []
+                maxs = []
+                for idx, result in enumerate(sorted(self.mea_file_view.results.frequency_analysis_results,
+                                                    key=lambda r: r.label)):
+                    x_labels.append(result.label)
+                    # reorganize dictionary that saves plot information
+                    row_index = int(result.label[1:]) - 1 # -1 to map first row to index 0
+                    for key in list(result.band_map.keys()):
+                        rows[row_index][key].append(result.band_map[key])
+                for key_idx, key in enumerate(list(rows.keys())):
+                    ax = fig.add_subplot(spec[key_idx])
+                    for j, band_key in enumerate(list(rows[key_idx].keys())):
+                        if key_idx == 0:
+                            ax.plot(np.arange(2, len(rows[key_idx][band_key]) + 2), rows[key_idx][band_key],
+                                    label=band_key)
+                            ax.fill_between(np.arange(2, len(rows[key_idx][band_key]) + 2),
+                                            np.zeros(len(rows[key_idx][band_key])), rows[key_idx][band_key])
+                            xlabels = ['B1', 'C1', 'D1', 'E1', 'F1', 'G1', 'H1', 'J1', 'K1', 'L1', 'M1', 'N1', 'O1',
+                                       'P1']
+                            ax.set_xticks(np.arange(2, len(rows[key_idx][band_key])+2))
+                            ax.set_xticklabels(xlabels)
+                        else:
+                            ax.plot(np.arange(1, len(rows[key_idx][band_key]) + 1), rows[key_idx][band_key])
+                            ax.fill_between(np.arange(1, len(rows[key_idx][band_key]) + 1),
+                                            np.zeros(len(rows[key_idx][band_key])), rows[key_idx][band_key])
+                            xlabels = [letter + str(key_idx+1) for letter in ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H',
+                                                                              'J', 'K', 'L', 'M', 'N', 'O', 'P', 'R']]
+                            ax.set_xticks(np.arange(1, len(rows[key_idx][band_key]) + 1))
+                            ax.set_xticklabels(xlabels)
+                        maxs.append(np.max(rows[key_idx][band_key]))
+                axs = fig.get_axes()
+                for axi in axs:
+                    axi.set_ylim(0, np.max(maxs)+5)
+                fig.text(0.5, 0.01, 'channel', ha='center')
+                fig.text(0.01, 0.5, r'mean power [$\mu V^{2}/$Hz]', va='center', rotation='vertical')
+                fig.legend()
+                # fig.tight_layout(h_pad=0.2, w_pad=0.4)
+
+                # embed()
+                # print(rows)
 
     def on_save_button_clicked(self):
         file_dialog = QtWidgets.QFileDialog(self)
@@ -197,5 +265,25 @@ class FrequencyBandsTab(QtWidgets.QWidget):
     def can_be_closed(self):
         # only allow closing if not busy
         return not self.is_busy_analyzing_frequencies()
+
+    def create_plot_tab(self, plot_type_str):
+        plot_name = plot_type_str + self.reader.filename
+        plot_widget = PlotWidget(self, plot_name)
+        self.plot_tab_widget.addTab(plot_widget, plot_type_str)
+
+    def get_plot_widget(self, plot_type_str):
+        found_tab_index = -1
+        for tab_index in range(self.plot_tab_widget.count()):
+            if self.plot_tab_widget.tabText(tab_index) == plot_type_str:
+                found_tab_index = tab_index
+                break
+
+        if found_tab_index >= 0:
+            return self.plot_tab_widget.widget(found_tab_index)
+        else:
+            return None
+
+
+
 
 

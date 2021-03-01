@@ -17,13 +17,14 @@ class FilterTab(QtWidgets.QWidget):
     # The FilterTab class receives the MeaFileView as a parent (where it will be embedded), the McsDataReader (another
     # class, which handles the reading of the h5 files of the recordings), the grid  (either all or a selection of grid
     # channels) and the filter settings.
-    def __init__(self, parent, meae_filename, reader, grid_indices, append, settings):
+    def __init__(self, parent, meae_filename, reader, grid_indices, grid_labels, append, settings):
         super().__init__(parent)
         # By setting variables to class variables (done with the 'self.' in front of them) it enables you to use them
         # outside this __init__() function. For example in functions you created yourself further down in the script.
         self.meae_filename = meae_filename
         self.reader = reader
         self.grid_indices = grid_indices
+        self.grid_labels = grid_labels
         self.append_existing_file = append
         self.settings = settings
         self.mea_file_view = parent
@@ -108,7 +109,8 @@ class FilterTab(QtWidgets.QWidget):
             self.progress_label.setText('')
             self.operation_label.setText('Filtering')
             # Here, the thread is initialized. We pass the McsDataReader and the setting variables to the Thread.
-            self.filtering_thread = FilterThread(self, self.reader, filter_mode, cutoff_1, cutoff_2, self.grid_indices)
+            self.filtering_thread = FilterThread(self, self.reader, filter_mode, cutoff_1, cutoff_2, self.grid_indices,
+                                                 self.grid_labels)
             # The thread sends different signals to this FilterTab. So we have to connect the signals to defined
             # functions.
             self.filtering_thread.progress_made.connect(self.on_progress_made)

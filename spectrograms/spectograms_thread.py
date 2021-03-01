@@ -1,5 +1,6 @@
 from PyQt5 import QtCore
 import scipy.signal as signal
+import numpy as np
 
 
 class SpectrogramsThread(QtCore.QThread):
@@ -26,10 +27,12 @@ class SpectrogramsThread(QtCore.QThread):
         # for idx, ch_id in enumerate(selected_ids):
         #   label = reader.labels[ch_id]
         for idx in range(len(self.filtered)):
+            print(idx, self.grid_labels)
             label = self.grid_labels[idx]
             filtered_trace = self.filtered[idx]
             sampling_rate = reader.sampling_frequency
-            freqs, t, S_xx = signal.spectrogram(filtered_trace, sampling_rate, nperseg=2**10, noverlap=2**8)
+            freqs, t, S_xx = signal.spectrogram(np.abs(filtered_trace[60000:]), sampling_rate, nperseg=2**14,
+                                                noverlap=2**10)
             frequencies.append(freqs)
             time.append(t)
             Sxx.append(S_xx)

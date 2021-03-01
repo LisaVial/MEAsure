@@ -4,8 +4,8 @@ import csv
 # sub classes for specific results
 class FrequencyAnalysisResult:
     # todo: bring distinction of different analysis in here, for now it'll be hard coded
-    # band_names = 'delta', 'theta', 'alpha', 'smr', 'beta', 'gamma'
-    band_names = '50 Hz', '350 Hz', 'alpha', 'smr', 'beta', 'gamma'
+    band_names = 'delta', 'theta', 'alpha', 'smr', 'beta', 'gamma'
+    # band_names = '50 Hz', '350 Hz'
 
     # static method is called with FrequencyAnalysisResult.get_header
     # it does not need any 'self' data

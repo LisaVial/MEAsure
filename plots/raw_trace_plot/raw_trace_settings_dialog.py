@@ -5,7 +5,7 @@ from plots.raw_trace_plot.raw_trace_settings import RawTraceSettings
 
 class RawTraceSettingsDialog(QtWidgets.QDialog):
     def __init__(self, parent, allowed_channel_selection_mode, settings=None):
-        super().___init__(parent)
+        super().__init__(parent)
 
         title = 'Raw traces'
 
@@ -59,9 +59,21 @@ class RawTraceSettingsDialog(QtWidgets.QDialog):
         if not settings:
             settings = RawTraceSettings()
 
+        self.set_settings(settings)
+
+    def set_settings(self, settings):
+        self.time_zero_textbox.setText(str(settings.start_time))
+        self.time_one_textbox.setText(str(settings.end_time))
+        if settings.channel_selection == RawTraceSettings.ChannelSelection.ALL:
+            self.all_channels_button.setChecked(True)
+        elif settings.channel_selection == RawTraceSettings.ChannelSelection.SELECTION:
+            self.selected_channels_button.setChecked(True)
+
     def get_settings(self):
         settings = RawTraceSettings()
         settings.channel_selection = self.selected_channels_button.isChecked()
+        settings.start_time = int(self.time_zero_textbox.text())
+        settings.end_time = int(self.time_one_textbox.text())
         return settings
 
     def on_okay_clicked(self):
