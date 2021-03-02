@@ -49,6 +49,8 @@ from spectrograms.spectrograms_tab import SpectrogramsTab
 from spectrograms.spectrograms_settings import SpectrogramsSettings
 from spectrograms.spectrograms_settings_dialog import SpectrogramsSettingsDialog
 
+from spike_check.spike_check_dialog import SpikeCheckDialog
+
 
 # the MeaFileView Widget is portraying the currently selected Mea recording and what the user can do with it
 class MeaFileView(QtWidgets.QWidget):
@@ -162,6 +164,11 @@ class MeaFileView(QtWidgets.QWidget):
         self.add_heatmap_tab.setIcon(heatmap_icon)
         self.add_heatmap_tab.triggered.connect(self.open_heatmap_settings_dialog)
         self.toolbar.addAction(self.add_heatmap_tab)
+
+        self.open_spike_check = QtWidgets.QAction('Spike Verfication', self)
+        self.open_spike_check.setIcon(spike_detection_icon)
+        self.open_spike_check.triggered.connect(self.open_spike_check_dialog)
+        self.toolbar.addAction(self.open_spike_check)
 
         main_layout.addWidget(self.toolbar)
 
@@ -515,6 +522,17 @@ class MeaFileView(QtWidgets.QWidget):
             self.csd_plot_tab = CsdPlotTab(self, self.reader, grid_indices, grid_labels, fs,
                                            self.csd_plot_settings)
             self.tab_widget.addTab(self.csd_plot_tab, "CSD Plot")
+
+    def open_spike_check_dialog(self, is_pressed):
+        sc_filepath = self.file_manager.get_verified_sc_file()
+        if sc_filepath:
+            sc_reader = SCDataReader(sc_filepath)
+            spike_check_dialog = SpikeCheckDialog(self, self.reader, sc_reader)
+            spike_check_dialog.exec()
+        else:
+            error_dialog = QtWidgets.QErrorMessage()
+            error_dialog.showMessage('Please set spyking circus result file first')
+            error_dialog.exec_()
 
     def on_show_file_manager(self, is_pressed):
         self.file_manager.setVisible(is_pressed)

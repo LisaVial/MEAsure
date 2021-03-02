@@ -13,8 +13,8 @@ class SCDataReader:
     def retrieve_spiketimes(self):
         same_len_keys = []
 
-        for key in list(self.file['gspikes'].keys()):
-            if 'elec' in key:
+        for key in list(self.file.keys()):
+            if 'times' in key:
                 if len(key) == 6:
                     current_key = key[:5] + '00' + key[-1:]
                     same_len_keys.append(current_key)
@@ -27,8 +27,9 @@ class SCDataReader:
 
         sorted_spiketimes = []
         for idx in indices:
-            key = 'elec_' + str(idx)
-            if key in list(self.file['gspikes'].keys()):
+            key = 'times_' + str(idx)
+            if key in list(self.file.keys()):
                 # ToDo: check how to retrieve sampling frequency from SC results file and then divide spiketimes by fs
-                sorted_spiketimes.append(self.file['gspikes'][key][:])
+                # -> in the spike check dialog this will be done by using the mcs file as well
+                sorted_spiketimes.append(self.file[key][:])
         return sorted_spiketimes
