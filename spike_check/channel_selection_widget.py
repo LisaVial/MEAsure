@@ -27,7 +27,7 @@ class ChannelSelectionWidget(QtWidgets.QWidget):
     @QtCore.pyqtSlot(int)
     def channel_selection_change(self, index):
         self.label = self.channel_selection_combobox.itemText(index)
-        self.channel_selection_changed.emit(self.label)
+        self.channel_selection_changed.emit(self.label, index)
 
     @staticmethod
     def get_channel_labels():
