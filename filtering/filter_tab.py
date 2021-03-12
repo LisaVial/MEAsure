@@ -211,7 +211,6 @@ class FilterTab(QtWidgets.QWidget):
                     # dset_3 = hf.create_dataset('channel_labels', data=save_labels)
             self.operation_label.setText('Filtered traces saved in: ' + filename)
 
-
     def open_filter_file(self, filepath):
         """
         This function loads the filtered traces matrix, if it already exists

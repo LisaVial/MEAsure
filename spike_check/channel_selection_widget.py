@@ -1,4 +1,5 @@
 from PyQt5 import QtWidgets, QtCore
+from utility.channel_utility import ChannelUtility
 
 
 class ChannelSelectionWidget(QtWidgets.QWidget):
@@ -10,7 +11,7 @@ class ChannelSelectionWidget(QtWidgets.QWidget):
 
         main_layout = QtWidgets.QHBoxLayout(self)
 
-        channel_labels = self.get_channel_labels()
+        channel_labels = ChannelUtility.get_channel_labels()
         self.channel_selection_combobox = QtWidgets.QComboBox(self)
         self.channel_selection_combobox.setEditable(True)
         line_edit = self.channel_selection_combobox.lineEdit()
@@ -27,15 +28,4 @@ class ChannelSelectionWidget(QtWidgets.QWidget):
     @QtCore.pyqtSlot(int)
     def channel_selection_change(self, index):
         self.label = self.channel_selection_combobox.itemText(index)
-        self.channel_selection_changed.emit(self.label, index)
-
-    @staticmethod
-    def get_channel_labels():
-        labels = []
-        for col, c in enumerate(['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'R']):
-            for row, n in enumerate(range(1, 17)):
-                if c == 'A' and n == 1 or c == 'A' and n == 16 or c == 'R' and n == 1 or c == 'R' and n == 16:
-                    continue
-                number_str = str(n)
-                labels.append(c + number_str)
-        return labels
+        self.channel_selection_changed.emit(self.label)

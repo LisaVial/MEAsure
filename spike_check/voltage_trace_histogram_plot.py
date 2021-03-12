@@ -4,15 +4,17 @@ import seaborn as sns
 from scipy.signal import filtfilt, butter
 
 from plot_manager import PlotManager
+from utility.channel_utility import ChannelUtility
+
 from plots.plot_widget import PlotWidget
 
 
 class VoltageTraceHistogramPlot(QtWidgets.QWidget):
-    def __init__(self, parent, reader, label):
-        # ToDo: probably get filtered (and whitened) traces in to 'see' what SC 'sees'
+    def __init__(self, parent, reader, label, label_index):
         super().__init__(parent)
         self.reader = reader
         self.label = label
+        self.label_index = label_index
 
         main_layout = QtWidgets.QVBoxLayout(self)
 
@@ -27,25 +29,13 @@ class VoltageTraceHistogramPlot(QtWidgets.QWidget):
         self.ax.tick_params(labelsize=10, direction='out')
         self.ax.set_xlabel(r'amplitude [$\mu$ V]')
         self.ax.set_ylabel('prevelance')
-        self.plot(self.label)
         main_layout.addWidget(plot_widget)
+        sns.set()
 
-    def butter_bandpass(self, lowcut, highcut, fs, order=3):
-        nyq = 0.5 * fs
-        low = lowcut / nyq
-        high = highcut / nyq
-        b, a = butter(order, [low, high], btype='band')
-        return b, a
-
-    def butter_bandpass_filter(self, data, lowcut, highcut, fs, order=3):
-        b, a = self.butter_bandpass(lowcut, highcut, fs, order=order)
-        y = filtfilt(b, a, data)
-        return y
-
-    def plot(self, label):
-        scaled_trace = self.reader.get_scaled_channel(label)
-        fs = self.reader.sampling_frequency
-        filtered = self.butter_bandpass_filter(scaled_trace[10000:], 300, 4750, fs)
+    def plot(self, label, label_index):
+        self.label_index = label_index
+        idx = ChannelUtility.get_ordered_index(label)
+        trace = self.reader.voltage_traces[self.label_index]
         self.ax.cla()
-        self.ax.hist(filtered, density=True, bins=1000)
+        self.ax.hist(trace, density=True, bins=1000)
         self.figure.canvas.draw_idle()

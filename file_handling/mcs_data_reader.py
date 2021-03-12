@@ -17,7 +17,7 @@ class McsDataReader:
     def get_channel_id(self, label):
         for ch in self.file['Data']['Recording_0']['AnalogStream']['Stream_0']['InfoChannel']:
             if label == ch[4].decode('utf8'):
-                return ch[1]
+                return ch[0]
 
     def get_scaled_channel(self, label):
         # so far unclear: will this be done once? -> might be difficult regarding memory
@@ -55,7 +55,7 @@ class McsDataReader:
         return voltage_traces, sampling_frequency, duration
 
     def get_channel_ids(self):
-        ids = [ch[1] for ch in self.file['Data']['Recording_0']['AnalogStream']['Stream_0']['InfoChannel']]
+        ids = [ch[0] for ch in self.file['Data']['Recording_0']['AnalogStream']['Stream_0']['InfoChannel']]
         labels = [ch[4].decode('utf8') for ch in
                   self.file['Data']['Recording_0']['AnalogStream']['Stream_0']['InfoChannel']]
         same_len_labels = [str(label[0]) + '0' + str(label[1]) if len(label) < 3 else label for label in labels]

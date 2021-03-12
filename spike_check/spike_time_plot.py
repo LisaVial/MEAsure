@@ -1,6 +1,7 @@
 from PyQt5 import QtWidgets
 import numpy as np
 import seaborn as sns
+from scipy.signal import filtfilt, butter
 
 from plot_manager import PlotManager
 from plots.plot_widget import PlotWidget
@@ -30,8 +31,35 @@ class SpikeTimePlot(QtWidgets.QWidget):
         self.ax.set_xlabel('time [msec]')
         self.ax.set_ylabel(r'voltage [$\mu$ V]')
 
-        self.plot(self.label)
         main_layout.addWidget(plot_widget)
 
-    def plot(self, label):
-        pass
+    def butter_bandpass(self, lowcut, highcut, fs, order=3):
+        nyq = 0.5 * fs
+        low = lowcut / nyq
+        high = highcut / nyq
+        b, a = butter(order, [low, high], btype='band')
+        return b, a
+
+    def butter_bandpass_filter(self, data, lowcut, highcut, fs, order=3):
+        b, a = self.butter_bandpass(lowcut, highcut, fs, order=order)
+        y = filtfilt(b, a, data)
+        return y
+
+    def plot(self, channel_idx, idx):
+        trace = self.mcs_reader.voltage_traces[channel_idx]
+        fs = self.mcs_reader.sampling_frequency
+
+        spiketime_index = self.sc_reader.spiketimes[channel_idx][idx]
+
+        spiketime = spiketime_index/fs
+        st_start_index = max(int(spiketime_index - 50), 0)   # entspricht 5 ms
+        st_end_index = min(int(spiketime_index + 50), len(trace))
+        time = np.arange((st_start_index/fs), (st_end_index/fs), 1/fs)
+        self.ax.cla()
+        try:
+            self.ax.plot(time, trace[st_start_index:st_end_index])
+        except ValueError:
+            self.ax.plot(time[:-1], trace[st_start_index:st_end_index])
+        if spiketime_index < len(trace):
+            self.ax.scatter(spiketime, trace[spiketime_index], marker='o', color='red', zorder=2)
+        self.figure.canvas.draw_idle()
