@@ -2,6 +2,8 @@ import numpy as np
 import h5py
 import time
 
+from utility.channel_utility import ChannelUtility
+
 
 class McsDataReader:
     def __init__(self, path):
@@ -11,8 +13,18 @@ class McsDataReader:
         self.file = self.open_mea_file()
         t1 = time.time() - t0
         print("Time elapsed for file opening: ", t1)
-        self.voltage_traces, self.sampling_frequency, self.duration = self.get_data_of_file()
-        self.channel_ids, self.labels = self.get_channel_ids()
+        try:
+            self.voltage_traces, self.sampling_frequency, self.duration = self.get_data_of_file()
+        except KeyError:
+            self.voltage_traces = self.file['scaled']
+            self.sampling_frequency = 10000.0
+            self.duration = 300.0
+        try:
+            self.channel_ids, self.labels = self.get_channel_ids()
+        except KeyError:
+            self.channel_ids = range(252)
+            channel_utility = ChannelUtility()
+            self.labels = channel_utility.get_channel_labels()
 
     def get_channel_id(self, label):
         for ch in self.file['Data']['Recording_0']['AnalogStream']['Stream_0']['InfoChannel']:

@@ -59,6 +59,24 @@ class FileManager(QtWidgets.QWidget):
         sc_layout.addWidget(sc_path_remove_button)
         main_layout.addLayout(sc_layout)
 
+        sc_base_file_layout = QtWidgets.QHBoxLayout()
+        sc_base_file_label = QtWidgets.QLabel(self)
+        sc_base_file_label.setText("base file in the SC folder:")
+        sc_base_file_layout.addWidget(sc_base_file_label)
+        self.sc_base_file_input = QtWidgets.QLineEdit(self)
+        self.sc_base_file_input.setText("")
+        sc_base_file_layout.addWidget(self.sc_base_file_input)
+        sc_base_file_change_button = QtWidgets.QPushButton(self)
+        sc_base_file_change_button.setText("...")
+        sc_base_file_change_button.pressed.connect(self.on_sc_base_file_path_change_button_pressed)
+        sc_base_file_layout.addWidget(sc_base_file_change_button)
+        sc_base_file_remove_button = QtWidgets.QPushButton(self)
+        sc_base_file_remove_button.setText("-")
+        sc_base_file_remove_button.pressed.connect(self.on_sc_base_file_path_remove_button_pressed)
+        sc_base_file_layout.addWidget(sc_base_file_remove_button)
+        main_layout.addLayout(sc_layout)
+        main_layout.addLayout(sc_base_file_layout)
+
         self.auto_detect_meae_file()
         self.auto_detect_sc_file()
 
@@ -95,6 +113,24 @@ class FileManager(QtWidgets.QWidget):
             return file
         else:
             return None
+
+    def get_verified_sc_base_file(self):
+        file = self.sc_base_file_input.text().strip()
+        if os.path.exists(file):
+            return file
+        else:
+            return None
+
+    @QtCore.pyqtSlot()
+    def on_sc_base_file_path_remove_button_pressed(self):
+        self.sc_base_file_input.setText("")
+
+    @QtCore.pyqtSlot()
+    def on_sc_base_file_path_change_button_pressed(self):
+        selectedFile = QtWidgets.QFileDialog.getOpenFileName(self, "Please select SC base file",
+                                                             self.mcs_file_directory, "SC files (*.h5)")[0]
+        if len(selectedFile) > 0:
+            self.sc_base_file_input.setText(selectedFile)
 
     # This function allows a filepath selection dialog to open, once the mea_path_change_button is pressed
     @QtCore.pyqtSlot()

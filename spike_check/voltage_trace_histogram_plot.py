@@ -10,15 +10,16 @@ from plots.plot_widget import PlotWidget
 
 
 class VoltageTraceHistogramPlot(QtWidgets.QWidget):
-    def __init__(self, parent, reader, label, label_index):
+    def __init__(self, parent, mcs_reader, sc_reader, label, label_index):
         super().__init__(parent)
-        self.reader = reader
+        self.mcs_reader = mcs_reader
+        self.sc_reader = sc_reader
         self.label = label
         self.label_index = label_index
 
         main_layout = QtWidgets.QVBoxLayout(self)
 
-        plot_name = 'VT_Histogram_' + self.reader.filename + '_' + self.label
+        plot_name = 'VT_Histogram_' + self.mcs_reader.filename + '_' + self.label
         plot_widget = PlotWidget(self, plot_name)
         self.figure = plot_widget.figure
         self.ax = self.figure.add_subplot(111)
@@ -32,10 +33,9 @@ class VoltageTraceHistogramPlot(QtWidgets.QWidget):
         main_layout.addWidget(plot_widget)
         sns.set()
 
-    def plot(self, label, label_index):
+    def plot(self, label_index):
         self.label_index = label_index
-        idx = ChannelUtility.get_ordered_index(label)
-        trace = self.reader.voltage_traces[self.label_index]
+        trace = self.sc_reader.base_file_voltage_traces[self.label_index]
         self.ax.cla()
         self.ax.hist(trace, density=True, bins=1000)
         self.figure.canvas.draw_idle()

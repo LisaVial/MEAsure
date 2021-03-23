@@ -525,13 +525,14 @@ class MeaFileView(QtWidgets.QWidget):
 
     def open_spike_check_dialog(self, is_pressed):
         sc_filepath = self.file_manager.get_verified_sc_file()
-        if sc_filepath:
-            sc_reader = SCDataReader(sc_filepath)
+        sc_base_filepath = self.file_manager.get_verified_sc_base_file()
+        if sc_filepath and sc_base_filepath:
+            sc_reader = SCDataReader(sc_filepath, sc_base_filepath)
             spike_check_dialog = SpikeCheckDialog(self, self.reader, sc_reader)
             spike_check_dialog.exec()
         else:
             error_dialog = QtWidgets.QErrorMessage()
-            error_dialog.showMessage('Please set spyking circus result file first')
+            error_dialog.showMessage('Please set spyking circus result and base file first')
             error_dialog.exec_()
 
     def on_show_file_manager(self, is_pressed):

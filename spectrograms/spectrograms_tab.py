@@ -93,7 +93,7 @@ class SpectrogramsTab(QtWidgets.QWidget):
             im = ax1.pcolormesh(self.time[idx], self.frequencies[idx], self.Sxx[idx], shading='gouraud', vmin=0, vmax=1)
             # ax1.plot(self.time[idx], overall_power)
             ax1.set_ylim(0, 100)
-            ax1.set_ylabel('overall power')
+            ax1.set_ylabel('frequency')
             ax1.set_xlabel('Time [sec]')
             fig.colorbar(im, ax=ax1)
 
@@ -113,3 +113,7 @@ class SpectrogramsTab(QtWidgets.QWidget):
             return self.plot_tab_widget.widget(found_tab_index)
         else:
             return None
+
+    def can_be_closed(self):
+        # only closeable if spike detection is not running currently
+        return True

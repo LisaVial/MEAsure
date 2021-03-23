@@ -2,6 +2,7 @@ from PyQt5 import QtCore
 import numpy as np
 from scipy.signal import filtfilt, butter
 import time
+from utility.channel_utility import ChannelUtility
 
 
 class PreprocessingThread(QtCore.QThread):
@@ -48,13 +49,26 @@ class PreprocessingThread(QtCore.QThread):
     def preprocess_file(self):
         self.operation_changed.emit('Filtering traces and substracting median...')
         num_of_elements = len(self.scaled_matrix[0])
-        # How many steps does it take, according to len of single channels, when we consider 30s chunks?:
+        dead_channels = [0, 1, 14, 15, 16, 30, 31, 46, 47, 62, 63, 78, 79, 94, 95, 110, 111, 126, 127, 142, 143, 158,
+                         159, 174, 175, 190, 191, 206, 207, 222, 223, 224, 238, 239, 240]
+
+        cluster_to_channel_index = dict()
+        channel_to_cluster_index = dict()  # note: dead channels do not have a cluster
+
+        cluster_index = 0
+        for channel_index in range(ChannelUtility.get_label_count()):
+            if channel_index not in dead_channels:
+                cluster_to_channel_index[cluster_index] = channel_index
+                channel_to_cluster_index[channel_index] = cluster_index
+                cluster_index += 1  # increase cluster index
+
         fs = self.mcs_reader.sampling_frequency
         preproc_matrix = np.full([len(self.scaled_matrix), num_of_elements], np.nan)
         filtered_matrix = np.full([len(self.scaled_matrix), num_of_elements], np.nan)
         step_size = self.chunk_size * fs
         chunk_windows = np.arange(0, num_of_elements + step_size, step_size)
         spatial_matrix = self.sc_reader.retrieve_spatial_mat()
+        # How many steps does it take, according to len of single channels, when we consider 30s chunks?:
         for i, chunk_idx in enumerate(chunk_windows[:-1]):
             local_chunk = np.asarray(self.scaled_matrix)[:, int(chunk_idx):int(chunk_windows[i+1])]
             filtered = self.butter_bandpass_filter(local_chunk, 300, 4750, fs)
@@ -62,7 +76,10 @@ class PreprocessingThread(QtCore.QThread):
             filtered -= np.median(filtered, 0)
             global_median = np.median(filtered, 1)
             filtered -= global_median[:, np.newaxis]
-            filtered = np.dot(spatial_matrix, filtered)
+
+            # ToDo: find a way to remove dead channels and add them together later
+            # if self.label_index not in dead_channels:
+            # filtered = np.dot(spatial_matrix, filtered)
             preproc_matrix[:, int(chunk_idx):int(chunk_windows[i+1])] = filtered
             progress = round(((i + 1) / len(chunk_windows[:-1])) * 100.0, 2)
             self.progress_made.emit(progress)
@@ -71,7 +88,8 @@ class PreprocessingThread(QtCore.QThread):
     def run(self):
         self.operation_changed.emit("preprocessing data")
         t0 = time.time()
-        self.scaled_matrix = self.get_scaled_channel_matrix(self.labels)
+
+        self.scaled_matrix = self.mcs_reader.voltage_traces
         self.filtered_matrix, self.preproc_matrix = self.preprocess_file()
         t1 = time.time() - t0
         print('time for preprocessing file: ', t1)

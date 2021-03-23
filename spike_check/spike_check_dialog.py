@@ -7,6 +7,7 @@ from spike_check.voltage_trace_histogram_plot import VoltageTraceHistogramPlot
 from spike_check.spike_time_plot import SpikeTimePlot
 from spike_check.navigation_buttons_widget import NavigationButtonsWidget
 from spike_check.preprocessing_thread import PreprocessingThread
+from spike_check.spike_sorting_plot import SpikeSortingPlot
 
 from utility.channel_utility import ChannelUtility
 
@@ -60,22 +61,28 @@ class SpikeCheckDialog(QtWidgets.QDialog):
 
         # insert plot widget that shows histogram of voltage trace values -> gaussian curve with tails hints to the
         #   channel having spikes
-        self.histogram_plot_widget = VoltageTraceHistogramPlot(self, self.mcs_reader, self.label, self.label_index)
+        self.histogram_plot_widget = VoltageTraceHistogramPlot(self, self.mcs_reader, self.sc_reader, self.label,
+                                                               self.label_index)
         main_layout.addWidget(self.histogram_plot_widget, 2, 1)
 
         # insert a plot widget which shows 10 ms around a spike (it would be great if the spiketime is also indicated in
         #   the first plot widget)
         self.spike_time_plot_widget = SpikeTimePlot(self, self.mcs_reader, self.sc_reader, self.label, self.label_index)
-        main_layout.addWidget(self.spike_time_plot_widget, 3, 0, 1, 2)
+        main_layout.addWidget(self.spike_time_plot_widget, 3, 0)
+
+        self.spike_sorting_plot_widget = SpikeSortingPlot(self, self.mcs_reader, self.sc_reader, self.label)
+        main_layout.addWidget(self.spike_sorting_plot_widget, 3, 1)
 
         # buttons on the bottom of the dialog to navigate through spike times
         max_idx = len(self.sc_reader.spiketimes[self.label_index]) - 1
         self.navigation_buttons_widget = NavigationButtonsWidget(self, max_idx)
         main_layout.addWidget(self.navigation_buttons_widget, 4, 0, 1, 2)
         self.navigation_buttons_widget.index_changed.connect(self.on_spiketime_index_changed)
+
+        self.histogram_plot_widget.plot(self.label_index)
+        self.spike_time_plot_widget.plot(self.label_index, self.st_index)
         self.raw_trace_plot_widget.plot(self.label)
-        self.histogram_plot_widget.plot(self.label, self.label_index)
-        self.spike_time_plot_widget.plot(self.label_index, 0)
+        self.spike_sorting_plot_widget.plot(self.label, self.st_index)
 
         # self.initialize_preprocessing_thread()
 
@@ -118,19 +125,21 @@ class SpikeCheckDialog(QtWidgets.QDialog):
             self.filtered_matrix = self.pre_proc_thread.filtered_matrix.copy()
 
         self.pre_proc_thread = None
-        self.raw_trace_plot_widget.plot(self.label, self.preproc_mat, self.filtered_matrix)
-        self.histogram_plot_widget.plot(self.label, self.preproc_mat)
-        self.spike_time_plot_widget.plot(self.label, self.label_index, 0, preproc_mat=self.preproc_mat)
+        self.raw_trace_plot_widget.plot(self.label, self.preproc_mat)
 
     @QtCore.pyqtSlot(str)
     def on_channel_selection_changed(self, label):
         self.label = label
+        self.label_index = ChannelUtility.get_ordered_index(self.label)
+        # if self.preproc_mat is not None:
+        self.histogram_plot_widget.plot(self.label_index)
+        self.spike_time_plot_widget.plot(self.label_index, self.st_index)
         self.raw_trace_plot_widget.plot(self.label)
-        self.histogram_plot_widget.plot(self.label, self.label_index)
-        self.spike_time_plot_widget.plot(self.label_index, 0)
+        self.spike_sorting_plot_widget.plot(self.label, self.st_index)
 
     def on_spiketime_index_changed(self, index):
         self.st_index = index
-        self.raw_trace_plot_widget.on_scatter_plot_updated(index)
-        self.spike_time_plot_widget.plot(self.label_index, index)
+        self.raw_trace_plot_widget.on_scatter_plot_updated(self.label_index, self.st_index)
+        self.spike_time_plot_widget.plot(self.label_index, self.st_index)
+        self.spike_sorting_plot_widget.plot(self.label, self.st_index)
 

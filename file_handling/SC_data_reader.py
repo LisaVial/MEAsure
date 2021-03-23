@@ -5,12 +5,15 @@ from IPython import embed
 
 
 class SCDataReader:
-    def __init__(self, path):
+    def __init__(self, path, base_filepath):
         self.folder, self.cluster_filename = os.path.split(path)
+        self.base_sc_folder, self.base_filename = os.path.split(path)
         # only cut out last two tokens (e.g. 'clusters', 'hdf5') leave the rest
         self.filename_prefix = '.'.join(self.cluster_filename.split('.')[:-2])
 
         self.file = h5py.File(path, 'r')
+        self.base_file = h5py.File(base_filepath, 'r')
+        self.base_file_voltage_traces = self.base_file['scaled']
         self.spiketimes = self.retrieve_spiketimes()
         self.retrieve_mua_spikes()
 
