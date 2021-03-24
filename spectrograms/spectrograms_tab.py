@@ -1,6 +1,8 @@
 from PyQt5 import QtCore, QtWidgets
 import seaborn as sns
 import numpy as np
+import matplotlib.cm
+from IPython import embed
 
 from plots.plot_widget import PlotWidget
 from plot_manager import PlotManager
@@ -90,12 +92,16 @@ class SpectrogramsTab(QtWidgets.QWidget):
             fig = plot_widget.figure
             ax1 = fig.add_subplot(111)
             # overall_power = np.sum(self.Sxx[idx], axis=0)
-            im = ax1.pcolormesh(self.time[idx], self.frequencies[idx], self.Sxx[idx], shading='gouraud', vmin=0, vmax=1)
+            # embed()
+            spec_values = 10 * np.log10(self.Sxx[idx]/np.max(self.Sxx[idx]))
+            im = ax1.pcolormesh(self.time[idx], self.frequencies[idx], spec_values, shading='nearest', vmin=-60,
+                                vmax=0)
             # ax1.plot(self.time[idx], overall_power)
-            ax1.set_ylim(0, 100)
+            ax1.set_ylim(0, 1)
             ax1.set_ylabel('frequency')
-            ax1.set_xlabel('Time [sec]')
-            fig.colorbar(im, ax=ax1)
+            ax1.set_xlabel('time [sec]')
+            cbar = fig.colorbar(im, ax=ax1)
+            cbar.set_label('power [dB]')
 
     def create_plot_tab(self, label):
         plot_name = 'Spectogram_' + self.reader.filename + '_' + label
