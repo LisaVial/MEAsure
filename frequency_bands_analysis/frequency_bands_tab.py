@@ -77,19 +77,18 @@ class FrequencyBandsTab(QtWidgets.QWidget):
 
     @QtCore.pyqtSlot(list)
     def on_data_updated(self, data):
-        #recode this part of tab to fit csd as well as ictal activity data
         # utility functions
         # find Paper reference for this
         def get_band_name(frequency):
             if self.settings.analysis_mode == 0:
+                if 0 <= frequency <= 1:
+                    return '< 1 Hz'
                 if 2 <= frequency < 6:
                     return 'delta'
                 elif 6 <= frequency < 11:
                     return 'theta'
                 elif 11 <= frequency < 16:
                     return 'alpha'
-                elif 16 <= frequency < 21:
-                    return 'smr'
                 elif 21 <= frequency < 41:
                     return 'beta'
                 elif 41 <= frequency < 101:
@@ -106,7 +105,7 @@ class FrequencyBandsTab(QtWidgets.QWidget):
 
         label, frequencies, powers = data[0], data[1], data[2]
         if self.settings.analysis_mode == 0:
-            band_names = 'delta', 'theta', 'alpha', 'smr', 'beta', 'gamma'
+            band_names = '< 1 Hz', 'delta', 'theta', 'alpha', 'beta', 'gamma'
         elif self.settings.analysis_mode == 1:
             band_names = '50 Hz', '350 Hz'
 
@@ -159,7 +158,7 @@ class FrequencyBandsTab(QtWidgets.QWidget):
                     ax = fig.add_subplot(spec[idx])
 
                     if self.settings.analysis_mode == 0:
-                        band_names = 'delta', 'theta', 'alpha', 'smr', 'beta', 'gamma'
+                        band_names = '< 1 Hz', 'delta', 'theta', 'alpha', 'beta', 'gamma'
                     elif self.settings.analysis_mode == 1:
                         band_names = '50 Hz', '350 Hz'
                     means = []
@@ -169,7 +168,7 @@ class FrequencyBandsTab(QtWidgets.QWidget):
 
                     # calculate sum of amplitudes
                     if self.settings.analysis_mode == 0:
-                        xticklabels = [r'$\delta$', r'$\theta$', r'$\alpha$', 'SMR', r'$\beta$', r'$\gamma$']
+                        xticklabels = [r'$\leq$ 1 Hz', r'$\delta$', r'$\theta$', r'$\alpha$', r'$\beta$', r'$\gamma$']
                     elif self.settings.analysis_mode == 1:
                         xticklabels = ['50 Hz', '350 Hz']
                     ax.bar(range(len(means)), means, align='center')
@@ -197,8 +196,9 @@ class FrequencyBandsTab(QtWidgets.QWidget):
                 rows = dict()
 
                 if self.settings.analysis_mode == 0:
-                    band_names = 'delta', 'theta', 'alpha', 'smr', 'beta', 'gamma'
-                    xticklabels = [r'$\delta$', r'$\theta$', r'$\alpha$', 'SMR', r'$\beta$', r'$\gamma$']
+                    band_names = '< 1 Hz', 'delta', 'theta', 'alpha', 'beta', 'gamma'
+                    xticklabels = [r'$\leq$ 1 Hz', r'$\delta$', r'$\theta$', r'$\alpha$', 'SMR', r'$\beta$',
+                                   r'$\gamma$']
                 elif self.settings.analysis_mode == 1:
                     band_names = '50 Hz', '350 Hz'
                     xticklabels = ['50 Hz', '350 Hz']
@@ -219,18 +219,25 @@ class FrequencyBandsTab(QtWidgets.QWidget):
                     ax = fig.add_subplot(spec[key_idx])
                     for j, band_key in enumerate(list(rows[key_idx].keys())):
                         if key_idx == 0:
-                            ax.plot(np.arange(2, len(rows[key_idx][band_key]) + 2), rows[key_idx][band_key],
-                                    label=band_key)
-                            ax.fill_between(np.arange(2, len(rows[key_idx][band_key]) + 2),
-                                            np.zeros(len(rows[key_idx][band_key])), rows[key_idx][band_key])
-                            xlabels = ['B1', 'C1', 'D1', 'E1', 'F1', 'G1', 'H1', 'J1', 'K1', 'L1', 'M1', 'N1', 'O1',
-                                       'P1']
-                            ax.set_xticks(np.arange(2, len(rows[key_idx][band_key])+2))
+                            # the next three code lines are to fake an x-offset in the beginning and the end of the plot
+                            # of the first row since there are no channels A1 and R1
+                            values = np.zeros(1)
+                            values = np.append(values, rows[key_idx][band_key])
+                            values = np.append(values, 0)
+
+                            ax.plot(np.arange(1, len(rows[key_idx][band_key]) + 3), values,
+                                    label=band_key, alpha=0.5)
+                            ax.fill_between(np.arange(1, len(rows[key_idx][band_key]) + 3),
+                                            np.zeros(len(values)), values,
+                                            alpha=0.5)
+                            xlabels = ['', 'B1', 'C1', 'D1', 'E1', 'F1', 'G1', 'H1', 'J1', 'K1', 'L1', 'M1', 'N1', 'O1',
+                                       'P1', '']
+                            ax.set_xticks(np.arange(1, len(rows[key_idx][band_key])+3))
                             ax.set_xticklabels(xlabels)
                         else:
-                            ax.plot(np.arange(1, len(rows[key_idx][band_key]) + 1), rows[key_idx][band_key])
+                            ax.plot(np.arange(1, len(rows[key_idx][band_key]) + 1), rows[key_idx][band_key], alpha=0.5)
                             ax.fill_between(np.arange(1, len(rows[key_idx][band_key]) + 1),
-                                            np.zeros(len(rows[key_idx][band_key])), rows[key_idx][band_key])
+                                            np.zeros(len(rows[key_idx][band_key])), rows[key_idx][band_key], alpha=0.5)
                             xlabels = [letter + str(key_idx+1) for letter in ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H',
                                                                               'J', 'K', 'L', 'M', 'N', 'O', 'P', 'R']]
                             ax.set_xticks(np.arange(1, len(rows[key_idx][band_key]) + 1))
