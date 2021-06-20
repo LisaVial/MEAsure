@@ -54,10 +54,11 @@ class FrequencyAnalysisTab(QtWidgets.QWidget):
 
     def initialize_frequency_analysis(self):
         if self.frequencies is None:
+            filtered = self.mea_file_view.results.get_filter_mat()
             self.progress_bar.setValue(0)
             self.progress_label.setText('')
             self.operation_label.setText('Analyzing frequency components of recording')
-            self.frequency_analysis_thread = FrequencyAnalysisThread(self, self.reader, self.grid_indices)
+            self.frequency_analysis_thread = FrequencyAnalysisThread(self, self.reader, self.grid_indices, filtered)
             self.frequency_analysis_thread.progress_made.connect(self.on_progress_made)
             self.frequency_analysis_thread.operation_changed.connect(self.on_operation_changed)
             self.frequency_analysis_thread.finished.connect(self.on_frequency_analysis_thread_finished)

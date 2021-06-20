@@ -7,11 +7,12 @@ class FrequencyAnalysisThread(QtCore.QThread):
     progress_made = QtCore.pyqtSignal(float)
     finished = QtCore.pyqtSignal()
 
-    def __init__(self, parent, reader, grid_indices):
+    def __init__(self, parent, reader, grid_indices, filtered):
         super().__init__(parent)
         self.reader = reader
         self.labels = self.reader.labels
         self.grid_indices = grid_indices
+        self.filtered = filtered
 
         self.frequencies = None
 
@@ -23,12 +24,11 @@ class FrequencyAnalysisThread(QtCore.QThread):
         ids = reader.channel_ids
         selected_ids = [ids[g_idx] for g_idx in self.grid_indices]
         for idx, ch_id in enumerate(selected_ids):
-            label = self.labels[ch_id]
-            scaled_signal = reader.get_scaled_channel(label)
+            signal = self.filtered[idx]
             # call function to scale signal -> question is, if the effects will then be so soft as with the CSD video
             # spectrograms
-            hann = np.hanning(len(scaled_signal))
-            y_hann = np.fft.fft(hann*scaled_signal)
+            hann = np.hanning(len(signal))
+            y_hann = np.fft.fft(hann*signal)
             frequencies.append(y_hann)
             progress = round(((idx + 1) / len(selected_ids)) * 100.0, 2)  # change idx of same_len_labels at the
             self.progress_made.emit(progress)

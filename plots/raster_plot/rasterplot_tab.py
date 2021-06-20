@@ -53,6 +53,8 @@ class RasterplotTab(QtWidgets.QWidget):
                     if (s - self.duration/30) <= spike <= s and spike not in spiketimes_for_plot[j][s_i]:
                         spiketimes_for_plot[j][s_i].append(spike - (s - self.duration/30))
         for i in range(len(spiketimes_for_plot)):
+            # try to flatten axes objects by using axes_objects.flatten(order='F') -> this will flatten in column major
+            # order
             row_major_order_idx = to_row_major_order(i, rows)
             ax = fig.add_subplot(spec[i])
             for idx, spike_sublist in enumerate(reversed(spiketimes_for_plot[i])):

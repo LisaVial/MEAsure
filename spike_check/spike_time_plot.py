@@ -31,9 +31,7 @@ class SpikeTimePlot(QtWidgets.QWidget):
         self.ax.set_xlabel('time [msec]')
         self.ax.set_ylabel(r'voltage [$\mu$ V]')
 
-        self.dead_channels = [0, 1, 14, 15, 16, 30, 31, 46, 47, 62, 63, 78, 79, 94, 95, 110, 111, 126, 127, 142, 143,
-                              158, 159, 174, 175, 190, 191, 206, 207, 222, 223, 224, 238, 239, 240]
-        # self.dead_channels = [0, 1, 14, 15, 30, 31, 190, 206, 222]
+        self.dead_channels = self.sc_reader.dead_channels
         self.cluster_to_channel_index = dict()
         self.channel_to_cluster_index = dict()  # note: dead channels do not have a cluster
 

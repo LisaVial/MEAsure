@@ -31,8 +31,8 @@ class SpectrogramsThread(QtCore.QThread):
             sampling_rate = reader.sampling_frequency
             # freqs, t, S_xx = signal.spectrogram(filtered_trace[::downsampling_stepsize], sampling_rate, nperseg=2**14,
             #                                     noverlap=2 ** 10)
-            freqs, t, S_xx = signal.spectrogram(filtered_trace, sampling_rate, nperseg=2**18,
-                                                noverlap=2**17)
+            freqs, t, S_xx = signal.spectrogram(filtered_trace, sampling_rate, nperseg=2**16,
+                                                noverlap=2**15)
 
             frequencies.append(freqs)
 
@@ -45,6 +45,6 @@ class SpectrogramsThread(QtCore.QThread):
         # for idx, ch_id in enumerate(selected_ids):
 
     def run(self):
-        self.operation_changed.emit('Calculation spectrograms...')
+        self.operation_changed.emit('Calculating spectrograms...')
         self.frequencies, self.time, self.Sxx = self.calculating_spectrogram(self.reader)
         self.finished.emit()

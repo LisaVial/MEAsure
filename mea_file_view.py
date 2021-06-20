@@ -166,7 +166,8 @@ class MeaFileView(QtWidgets.QWidget):
         self.toolbar.addAction(self.add_heatmap_tab)
 
         self.open_spike_check = QtWidgets.QAction('Spike Verfication', self)
-        self.open_spike_check.setIcon(spike_detection_icon)
+        spike_verification_icon = QtGui.QIcon("./icons/spike_verification_icon.png")
+        self.open_spike_check.setIcon(spike_verification_icon)
         self.open_spike_check.triggered.connect(self.open_spike_check_dialog)
         self.toolbar.addAction(self.open_spike_check)
 

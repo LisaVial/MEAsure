@@ -32,43 +32,24 @@ class SpikeCheckDialog(QtWidgets.QDialog):
         self.setWindowTitle("Verification of detected spikes")
 
         main_layout = QtWidgets.QGridLayout(self)
-        # main_layout.setAlignment(QtCore.Qt.AlignTop | QtCore.Qt.AlignLeft)
 
         # insert widget to select channel for which spikes should be checked
         channel_selection_widget = ChannelSelectionWidget(self)
         channel_selection_widget.channel_selection_changed.connect(self.on_channel_selection_changed)
-        main_layout.addWidget(channel_selection_widget, 0, 0, 1, 2)
+        main_layout.addWidget(channel_selection_widget, 0, 0, 2, 2)
         self.label = channel_selection_widget.label
         self.label_index = ChannelUtility.get_ordered_index(self.label)
-
-        self.operation_label = QtWidgets.QLabel(self)
-        self.operation_label.setText('Nothing happens so far')
-        main_layout.addWidget(self.operation_label, 1, 0, 1, 2)
-
-        self.progress_bar = QtWidgets.QProgressBar(self)
-        self.progress_bar.setMinimum(0)
-        self.progress_bar.setMaximum(100)
-        self.progress_bar.setTextVisible(True)
-        self.progress_label = QtWidgets.QLabel(self)
-        main_layout.addWidget(self.progress_bar, 1, 0, 1, 2)
-        main_layout.addWidget(self.progress_label, 1, 0, 1, 2)
 
         # insert plot widget that shows raw trace of channel: Plot title should show channel label, plot should show
         #   raw trace and thresholds (maybe get settings)
         self.raw_trace_plot_widget = RawTraceWThresholdPlot(self, self.mcs_reader, self.sc_reader, self.label,
                                                             self.label_index)
-        main_layout.addWidget(self.raw_trace_plot_widget, 2, 0)
-
-        # insert plot widget that shows histogram of voltage trace values -> gaussian curve with tails hints to the
-        #   channel having spikes
-        self.histogram_plot_widget = VoltageTraceHistogramPlot(self, self.mcs_reader, self.sc_reader, self.label,
-                                                               self.label_index)
-        main_layout.addWidget(self.histogram_plot_widget, 2, 1)
+        main_layout.addWidget(self.raw_trace_plot_widget, 2, 0, 2, 1)
 
         # insert a plot widget which shows 10 ms around a spike (it would be great if the spiketime is also indicated in
         #   the first plot widget)
         self.spike_time_plot_widget = SpikeTimePlot(self, self.mcs_reader, self.sc_reader, self.label, self.label_index)
-        main_layout.addWidget(self.spike_time_plot_widget, 3, 0)
+        main_layout.addWidget(self.spike_time_plot_widget, 2, 1)
 
         self.spike_sorting_plot_widget = SpikeSortingPlot(self, self.mcs_reader, self.sc_reader, self.label)
         main_layout.addWidget(self.spike_sorting_plot_widget, 3, 1)
@@ -79,7 +60,7 @@ class SpikeCheckDialog(QtWidgets.QDialog):
         main_layout.addWidget(self.navigation_buttons_widget, 4, 0, 1, 2)
         self.navigation_buttons_widget.index_changed.connect(self.on_spiketime_index_changed)
 
-        self.histogram_plot_widget.plot(self.label_index)
+        # self.histogram_plot_widget.plot(self.label_index)
         self.spike_time_plot_widget.plot(self.label_index, self.st_index)
         self.raw_trace_plot_widget.plot(self.label)
         self.spike_sorting_plot_widget.plot(self.label, self.st_index)
@@ -132,7 +113,7 @@ class SpikeCheckDialog(QtWidgets.QDialog):
         self.label = label
         self.label_index = ChannelUtility.get_ordered_index(self.label)
         # if self.preproc_mat is not None:
-        self.histogram_plot_widget.plot(self.label_index)
+        # self.histogram_plot_widget.plot(self.label_index)
         self.spike_time_plot_widget.plot(self.label_index, self.st_index)
         self.raw_trace_plot_widget.plot(self.label)
         self.spike_sorting_plot_widget.plot(self.label, self.st_index)

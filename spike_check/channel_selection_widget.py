@@ -18,7 +18,6 @@ class ChannelSelectionWidget(QtWidgets.QWidget):
         line_edit.setReadOnly(True)
         line_edit.setAlignment(QtCore.Qt.AlignCenter)
         self.channel_selection_combobox.addItems(channel_labels)
-        # ToDo: get other labels aligned at center as well
         for i in range(self.channel_selection_combobox.count()):
             self.channel_selection_combobox.setItemData(i, QtCore.Qt.AlignCenter, QtCore.Qt.TextAlignmentRole)
         self.label = self.channel_selection_combobox.itemText(0)

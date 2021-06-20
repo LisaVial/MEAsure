@@ -1,10 +1,5 @@
 from PyQt5 import QtWidgets
-import numpy as np
 import seaborn as sns
-from scipy.signal import filtfilt, butter
-
-from plot_manager import PlotManager
-from utility.channel_utility import ChannelUtility
 
 from plots.plot_widget import PlotWidget
 

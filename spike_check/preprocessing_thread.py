@@ -2,6 +2,7 @@ from PyQt5 import QtCore
 import numpy as np
 from scipy.signal import filtfilt, butter
 import time
+from file_handling import SC_data_reader
 from utility.channel_utility import ChannelUtility
 
 
@@ -15,8 +16,6 @@ class PreprocessingThread(QtCore.QThread):
         super().__init__(parent)
         self.mcs_reader = mcs_reader
         self.sc_reader = sc_reader
-
-        self.chunk_size = 30    # [s] -> info from spyking circus log
 
         self.scaled_matrix = None
         self.filtered_matrix = None
@@ -49,8 +48,8 @@ class PreprocessingThread(QtCore.QThread):
     def preprocess_file(self):
         self.operation_changed.emit('Filtering traces and substracting median...')
         num_of_elements = len(self.scaled_matrix[0])
-        dead_channels = [0, 1, 14, 15, 16, 30, 31, 46, 47, 62, 63, 78, 79, 94, 95, 110, 111, 126, 127, 142, 143, 158,
-                         159, 174, 175, 190, 191, 206, 207, 222, 223, 224, 238, 239, 240]
+        # ToDo: find a clever way to get the dead channels
+        dead_channels = SC_data_reader.dead_channels
 
         cluster_to_channel_index = dict()
         channel_to_cluster_index = dict()  # note: dead channels do not have a cluster

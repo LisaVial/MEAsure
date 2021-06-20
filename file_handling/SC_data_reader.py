@@ -1,7 +1,7 @@
 import os
 import numpy as np
 import h5py
-from IPython import embed
+from circus.shared.parser import CircusParser
 
 
 class SCDataReader:
@@ -15,7 +15,10 @@ class SCDataReader:
         self.base_file = h5py.File(base_filepath, 'r')
         self.base_file_voltage_traces = self.base_file['scaled']
         self.spiketimes = self.retrieve_spiketimes()
-        self.retrieve_mua_spikes()
+        self.mua_spikes = self.retrieve_mua_spikes()
+        params = CircusParser(base_filepath)
+        self.dead_channels = params.get('detection', 'dead_channels')
+        self.dead_channels = [int(s) for s in self.dead_channels[5:-2].split(',')]
 
     def retrieve_mua_spikes(self):
         mua_filename = self.filename_prefix + ".mua.hdf5"

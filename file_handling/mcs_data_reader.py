@@ -12,13 +12,12 @@ class McsDataReader:
         t0 = time.time()
         self.file = self.open_mea_file()
         t1 = time.time() - t0
-        print("Time elapsed for file opening: ", t1)
         try:
             self.voltage_traces, self.sampling_frequency, self.duration = self.get_data_of_file()
         except KeyError:
             self.voltage_traces = self.file['scaled']
-            self.sampling_frequency = 10000.0
-            self.duration = 300.0
+            self.sampling_frequency = 25000.0
+            self.duration = 120.0
         try:
             self.channel_ids, self.labels = self.get_channel_ids()
         except KeyError:
@@ -29,15 +28,16 @@ class McsDataReader:
     def get_channel_id(self, label):
         for ch in self.file['Data']['Recording_0']['AnalogStream']['Stream_0']['InfoChannel']:
             if label == ch[4].decode('utf8'):
-                return ch[0]
+                return ch[1]
 
     def get_scaled_channel(self, label):
         # so far unclear: will this be done once? -> might be difficult regarding memory
         # do this for each single channel while the channel is needed -> function has to be called each time when
         # signal is needed
-        id = self.get_channel_id(label)
-        vt = self.voltage_traces[id]
-        conversion_factor = self.file['Data']['Recording_0']['AnalogStream']['Stream_0']['InfoChannel'][0]['ConversionFactor']
+        id_by_label = self.get_channel_id(label)
+        vt = self.voltage_traces[id_by_label]
+        conversion_factor = \
+            self.file['Data']['Recording_0']['AnalogStream']['Stream_0']['InfoChannel'][0]['ConversionFactor']
         exponent = self.file['Data']['Recording_0']['AnalogStream']['Stream_0']['InfoChannel'][0]['Exponent'] + 6
         # 6 = pV -> uV
         scaled_trace = vt * conversion_factor * np.power(10.0, exponent)

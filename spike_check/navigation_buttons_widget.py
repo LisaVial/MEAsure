@@ -30,7 +30,6 @@ class NavigationButtonsWidget(QtWidgets.QWidget):
     @QtCore.pyqtSlot()
     def on_previous_button_pressed(self):
         self.index = max(0, self.index - 1)  # make sure index is at least 0
-        print('index:', self.index)
         self.previous_button.setEnabled(self.index > 0)
         self.index_changed.emit(self.index)
 

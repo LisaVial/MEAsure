@@ -1,10 +1,9 @@
-from PyQt5 import QtCore, QtWidgets
+from PyQt5 import QtWidgets
 import numpy as np
 import seaborn as sns
 import matplotlib as mpl
-from IPython import embed
+import matplotlib.gridspec as gridspec
 
-from plot_manager import PlotManager
 from plots.plot_widget import PlotWidget
 from utility.channel_utility import ChannelUtility
 
@@ -17,7 +16,6 @@ class RawTraceWThresholdPlot(QtWidgets.QWidget):
         self.sc_reader = sc_reader
         self.label = label
         self.label_index = label_index
-        print(self.label, self.label_index)
 
         self.time = None
         self.filter_trace = None
@@ -36,15 +34,20 @@ class RawTraceWThresholdPlot(QtWidgets.QWidget):
 
         plot_widget = PlotWidget(self, plot_name)
         self.figure = plot_widget.figure
+        gs = gridspec.GridSpec(2, 3, wspace=0, hspace=.5)
         sns.set()
-        self.ax_raw = self.figure.add_subplot(211)
+        self.ax_raw = self.figure.add_subplot(gs[0, :2])
         self.ax_raw.spines['right'].set_visible(False)
         self.ax_raw.spines['top'].set_visible(False)
         self.ax_raw.get_xaxis().tick_bottom()
         self.ax_raw.get_yaxis().tick_left()
         self.ax_raw.tick_params(labelsize=10, direction='out')
 
-        self.ax_preproc = self.figure.add_subplot(212)
+        self.ax_empty = self.figure.add_subplot(gs[0, 2])
+        self.ax_empty.plot(0, 0)
+        self.ax_empty.axis('off')
+
+        self.ax_preproc = self.figure.add_subplot(gs[1, :2])
         self.ax_preproc.spines['right'].set_visible(False)
         self.ax_preproc.spines['top'].set_visible(False)
         self.ax_preproc.get_xaxis().tick_bottom()
@@ -53,9 +56,9 @@ class RawTraceWThresholdPlot(QtWidgets.QWidget):
         self.ax_preproc.set_xlabel('time [sec]')
         self.ax_preproc.set_ylabel(r'voltage [$\mu$ V]')
 
-        self.dead_channels = [0, 1, 14, 15, 16, 30, 31, 46, 47, 62, 63, 78, 79, 94, 95, 110, 111, 126, 127, 142, 143, 158,
-                         159, 174, 175, 190, 191, 206, 207, 222, 223, 224, 238, 239, 240]
-        # self.dead_channels = [0, 1, 14, 15, 30, 31, 190, 206, 222]
+        self.ax_hist = self.figure.add_subplot(gs[1, 2])
+
+        self.dead_channels = self.sc_reader.dead_channels
         self.cluster_to_channel_index = dict()
         self.channel_to_cluster_index = dict()  # note: dead channels do not have a cluster
 
@@ -70,7 +73,6 @@ class RawTraceWThresholdPlot(QtWidgets.QWidget):
 
     def plot(self, label):
         self.label_index = ChannelUtility.get_ordered_index(label)
-        # self.filter_trace = filter_mat[self.label_index]
         fs = self.mcs_reader.sampling_frequency
 
         # CAUTION: Filtering is now done by SC
@@ -114,6 +116,14 @@ class RawTraceWThresholdPlot(QtWidgets.QWidget):
             self.ax_preproc.scatter(self.scatter_cluster_time[0], self.scatter_cluster_amps[0], marker='o', color='red',
                                     zorder=2)
             self.ax_preproc.hlines(-6 * thresholds[spike_index], 0, self.time[-1], color='r', zorder=2)
+        trace = self.base_file_trace
+        self.ax_hist.cla()
+        vert_hist = np.histogram(trace, bins=1000)
+        height = np.ceil(max(vert_hist[1])) - np.floor(min(vert_hist[1]))
+        height = height/len(vert_hist[0])
+        self.ax_hist.barh(vert_hist[1][:-1], vert_hist[0], height=height)
+        self.ax_hist.get_xaxis().set_visible(False)
+        self.ax_hist.get_yaxis().set_visible(False)
         self.figure.canvas.draw_idle()
 
     def on_scatter_plot_updated(self, label_idx, index):
