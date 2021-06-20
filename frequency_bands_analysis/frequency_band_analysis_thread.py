@@ -16,11 +16,9 @@ class FrequencyBandAnalysisThread(QtCore.QThread):
         self.filtered = filtered
         self.frequencies, self.power = None, None
 
-    def analyzing_frequency_bands(self, reader):
-
+    def analyzing_frequency_bands(self):
         frequencies = []
         powers = []
-
         # if analysis is done without filtering before:
         # ids = reader.channel_ids
         # selected_ids = [ids[g_idx] for g_idx in self.grid_indices]
@@ -31,7 +29,7 @@ class FrequencyBandAnalysisThread(QtCore.QThread):
             # scaled_signal = reader.get_scaled_channel(label)
             filtered_trace = self.filtered[idx]
             # freqs, Pxx = signal.welch(scaled_signal, self.reader.sampling_frequency, nperseg=2**14)
-            freqs, Pxx = signal.welch(filtered_trace[60000:], self.reader.sampling_frequency, nperseg=2**14)
+            freqs, Pxx = signal.welch(filtered_trace, self.reader.sampling_frequency, nperseg=2**14)
             frequencies.append(freqs)
             powers.append(Pxx)
             data = [label, freqs, Pxx]
@@ -42,5 +40,5 @@ class FrequencyBandAnalysisThread(QtCore.QThread):
 
     def run(self):
         self.operation_changed.emit('Calculating Power Spectral Density of channels')
-        self.frequencies, self.power = self.analyzing_frequency_bands(self.reader)
+        self.frequencies, self.power = self.analyzing_frequency_bands()
         self.finished.emit()
