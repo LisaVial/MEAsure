@@ -72,6 +72,11 @@ class MainWindow(QtWidgets.QMainWindow):
         self.show_plot_manager.setChecked(False)
         self.show_plot_manager.triggered.connect(self.on_show_plot_manager)
         self.toolbar.addAction(self.show_plot_manager)
+        self.open_multiple_files_analysis_dialog = QtWidgets.QAction("analyse multiple files")
+        multiple_file_analysis_icon = QtGui.QIcon("./icons/multiple_files_icon.png")
+        self.open_multiple_files_analysis_dialog.setIcon(multiple_file_analysis_icon)
+        self.open_multiple_files_analysis_dialog.connect(self.open_mfa_dialog)
+        self.toolbar.addAction(self.open_multiple_files_analysis_dialog)
         self.addToolBar(self.toolbar)
 
         plot_manager = PlotManager()
@@ -91,6 +96,9 @@ class MainWindow(QtWidgets.QMainWindow):
     @QtCore.pyqtSlot()
     def on_close_button_pressed(self):
         self.accept()
+
+    def open_mfa_dialog(self, is_pressed):
+        
 
     def on_show_plot_manager(self, is_pressed):
         self.plot_list_dock_widget.setVisible(is_pressed)
@@ -118,4 +126,10 @@ class MainWindow(QtWidgets.QMainWindow):
         except OSError:
             pass
 
-
+    def get_heatmaps(self):
+        heatmap_tabs = []
+        for widget_index in range(self.mea_tab_widget.count()):
+            mea_file_view = self.mea_tab_widget.widget(widget_index)
+            if mea_file_view and mea_file_view.heatmap_tab:
+                heatmap_tabs.append(mea_file_view.heatmap_tab)
+        return heatmap_tabs

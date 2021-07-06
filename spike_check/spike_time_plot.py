@@ -37,19 +37,23 @@ class SpikeTimePlot(QtWidgets.QWidget):
 
         cluster_index = 0
         for channel_index in range(ChannelUtility.get_label_count()):
-            if channel_index not in self.dead_channels:
-                self.cluster_to_channel_index[cluster_index] = channel_index
-                self.channel_to_cluster_index[channel_index] = cluster_index
-                cluster_index += 1  # increase cluster index
+            if len(self.dead_channels) > 0:
+                if channel_index not in self.dead_channels:
+                    self.cluster_to_channel_index[cluster_index] = channel_index
+                    self.channel_to_cluster_index[channel_index] = cluster_index
+                    cluster_index += 1  # increase cluster index
 
         main_layout.addWidget(plot_widget)
 
     def plot(self, label_index, spike_idx):
-        if label_index not in self.dead_channels:
-            spike_label_index = self.channel_to_cluster_index[label_index]
+        if len(self.dead_channels) > 0:
+            if label_index not in self.dead_channels:
+                spike_label_index = self.channel_to_cluster_index[label_index]
+            else:
+                spike_label_index = label_index
         else:
             spike_label_index = label_index
-        trace = self.sc_reader.base_file_voltage_traces[spike_label_index]
+        trace = self.sc_reader.base_file_voltage_traces[label_index]
         fs = self.mcs_reader.sampling_frequency
 
         spiketime_index = self.sc_reader.spiketimes[spike_label_index][spike_idx]
@@ -58,12 +62,30 @@ class SpikeTimePlot(QtWidgets.QWidget):
         st_start_index = max(int(spiketime_index - 50), 0)   # entspricht 5 ms
         st_end_index = min(int(spiketime_index + 50), len(trace))
         time = np.arange((st_start_index/fs), (st_end_index/fs), 1/fs)
-        if label_index not in self.dead_channels:
+        if len(self.dead_channels) > 0:
+            if label_index not in self.dead_channels:
+                self.ax.cla()
+                self.ax.set_xticklabels([])
+                self.ax.set_yticklabels([])
+                try:
+                    self.ax.plot(time, trace[st_start_index:st_end_index])
+                except ValueError:
+                    self.ax.plot(time[:-1], trace[st_start_index:st_end_index])
+                if spiketime_index < len(trace):
+                    self.ax.scatter(spiketime, trace[spiketime_index], marker='o', color='red', zorder=2)
+                    self.ax.set_xticklabels([])
+                    self.ax.set_yticklabels([])
+                self.figure.canvas.draw_idle()
+        else:
             self.ax.cla()
             try:
                 self.ax.plot(time, trace[st_start_index:st_end_index])
             except ValueError:
                 self.ax.plot(time[:-1], trace[st_start_index:st_end_index])
+            self.ax.set_xticklabels([])
+            self.ax.set_yticklabels([])
             if spiketime_index < len(trace):
                 self.ax.scatter(spiketime, trace[spiketime_index], marker='o', color='red', zorder=2)
+                self.ax.set_xticklabels([])
+                self.ax.set_yticklabels([])
             self.figure.canvas.draw_idle()

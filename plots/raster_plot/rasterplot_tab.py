@@ -27,14 +27,15 @@ class RasterplotTab(QtWidgets.QWidget):
         main_layout = QtWidgets.QVBoxLayout(self)
         main_layout.setAlignment(QtCore.Qt.AlignTop | QtCore.Qt.AlignHCenter)
 
-        plot_name = 'Rasterplot_' + self.reader.filename
+        # plot_name = 'Rasterplot_' + self.reader.filename
 
-        self.plot_widget = PlotWidget(self, plot_name)
+        self.plot_widget = PlotWidget(self, 'Rasterplot')
         self.figure = self.plot_widget.figure
         main_layout.addWidget(self.plot_widget)
         self.plot(self.figure, self.spiketimes)
 
     def plot(self, fig, spike_mat):
+        # ToDo: redo this whole plot, since the binning of 10 sec segments per row does not make a lot of sense
         sns.set()
         fs = self.fs
         rows = int(np.ceil(np.sqrt(len(spike_mat))))
@@ -62,7 +63,7 @@ class RasterplotTab(QtWidgets.QWidget):
                     c = self.colors[0]
                 else:
                     c = self.colors[1]
-                ax.scatter(spike_sublist/fs, np.ones(len(spike_sublist)) * idx, marker='|', color=c)
+                ax.scatter(np.array(spike_sublist)/fs, np.ones(len(spike_sublist)) * idx, marker='|', color=c)
                 ax.spines['right'].set_visible(False)
                 ax.spines['top'].set_visible(False)
                 ax.set_title(self.grid_labels[i])

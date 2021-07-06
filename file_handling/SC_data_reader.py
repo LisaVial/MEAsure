@@ -13,12 +13,15 @@ class SCDataReader:
 
         self.file = h5py.File(path, 'r')
         self.base_file = h5py.File(base_filepath, 'r')
-        self.base_file_voltage_traces = self.base_file['scaled']
+        self.base_file_voltage_traces = self.base_file['Data']['Recording_0']['AnalogStream']['Stream_0']['ChannelData']
+        self.sampling_frequency = 1000000 / \
+                             self.base_file['Data']['Recording_0']['AnalogStream']['Stream_0']['InfoChannel']['Tick'][0]
         self.spiketimes = self.retrieve_spiketimes()
         self.mua_spikes = self.retrieve_mua_spikes()
         params = CircusParser(base_filepath)
         self.dead_channels = params.get('detection', 'dead_channels')
-        self.dead_channels = [int(s) for s in self.dead_channels[5:-2].split(',')]
+        if len(self.dead_channels) > 1:
+            self.dead_channels = [int(s) for s in self.dead_channels[5:-2].split(',')]
 
     def retrieve_mua_spikes(self):
         mua_filename = self.filename_prefix + ".mua.hdf5"

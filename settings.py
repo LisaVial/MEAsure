@@ -6,6 +6,7 @@ from frequency_bands_analysis.frequency_bands_analysis_settings import Frequency
 from spike_detection.spike_detection_settings import SpikeDetectionSettings
 from filtering.filter_settings import FilterSettings
 from plots.csd_plot.csd_plot_settings import CsdPlotSettings
+from plots.heatmap.heatmap_settings import HeatmapSettings
 from plots.ISI.isi_histogram_settings import IsiHistogramSettings
 from plots.raster_plot.rasterplot_settings import RasterplotSettings
 from plots.raw_trace_plot.raw_trace_settings import RawTraceSettings
@@ -24,6 +25,7 @@ class Settings:
         self.filter_settings = FilterSettings()
         self.rasterplot_settings = RasterplotSettings()
         self.csd_plot_settings = CsdPlotSettings()
+        self.heatmap_settings = HeatmapSettings()
         self.frequency_analysis_settings = FrequencyAnalysisSettings()
         self.frequency_bands_analysis_settings = FrequencyBandsAnalysisSettings()
         self.isi_histogram_settings = IsiHistogramSettings()
@@ -48,6 +50,8 @@ class Settings:
                 self.rasterplot_settings.from_dict(d["rasterplot_settings"])
             if 'csd_plot_settings' in d.keys():
                 self.csd_plot_settings.from_dict(d['csd_plot_settings'])
+            if 'heatmap_settings' in d.keys():
+                self.heatmap_settings.from_dict(d['heatmap_settings'])
             if 'frequency_analysis_settings' in d.keys():
                 self.frequency_analysis_settings.from_dict(d['frequency_analysis_settings'])
             if 'frequency_bands_analysis_settings' in d.keys():
@@ -69,6 +73,8 @@ class Settings:
         d["spike_detection_settings"] = self.spike_detection_settings.to_dict()
         d["filter_settings"] = self.filter_settings.to_dict()
         d["rasterplot_settings"] = self.rasterplot_settings.to_dict()
+        d["csd_plot_settings"] = self.csd_plot_settings.to_dict()
+        d["heatmap_settings"] = self.heatmap_settings.to_dict()
         d["frequency_analysis_settings"] = self.frequency_analysis_settings.to_dict()
         d["frequency_bands_analysis_settings"] = self.frequency_bands_analysis_settings.to_dict()
         d["isi_histogram_settings"] = self.isi_histogram_settings.to_dict()

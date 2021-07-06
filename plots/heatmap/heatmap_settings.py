@@ -5,8 +5,9 @@ class HeatmapSettings:
         MEAE = 1
         SC = 2
 
-    def __init__(self, initial_mode=Mode.MEAE):
+    def __init__(self, initial_mode=Mode.SC):
         self.mode = initial_mode
+        self.heatmap_for_normalizing = None
 
     def to_dict(self):
         result = dict()

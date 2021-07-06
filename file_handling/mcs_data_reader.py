@@ -17,7 +17,7 @@ class McsDataReader:
         except KeyError:
             self.voltage_traces = self.file['scaled']
             self.sampling_frequency = 25000.0
-            self.duration = 120.0
+            self.duration = 600.0
         try:
             self.channel_ids, self.labels = self.get_channel_ids()
         except KeyError:

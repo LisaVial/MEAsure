@@ -31,4 +31,5 @@ mainWindow = MainWindow('MEAsure')
 mainWindow.show()
 
 application.setActiveWindow(mainWindow)
+application.main_window = mainWindow
 sys.exit(application.exec())

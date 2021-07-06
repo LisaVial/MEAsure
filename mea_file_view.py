@@ -1,5 +1,4 @@
 from PyQt5 import QtWidgets, QtGui, QtCore
-import time
 
 # all the following imports are script of the MEAsure application
 from file_handling.mcs_data_reader import McsDataReader
@@ -72,6 +71,7 @@ class MeaFileView(QtWidgets.QWidget):
         self.rasterplot_settings = Settings.instance.rasterplot_settings
         self.spike_detection_settings = Settings.instance.spike_detection_settings
         self.csd_plot_settings = Settings.instance.csd_plot_settings
+        self.heatmap_settings = Settings.instance.heatmap_settings
         self.isi_histogram_settings = Settings.instance.isi_histogram_settings
         self.spectrograms_settings = Settings.instance.spectrograms_settings
         self.raw_trace_plot_settings = Settings.instance.raw_trace_plot_settings
@@ -270,7 +270,8 @@ class MeaFileView(QtWidgets.QWidget):
                 self.tab_widget.addTab(self.isi_histogram_tab, "ISI Histogram")
             elif self.plot_settings.mode == IsiHistogramSettings.Mode.SC:
                 sc_path = self.file_manager.get_verified_sc_file()
-                sc_reader = SCDataReader(sc_path)
+                sc_base_filepath = self.file_manager.get_verified_sc_base_file()
+                sc_reader = SCDataReader(sc_path, sc_base_filepath)
                 self.isi_histogram_tab = IsiHistogramTab(self, sc_reader, self.plot_settings, sampling_rate,
                                                          grid_labels, grid_indices)
                 self.tab_widget.addTab(self.isi_histogram_tab, "ISI Histogram")
@@ -348,30 +349,34 @@ class MeaFileView(QtWidgets.QWidget):
         self.tab_widget.addTab(self.spectrograms_tab, "Spectrograms")
 
     def open_heatmap_settings_dialog(self, is_pressed):
+        # get main window from application (set in start_gui.py)
+        main_window = QtWidgets.QApplication.instance().main_window
+
         allowed_modes = [HeatmapSettings.Mode.MCS]
         if self.file_manager.get_verified_meae_file() is not None:
             allowed_modes.append(HeatmapSettings.Mode.MEAE)
         if self.file_manager.get_verified_sc_file() is not None:
             allowed_modes.append(HeatmapSettings.Mode.SC)
-        settings_dialog = HeatmapSettingsDialog(self, allowed_modes, self.plot_settings)
+        settings_dialog = HeatmapSettingsDialog(self, allowed_modes, self.heatmap_settings, main_window.get_heatmaps())
         if settings_dialog.exec() == 1:  # 'Execute' clicked
-            self.plot_settings = settings_dialog.get_settings()
+            self.heatmap_settings = settings_dialog.get_settings()
             # overwrite global settings as well
-            Settings.instance.plot_settings = self.plot_settings
+            Settings.instance.plot_settings = self.heatmap_settings
 
             # initialise plotting
-            if self.plot_settings.mode == HeatmapSettings.Mode.MCS:
-                self.heatmap_tab = HeatmapTab(self, self.reader, self.plot_settings)
+            if self.heatmap_settings.mode == HeatmapSettings.Mode.MCS:
+                self.heatmap_tab = HeatmapTab(self, self.reader, self.heatmap_settings)
                 self.tab_widget.addTab(self.heatmap_tab, "Heatmap")
-            elif self.plot_settings.mode == HeatmapSettings.Mode.MEAE:
+            elif self.heatmap_settings.mode == HeatmapSettings.Mode.MEAE:
                 meae_path = self.file_manager.get_verified_meae_file()
                 meae_reader = MeaeDataReader(meae_path)
-                self.heatmap_tab = HeatmapTab(self, meae_reader, self.plot_settings)
+                self.heatmap_tab = HeatmapTab(self, meae_reader, self.heatmap_settings)
                 self.tab_widget.addTab(self.heatmap_tab, "Heatmap")
-            elif self.plot_settings.mode == HeatmapSettings.Mode.SC:
+            elif self.heatmap_settings.mode == HeatmapSettings.Mode.SC:
                 sc_path = self.file_manager.get_verified_sc_file()
-                sc_reader = SCDataReader(sc_path)
-                self.heatmap_tab = HeatmapTab(self, sc_reader, self.plot_settings)
+                sc_base_filepath = self.file_manager.get_verified_sc_base_file()
+                sc_reader = SCDataReader(sc_path, sc_base_filepath)
+                self.heatmap_tab = HeatmapTab(self, sc_reader, self.heatmap_settings)
                 self.tab_widget.addTab(self.heatmap_tab, "Heatmap")
 
     def open_rasterplot_settings_dialog(self, is_pressed):
@@ -415,7 +420,8 @@ class MeaFileView(QtWidgets.QWidget):
                 self.tab_widget.addTab(self.rasterplot_tab, "Rasterplot")
             elif self.plot_settings.mode == RasterplotSettings.Mode.SC:
                 sc_path = self.file_manager.get_verified_sc_file()
-                sc_reader = SCDataReader(sc_path)
+                sc_base_filepath = self.file_manager.get_verified_sc_base_file()
+                sc_reader = SCDataReader(sc_path, sc_base_filepath)
                 self.rasterplot_tab = RasterplotTab(self, sc_reader, self.plot_settings, sampling_rate, duration,
                                                     grid_labels, grid_indices)
                 self.tab_widget.addTab(self.rasterplot_tab, "Rasterplot")
