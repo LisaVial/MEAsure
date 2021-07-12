@@ -8,6 +8,7 @@ class SCDataReader:
     def __init__(self, path, base_filepath):
         self.folder, self.cluster_filename = os.path.split(path)
         self.base_sc_folder, self.base_filename = os.path.split(path)
+        self.filename = path.split('/')[-1][:-5]
         # only cut out last two tokens (e.g. 'clusters', 'hdf5') leave the rest
         self.filename_prefix = '.'.join(self.cluster_filename.split('.')[:-2])
 
@@ -16,6 +17,8 @@ class SCDataReader:
         self.base_file_voltage_traces = self.base_file['Data']['Recording_0']['AnalogStream']['Stream_0']['ChannelData']
         self.sampling_frequency = 1000000 / \
                              self.base_file['Data']['Recording_0']['AnalogStream']['Stream_0']['InfoChannel']['Tick'][0]
+        duration_index = self.base_file['Data']['Recording_0']['AnalogStream']['Stream_0']['ChannelDataTimeStamps'][0][2]
+        self.duration = self.sampling_frequency/duration_index
         self.spiketimes = self.retrieve_spiketimes()
         self.mua_spikes = self.retrieve_mua_spikes()
         params = CircusParser(base_filepath)

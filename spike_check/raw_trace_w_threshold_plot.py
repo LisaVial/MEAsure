@@ -80,17 +80,17 @@ class RawTraceWThresholdPlot(QtWidgets.QWidget):
         fs = self.mcs_reader.sampling_frequency
 
         # CAUTION: Filtering is now done by SC
-        self.filter_trace = self.mcs_reader.get_scaled_channel(label)
+        # self.filter_trace = self.mcs_reader.get_scaled_channel(label)
         self.base_file_trace = self.sc_reader.base_file_voltage_traces[self.label_index]
         self.base_file_trace = self.scale_trace(self.base_file_trace)
-        self.time = np.arange(0, len(self.filter_trace) / fs, 1 / fs)
+        self.time = np.arange(0, len(self.base_file_trace) / fs, 1 / fs)
 
         if len(self.dead_channels) > 0:
-            if self.label_index not in self.dead_channels:
-                self.scatter_mua_indices, sorted_mua_amplitudes = self.sc_reader.retrieve_mua_spikes()
-                spike_index = self.channel_to_cluster_index[self.label_index]
-                self.scatter_mua_time = self.scatter_mua_indices[spike_index] / fs
-                self.scatter_mua_amps = [self.filter_trace[idx] for idx in self.scatter_mua_indices[spike_index]]
+            # if self.label_index not in self.dead_channels:
+            #     self.scatter_mua_indices, sorted_mua_amplitudes = self.sc_reader.retrieve_mua_spikes()
+            #     spike_index = self.channel_to_cluster_index[self.label_index]
+            #     self.scatter_mua_time = self.scatter_mua_indices[spike_index] / fs
+            #     self.scatter_mua_amps = [self.filter_trace[idx] for idx in self.scatter_mua_indices[spike_index]]
 
             if self.label_index not in self.dead_channels:
                 spike_index = self.channel_to_cluster_index[self.label_index]
@@ -107,10 +107,10 @@ class RawTraceWThresholdPlot(QtWidgets.QWidget):
                         self.scatter_cluster_time.append(self.time[scatter_t_max_jdx])
                         self.scatter_cluster_amps.append(self.base_file_trace[scatter_t_max_jdx])
         else:
-            self.scatter_mua_indices, sorted_mua_amplitudes = self.sc_reader.retrieve_mua_spikes()
+            # self.scatter_mua_indices, sorted_mua_amplitudes = self.sc_reader.retrieve_mua_spikes()
             spike_index = self.channel_to_cluster_index[self.label_index]
-            self.scatter_mua_time = self.scatter_mua_indices[spike_index] / fs
-            self.scatter_mua_amps = [self.filter_trace[idx] for idx in self.scatter_mua_indices[spike_index]]
+            # self.scatter_mua_time = self.scatter_mua_indices[spike_index] / fs
+            # self.scatter_mua_amps = [self.filter_trace[idx] for idx in self.scatter_mua_indices[spike_index]]
             # spike_index = self.channel_to_cluster_index[self.label_index]
             self.scatter_cluster_indices = self.sc_reader.spiketimes[spike_index]
             self.scatter_cluster_time = []

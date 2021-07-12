@@ -59,8 +59,8 @@ class SpikeTimePlot(QtWidgets.QWidget):
         spiketime_index = self.sc_reader.spiketimes[spike_label_index][spike_idx]
 
         spiketime = spiketime_index/fs
-        st_start_index = max(int(spiketime_index - 50), 0)   # entspricht 5 ms
-        st_end_index = min(int(spiketime_index + 50), len(trace))
+        st_start_index = max(int(spiketime_index - 500), 0)   # entspricht 50 ms
+        st_end_index = min(int(spiketime_index + 500), len(trace))
         time = np.arange((st_start_index/fs), (st_end_index/fs), 1/fs)
         if len(self.dead_channels) > 0:
             if label_index not in self.dead_channels:

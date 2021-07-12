@@ -23,9 +23,9 @@ class HeatmapTab(QtWidgets.QWidget):
         main_layout = QtWidgets.QVBoxLayout(self)
         main_layout.setAlignment(QtCore.Qt.AlignTop | QtCore.Qt.AlignHCenter)
 
-        # plot_name = 'Heatmap_' + self.reader.filename
+        plot_name = 'Heatmap_' + self.reader.filename
 
-        self.plot_widget = PlotWidget(self, 'Heatmap')
+        self.plot_widget = PlotWidget(self, plot_name)
         self.figure = self.plot_widget.figure
         main_layout.addWidget(self.plot_widget)
         self.plot(self.figure, self.spiketimes)
@@ -37,7 +37,7 @@ class HeatmapTab(QtWidgets.QWidget):
         old_heatmap = self.settings.heatmap_for_normalizing
         sc_channel_counter = 0
         for idx in range(252):
-            if idx not in self.reader.dead_channels:
+            if idx not in self.reader.dead_channels and len(spike_mat[sc_channel_counter])/self.reader.duration >= 0.05:
                 self.single_heatmap.append(len(spike_mat[sc_channel_counter]))
                 sc_channel_counter += 1
             else:
@@ -47,15 +47,15 @@ class HeatmapTab(QtWidgets.QWidget):
         self.single_heatmap.insert(15 * 16, 0)
         self.single_heatmap.append(0)
         self.single_heatmap = np.reshape(self.single_heatmap, (16, 16)).transpose()
-        if old_heatmap is not None:
-            self.single_heatmap = self.single_heatmap / np.array(old_heatmap)
-            self.single_heatmap = np.nan_to_num(self.single_heatmap)
+        # if old_heatmap is not None:
+        #     self.single_heatmap = self.single_heatmap / np.array(old_heatmap)
+        #     self.single_heatmap = np.nan_to_num(self.single_heatmap)
         y_labels = range(1, 17)
         x_labels = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'R']
         xticks = np.arange(0.5, 16.5, 1)
         if old_heatmap is not None:
-            sns.heatmap(self.single_heatmap, cmap='PuBuGn', vmin=0, vmax=np.max(self.single_heatmap), ax=ax,
-                        cbar_kws={'label': 'change in spike count'})
+            sns.heatmap(self.single_heatmap, cmap='PuBuGn', vmin=0, vmax=np.max(old_heatmap), ax=ax,
+                        cbar_kws={'label': 'spike count'})
         else:
             sns.heatmap(self.single_heatmap, cmap='PuBuGn', vmin=0, vmax=np.max(self.single_heatmap), ax=ax,
                         cbar_kws={'label': 'spike count'})
