@@ -67,7 +67,7 @@ class McsDataReader:
         return voltage_traces, sampling_frequency, duration
 
     def get_channel_ids(self):
-        ids = [ch[0] for ch in self.file['Data']['Recording_0']['AnalogStream']['Stream_0']['InfoChannel']]
+        ids = [ch[1] for ch in self.file['Data']['Recording_0']['AnalogStream']['Stream_0']['InfoChannel']]
         labels = [ch[4].decode('utf8') for ch in
                   self.file['Data']['Recording_0']['AnalogStream']['Stream_0']['InfoChannel']]
         same_len_labels = [str(label[0]) + '0' + str(label[1]) if len(label) < 3 else label for label in labels]

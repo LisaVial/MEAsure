@@ -19,9 +19,6 @@ class RawTracePlotTab(QtWidgets.QWidget):
         main_layout = QtWidgets.QVBoxLayout(self)
         main_layout.setAlignment(QtCore.Qt.AlignTop | QtCore.Qt.AlignCenter)
 
-        plot_name = 'Raw_trace_channel_' + str(self.grid_labels[0]) +'-' + str(self.grid_labels[-1]) \
-                    + self.reader.filename
-
         self.plot_tab_widget = QtWidgets.QTabWidget(self)
         self.plot_tab_widget.setMovable(True)
         self.plot_tab_widget.setTabsClosable(False)
@@ -41,11 +38,14 @@ class RawTracePlotTab(QtWidgets.QWidget):
             plot_time = np.arange(self.settings.start_time, self.settings.end_time, 1/self.fs)
             scaled_trace = self.reader.get_scaled_channel(label)
             ax.plot(plot_time, scaled_trace[start_time:end_time])
+            ax.set_xlim([plot_time[0], plot_time[-1]])
             ax.set_ylabel(r'amplitude [$\mu$ V]')
             ax.set_xlabel(r'time [s]')
 
+            PlotManager.instance.add_plot(plot_widget)
+
     def create_plot_tab(self, label):
-        plot_name = 'Raw_trace_' + self.reader.filename + '_' + label
+        plot_name = 'Raw_trace_channel_' + str(label) + '_' + self.reader.filename
         plot_widget = PlotWidget(self, plot_name)
         self.plot_tab_widget.addTab(plot_widget, label)
 
