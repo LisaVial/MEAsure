@@ -17,7 +17,6 @@ class FrequencyAnalysisTab(QtWidgets.QWidget):
         self.grid_indices = grid_indices
         self.grid_labels = grid_labels
         self.settings = settings
-        self.plot_manager = PlotManager()
         self.mea_file_view = parent
 
         main_layout = QtWidgets.QVBoxLayout(self)
@@ -126,13 +125,14 @@ class FrequencyAnalysisTab(QtWidgets.QWidget):
             ax.grid(True)
         figure.tight_layout(h_pad=0, w_pad=0.4)
         figure.text(0.5, 0.00, 'frequency [Hz]', ha='center')
-        figure.text(0.0, 0.5, 'Amplitude [$\mu$V/Hz]', va='center', rotation='vertical')
-
+        figure.text(0.0, 0.5, r'Amplitude [$\mu$V/Hz]', va='center', rotation='vertical')
+        PlotManager.instance.add_plot(self.plot_widget)
+        
     def on_plot_thread_is_done(self):
         self.plot_thread = None
         self.progress_label.hide()
         self.plot_widget.toolbar.hide()
-        self.plot_manager.add_plot(self)
+        PlotManager.instance.add_plot(self.plot_widget)
 
     def can_be_closed(self):
         # only allow closing if not busy
