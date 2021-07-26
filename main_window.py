@@ -9,6 +9,7 @@ from plot_list_view import PlotListView
 
 from file_handling.mcs_data_reader import McsDataReader
 from mea_file_tab_widget import MeaFileTabWidget
+from animation_overlay_widget import AnimationOverlayWidget
 
 from plot_manager import PlotManager
 from settings import Settings
@@ -78,6 +79,8 @@ class MainWindow(QtWidgets.QMainWindow):
         # self.open_multiple_files_analysis_dialog.connect(self.open_mfa_dialog)
         # self.toolbar.addAction(self.open_multiple_files_analysis_dialog)
         self.addToolBar(self.toolbar)
+
+        self.animation_overlay = AnimationOverlayWidget(self)
 
         plot_manager = PlotManager()
         plot_manager.set_plot_list_view(self.plot_list_view)

@@ -35,7 +35,7 @@ class CsdPlotTab(QtWidgets.QWidget):
         self.ch_ids = self.reader.channel_ids
         self.labels = self.reader.labels
         self.fs = self.reader.sampling_frequency
-        self.duration = self.reader.current_file['duration']
+        self.duration = self.reader.duration
 
         self.plot(self.figure)
 

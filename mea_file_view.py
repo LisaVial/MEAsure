@@ -50,16 +50,24 @@ from spectrograms.spectrograms_settings_dialog import SpectrogramsSettingsDialog
 
 from spike_check.spike_check_dialog import SpikeCheckDialog
 
+from utility.worker_thread import WorkerThread
+
 
 # the MeaFileView Widget is portraying the currently selected Mea recording and what the user can do with it
 class MeaFileView(QtWidgets.QWidget):
     def __init__(self, parent, mea_file):
         super().__init__(parent)
+        self.mea_file = mea_file    # this is just the path to the current mea recording h5 file
         self.results = ResultStoring()
-        self.reader = McsDataReader(mea_file)  # in the beginning we will take the mcs python module to look into the
-        # file
-        self.mea_file = mea_file  # this is just the path to the current mea recording h5 file
+        self.reader = None
+        self.worker_thread = WorkerThread(self)
+        self.worker_thread.finished.connect(self.on_worker_thread_finished)
+        self.worker_thread.set_function(self.initialize_reader)
+        self.worker_thread.start()
+        # start animation
+        QtWidgets.QApplication.instance().main_window.animation_overlay.start()
 
+    def continue_initialisation(self):
         self.file_manager = FileManager(self, self.reader.filename)  # this widget handles tasks in respect to
         # filepaths, with it the user is able to chose the .meae filepath (just .h5 data after analysis) or the
         # filepath of results of spyking circus
@@ -208,6 +216,14 @@ class MeaFileView(QtWidgets.QWidget):
         self.frequency_bands_analysis_tab = None
         self.isi_histogram_tab = None
         self.spectrograms_tab = None
+
+    def initialize_reader(self):
+        self.reader = McsDataReader(self.mea_file)
+
+    @QtCore.pyqtSlot()
+    def on_worker_thread_finished(self):
+        QtWidgets.QApplication.instance().main_window.animation_overlay.stop()
+        self.continue_initialisation()
 
     def open_raw_trace_plot_dialog(self, is_pressed):
         channel_labels_and_indices = self.mea_grid.get_selected_channels()
