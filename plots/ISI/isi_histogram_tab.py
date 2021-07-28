@@ -15,10 +15,12 @@ class IsiHistogramTab(QtWidgets.QWidget):
         self.fs = sampling_rate
         self.grid_labels = grid_labels
         self.grid_indices = grid_indices
+
         if len(grid_indices) > len(self.reader.spiketimes):
             self.spiketimes = self.reader.spiketimes
         else:
             self.spiketimes = self.reader.spiketimes
+            print(self.grid_indices, len(self.spiketimes))
             self.spiketimes = [self.spiketimes[g_idx] for g_idx in self.grid_indices]
 
         self.plot_thread = None
@@ -33,14 +35,14 @@ class IsiHistogramTab(QtWidgets.QWidget):
         main_layout.addWidget(self.plot_widget)
         self.plot(self.figure, self.spiketimes)
 
-    def plot(self, fig, spike_mat):
-        rows = int(np.ceil(np.sqrt(len(spike_mat))))
+    def plot(self, fig, spiketimes):
+        rows = int(np.ceil(np.sqrt(len(spiketimes))))
         spec = gridspec.GridSpec(ncols=rows, nrows=rows, figure=fig, wspace=4 / rows, hspace=2 / rows)
-        if spike_mat[0][0] > 100:  # this is not save, in the long run it should be changed, so that SC reader returns
+        if spiketimes[0][0] > 100:  # this is not save, in the long run it should be changed, so that SC reader returns
             # actual spike times instead of indices
-            spikes = np.array(spike_mat) / self.fs
+            spikes = np.array(spiketimes) / self.fs
         else:
-            spikes = spike_mat
+            spikes = spiketimes
         interspike_intervals = []
         for spike_sublist in spikes:
             spikes_diff = np.diff(spike_sublist)

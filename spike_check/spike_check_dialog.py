@@ -10,6 +10,7 @@ from spike_check.preprocessing_thread import PreprocessingThread
 from spike_check.spike_sorting_plot import SpikeSortingPlot
 
 from utility.channel_utility import ChannelUtility
+from utility.worker_thread import WorkerThread
 
 
 class SpikeCheckDialog(QtWidgets.QDialog):
@@ -65,7 +66,12 @@ class SpikeCheckDialog(QtWidgets.QDialog):
         self.raw_trace_plot_widget.plot(self.label)
         self.spike_sorting_plot_widget.plot(self.label, self.st_index)
 
-        # self.initialize_preprocessing_thread()
+        self.worker = WorkerThread(self)
+        self.worker_thread.finished.connect(self.on_worker_thread_finished)
+
+    @QtCore.pyqtSlot()
+    def on_worker_thread_finished(self):
+        QtWidgets.QApplication.instance().main_window.animation_overlay.stop()
 
     @QtCore.pyqtSlot()
     def initialize_preprocessing_thread(self):

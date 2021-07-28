@@ -66,6 +66,47 @@ class MeaFileView(QtWidgets.QWidget):
         self.worker_thread.start()
         # start animation
         QtWidgets.QApplication.instance().main_window.animation_overlay.start()
+        self.file_manager = None
+        self.frequency_analysis_settings = None
+        self.frequency_band_analysis_settings = None
+        self.filter_settings = None
+        self.rasterplot_settings = None
+        self.spike_detection_settings = None
+        self.csd_plot_settings = None
+        self.heatmap_settings = None
+        self.isi_histogram_settings = None
+        self.spectrograms_settings = None
+        self.raw_trace_plot_settings = None
+
+        self.toolbar = None
+
+        self.show_file_manager = None
+        self.show_mea_grid = None
+        self.show_raw_trace_plot_dialog = None
+        self.show_filter_dialog = None
+        self.show_spike_detection_dialog = None
+        self.add_frequency_analysis_tab = None
+        self.add_frequency_bands_analysis_tab = None
+        self.add_spectrogram_tab = None
+        self.add_csd_plot_tab = None
+        self.add_rasterplot_tab = None
+        self.add_isi_histogram_tab = None
+        self.add_heatmap_tab = None
+        self.open_spike_check = None
+        self.mea_grid = None
+        self.tab_widget = None
+
+        self.raw_trace_tab = None
+        self.filter_tab = None
+        self.spike_detection_tab = None
+
+        self.csd_plot_tab = None
+        self.heatmap_tab = None
+        self.rasterplot_tab = None
+        self.frequency_analysis_tab = None
+        self.frequency_bands_analysis_tab = None
+        self.isi_histogram_tab = None
+        self.spectrograms_tab = None
 
     def continue_initialisation(self):
         self.file_manager = FileManager(self, self.reader.filename)  # this widget handles tasks in respect to
@@ -204,18 +245,6 @@ class MeaFileView(QtWidgets.QWidget):
         # make sure widget visibility matches tool bar button check states
         self.file_manager.setVisible(self.show_file_manager.isChecked())
         self.mea_grid.setVisible(self.show_mea_grid.isChecked())
-
-        self.raw_trace_tab = None
-        self.filter_tab = None
-        self.spike_detection_tab = None
-
-        self.csd_plot_tab = None
-        self.heatmap_tab = None
-        self.rasterplot_tab = None
-        self.frequency_analysis_tab = None
-        self.frequency_bands_analysis_tab = None
-        self.isi_histogram_tab = None
-        self.spectrograms_tab = None
 
     def initialize_reader(self):
         self.reader = McsDataReader(self.mea_file)

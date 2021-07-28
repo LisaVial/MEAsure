@@ -38,10 +38,10 @@ class RasterplotTab(QtWidgets.QWidget):
         sns.set()
         fs = self.fs
         ax = fig.add_subplot(111)
-        sts = np.array(spike_mat)
+        sts = np.flip(np.array(spike_mat, dtype=object))
         ax.eventplot(sts/fs)
         ax.set_yticks(range(0, len(self.grid_labels), 16))
-        ax.set_yticklabels(self.grid_labels[::16])
+        ax.set_yticklabels(np.flip(self.grid_labels[::16]))
         ax.set_ylabel('MEA channels')
         ax.set_xlabel('time [s]')
         ax.get_xaxis().tick_bottom()
