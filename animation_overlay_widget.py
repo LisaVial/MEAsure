@@ -11,7 +11,8 @@ class AnimationOverlayWidget(QtWidgets.QWidget):
         super().__init__(parent)
         self.parent = parent
 
-        self.background_color = QtGui.QColor(125, 125, 255, 128)
+        self.background_color = QtGui.QColor('darkGray',)
+        self.background_color.setAlpha(175)
 
         self.setAttribute(QtCore.Qt.WA_NoMousePropagation, True)
 

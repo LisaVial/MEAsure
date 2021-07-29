@@ -12,14 +12,26 @@ class RasterplotTab(QtWidgets.QWidget):
     def __init__(self, parent, reader, settings, sampling_rate, duration, grid_labels, grid_indices):
         super().__init__(parent)
         self.reader = reader
+        print('SC' in str(self.reader))
         self.settings = settings
         self.fs = sampling_rate
         self.duration = duration
         self.grid_labels = grid_labels
         self.grid_indices = grid_indices
         self.colors = ['#749800', '#006d7c']
-        if len(grid_indices) > len(self.reader.spiketimes):
-            self.spiketimes = self.reader.spiketimes
+        dead_channel_counter = 0
+        if 'SC' in str(self.reader):
+            self.dead_channels = self.reader.dead_channels
+        self.spiketimes = []
+        s_idx = 0
+        if len(grid_indices) > len(self.reader.spiketimes) and len(self.dead_channels) > 0:
+            for g_idx in self.grid_indices:
+                if g_idx not in self.dead_channels:
+                    self.spiketimes.append(self.reader.spiketimes[s_idx])
+                    s_idx += 1
+                else:
+                    self.spiketimes.append(np.array([]))
+
         else:
             self.spiketimes = self.reader.spiketimes
             self.spiketimes = [self.spiketimes[g_idx] for g_idx in self.grid_indices]
@@ -41,7 +53,7 @@ class RasterplotTab(QtWidgets.QWidget):
         sts = np.flip(np.array(spike_mat, dtype=object))
         ax.eventplot(sts/fs)
         ax.set_yticks(range(0, len(self.grid_labels), 16))
-        ax.set_yticklabels(np.flip(self.grid_labels[::16]))
+        ax.set_yticklabels(self.grid_labels[251::-16])
         ax.set_ylabel('MEA channels')
         ax.set_xlabel('time [s]')
         ax.get_xaxis().tick_bottom()

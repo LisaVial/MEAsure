@@ -36,8 +36,11 @@ class IsiHistogramTab(QtWidgets.QWidget):
         self.plot(self.figure, self.spiketimes)
 
     def plot(self, fig, spiketimes):
-        rows = int(np.ceil(np.sqrt(len(spiketimes))))
-        spec = gridspec.GridSpec(ncols=rows, nrows=rows, figure=fig, wspace=4 / rows, hspace=2 / rows)
+        # rows = int(np.ceil(np.sqrt(len(spiketimes))))
+        cols = len(np.unique([gl[0] for gl in self.grid_labels]))
+        rows = len(np.unique([gl[1:] for gl in self.grid_labels]))
+
+        spec = gridspec.GridSpec(ncols=cols, nrows=rows, figure=fig, wspace=4 / rows, hspace=2 / rows)
         if spiketimes[0][0] > 100:  # this is not save, in the long run it should be changed, so that SC reader returns
             # actual spike times instead of indices
             spikes = np.array(spiketimes) / self.fs
@@ -49,6 +52,7 @@ class IsiHistogramTab(QtWidgets.QWidget):
             interspike_intervals.append(spikes_diff)
         c = '#006d7c'
         sns.set_style('darkgrid')
+        # print(np.max(interspike_intervals))
         for i, isi_list in enumerate(interspike_intervals):
             ax = fig.add_subplot(spec[i])
             sns.histplot(isi_list, bins=11, color=c, ax=ax, kde=True)

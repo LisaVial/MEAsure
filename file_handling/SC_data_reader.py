@@ -25,6 +25,8 @@ class SCDataReader:
         self.dead_channels = params.get('detection', 'dead_channels')
         if len(self.dead_channels) > 1:
             self.dead_channels = [int(s) for s in self.dead_channels[5:-2].split(',')]
+        else:
+            self.dead_channels = []
 
     def retrieve_mua_spikes(self):
         mua_filename = self.filename_prefix + ".mua.hdf5"

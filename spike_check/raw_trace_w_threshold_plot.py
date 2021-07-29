@@ -54,16 +54,10 @@ class RawTraceWThresholdPlot(QtWidgets.QWidget):
 
         cluster_index = 0
         for channel_index in range(ChannelUtility.get_label_count()):
-            if len(self.dead_channels) > 0:
-                if channel_index not in self.dead_channels:
-                    self.cluster_to_channel_index[cluster_index] = channel_index
-                    self.channel_to_cluster_index[channel_index] = cluster_index
-                    cluster_index += 1  # increase cluster index
-            else:
+            if channel_index not in self.dead_channels:
                 self.cluster_to_channel_index[cluster_index] = channel_index
                 self.channel_to_cluster_index[channel_index] = cluster_index
                 cluster_index += 1  # increase cluster index
-
         main_layout.addWidget(plot_widget)
 
     def scale_trace(self, trace_to_scale):
