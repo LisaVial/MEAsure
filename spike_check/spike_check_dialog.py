@@ -76,19 +76,24 @@ class SpikeCheckDialog(QtWidgets.QDialog):
 
         self.animation_overlay = AnimationOverlayWidget(self)
 
-
+    def stop_animation_if_finnished(self):
+        if self.raw_trace_worker is None and self.spike_time_worker is None and self.spike_waveform_worker is None:
+            self.animation_overlay.stop()
 
     @QtCore.pyqtSlot()
     def on_raw_trace_worker_thread_finished(self):
         self.raw_trace_worker = None
+        self.stop_animation_if_finnished()
 
     @QtCore.pyqtSlot()
     def on_spike_time_worker_thread_finished(self):
         self.spike_time_worker = None
+        self.stop_animation_if_finnished()
 
     @QtCore.pyqtSlot()
-    def on_spike_time_worker_thread_finished(self):
-        self.spike_time_worker = None
+    def on_spike_waveform_worker_thread_finished(self):
+        self.spike_waveform_worker = None
+        self.stop_animation_if_finnished()
 
     @QtCore.pyqtSlot()
     def initialize_preprocessing_thread(self):
@@ -137,22 +142,26 @@ class SpikeCheckDialog(QtWidgets.QDialog):
         self.label_index = ChannelUtility.get_ordered_index(self.label)
         # if self.preproc_mat is not None:
         # self.histogram_plot_widget.plot(self.label_index)
+
         self.animation_overlay.start()
 
         self.spike_time_worker = WorkerThread(self)
         self.spike_time_worker.set_arguments(self.label_index, self.st_index)
-        self.spike_time_worker.function(self.spike_waveform_widget.plot)
+        self.spike_time_worker.set_function(self.spike_time_plot_widget.plot)
         self.spike_time_worker.finished.connect(self.on_spike_time_worker_thread_finished)
+        self.spike_time_worker.start()
 
         self.raw_trace_worker = WorkerThread(self)
         self.raw_trace_worker.set_arguments(self.label)
-        self.raw_trace_worker.function(self.raw_trace_plot_widget.plot)
+        self.raw_trace_worker.set_function(self.raw_trace_plot_widget.plot)
         self.raw_trace_worker.finished.connect(self.on_raw_trace_worker_thread_finished)
+        self.raw_trace_worker.start()
 
-        self.spike_time_worker = WorkerThread(self)
+        self.spike_waveform_worker = WorkerThread(self)
         self.spike_waveform_worker.set_arguments(self.label, self.st_index)
-        self.spike_waveform_worker.function(self.spike_sorting_plot_widget.plot)
-        self.spike_waveform_worker.finished.connect(self.on_spike_waveform_worker_finished)
+        self.spike_waveform_worker.set_function(self.spike_sorting_plot_widget.plot)
+        self.spike_waveform_worker.finished.connect(self.on_spike_waveform_worker_thread_finished)
+        self.raw_trace_worker.start()
 
     def on_spiketime_index_changed(self, index):
         self.st_index = index
