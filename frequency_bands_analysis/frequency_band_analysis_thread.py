@@ -24,7 +24,7 @@ class FrequencyBandAnalysisThread(QtCore.QThread):
         # selected_ids = [ids[g_idx] for g_idx in self.grid_indices]
         # for idx, ch_id in enumerate(selected_ids):
         #     label = reader.labels[ch_id]
-        for idx in range(len(self.filtered)):
+        for idx in range(len(self.grid_indices)):
             label = self.grid_labels[idx]
             # scaled_signal = reader.get_scaled_channel(label)
             filtered_trace = self.filtered[idx]
