@@ -5,13 +5,15 @@ from IPython import embed
 
 from plot_manager import PlotManager
 from plots.plot_widget import PlotWidget
+from utility.channel_utility import ChannelUtility
 
 
 class HeatmapTab(QtWidgets.QWidget):
-    def __init__(self, parent, reader, settings):
+    def __init__(self, parent, reader, mcs_channel_ids, settings):
         super().__init__(parent)
         self.reader = reader
         self.settings = settings
+        self.ch_ids = mcs_channel_ids
         self.colors = ['#749800', '#006d7c']
         self.single_heatmap = []
 
@@ -35,13 +37,25 @@ class HeatmapTab(QtWidgets.QWidget):
         ax = fig.add_subplot(111)
         self.single_heatmap = []
         old_heatmap = self.settings.heatmap_for_normalizing
-        sc_channel_counter = 0
-        for idx in range(252):
-            if idx not in self.reader.dead_channels and len(spike_mat[sc_channel_counter])/self.reader.duration >= 0.05:
-                self.single_heatmap.append(len(spike_mat[sc_channel_counter]))
-                sc_channel_counter += 1
+        sc_channel_index = 0  # consecutive channel indices in sc file (skipping dead channels)
+        for raw_index in self.ch_ids:
+            # raw index simply corresponds to all channels (0 = A2, 1 = A3, ...) even if some are dead channels
+            # if idx not in self.reader.dead_channels and
+            # len(spike_mat[sc_channel_counter])/self.reader.duration >= 0.05:
+            if self.reader.dead_channels:
+                if raw_index not in self.reader.dead_channels:
+                    self.single_heatmap.append(len(spike_mat[self.ch_ids[sc_channel_index]]))
+                    print("Active channel: ", ChannelUtility.get_label_by_ordered_index(raw_index), "->",
+                          len(spike_mat[self.ch_ids[sc_channel_index]]))
+                    sc_channel_index += 1
+                else:
+                    # raw index is pointing at dead channel
+                    self.single_heatmap.append(0)
+                    print("Dead channel: ", ChannelUtility.get_label_by_ordered_index(self.ch_ids[raw_index]))
             else:
-                self.single_heatmap.append(0)
+                # no dead channels -> raw index is sc channel index (all channels were recorded)
+                self.single_heatmap.append(len(spike_mat[self.ch_ids[raw_index]]))
+
         self.single_heatmap.insert(0, 0)
         self.single_heatmap.insert(15, 0)
         self.single_heatmap.insert(15 * 16, 0)
@@ -54,9 +68,13 @@ class HeatmapTab(QtWidgets.QWidget):
         x_labels = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'R']
         xticks = np.arange(0.5, 16.5, 1)
         if old_heatmap is not None:
+            # sns.heatmap(self.single_heatmap, cmap='hot_r', vmin=0, vmax=np.max(old_heatmap), ax=ax,
+            #              cbar_kws={'label': 'spike count'})
             sns.heatmap(self.single_heatmap, cmap='PuBuGn', vmin=0, vmax=np.max(old_heatmap), ax=ax,
-                        cbar_kws={'label': 'spike count'})
+                      cbar_kws={'label': 'spike count'})
         else:
+            # sns.heatmap(self.single_heatmap, cmap='hot_r', vmin=0, vmax=np.max(self.single_heatmap), ax=ax,
+            #             cbar_kws={'label': 'spike count'})
             sns.heatmap(self.single_heatmap, cmap='PuBuGn', vmin=0, vmax=np.max(self.single_heatmap), ax=ax,
                         cbar_kws={'label': 'spike count'})
         yticks = np.arange(0.5, 16.5, 1)

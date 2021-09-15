@@ -108,6 +108,8 @@ class MeaFileView(QtWidgets.QWidget):
         self.isi_histogram_tab = None
         self.spectrograms_tab = None
 
+        self.mcs_channel_ids = None
+
     def continue_initialisation(self):
         self.file_manager = FileManager(self, self.reader.filename)  # this widget handles tasks in respect to
         # filepaths, with it the user is able to chose the .meae filepath (just .h5 data after analysis) or the
@@ -245,6 +247,8 @@ class MeaFileView(QtWidgets.QWidget):
         # make sure widget visibility matches tool bar button check states
         self.file_manager.setVisible(self.show_file_manager.isChecked())
         self.mea_grid.setVisible(self.show_mea_grid.isChecked())
+
+        self.mcs_channel_ids = self.reader.channel_ids
 
     def initialize_reader(self):
         self.reader = McsDataReader(self.mea_file)
@@ -410,18 +414,18 @@ class MeaFileView(QtWidgets.QWidget):
 
             # initialise plotting
             if self.heatmap_settings.mode == HeatmapSettings.Mode.MCS:
-                self.heatmap_tab = HeatmapTab(self, self.reader, self.heatmap_settings)
+                self.heatmap_tab = HeatmapTab(self, self.reader, self.mcs_channel_ids, self.heatmap_settings)
                 self.tab_widget.addTab(self.heatmap_tab, "Heatmap")
             elif self.heatmap_settings.mode == HeatmapSettings.Mode.MEAE:
                 meae_path = self.file_manager.get_verified_meae_file()
                 meae_reader = MeaeDataReader(meae_path)
-                self.heatmap_tab = HeatmapTab(self, meae_reader, self.heatmap_settings)
+                self.heatmap_tab = HeatmapTab(self, meae_reader, self.mcs_channel_ids, self.heatmap_settings)
                 self.tab_widget.addTab(self.heatmap_tab, "Heatmap")
             elif self.heatmap_settings.mode == HeatmapSettings.Mode.SC:
                 sc_path = self.file_manager.get_verified_sc_file()
                 sc_base_filepath = self.file_manager.get_verified_sc_base_file()
                 sc_reader = SCDataReader(sc_path, sc_base_filepath)
-                self.heatmap_tab = HeatmapTab(self, sc_reader, self.heatmap_settings)
+                self.heatmap_tab = HeatmapTab(self, sc_reader, self.mcs_channel_ids, self.heatmap_settings)
                 self.tab_widget.addTab(self.heatmap_tab, "Heatmap")
 
     def open_rasterplot_settings_dialog(self, is_pressed):
@@ -455,20 +459,20 @@ class MeaFileView(QtWidgets.QWidget):
             # initialise plotting
             if self.plot_settings.mode == RasterplotSettings.Mode.MCS:
                 self.rasterplot_tab = RasterplotTab(self, self.reader, self.plot_settings, sampling_rate, duration,
-                                                    grid_labels, grid_indices)
+                                                    grid_labels, grid_indices, self.mcs_channel_ids)
                 self.tab_widget.addTab(self.rasterplot_tab, "Rasterplot")
             elif self.plot_settings.mode == RasterplotSettings.Mode.MEAE:
                 meae_path = self.file_manager.get_verified_meae_file()
                 meae_reader = MeaeDataReader(meae_path)
                 self.rasterplot_tab = RasterplotTab(self, meae_reader, self.plot_settings, sampling_rate, duration,
-                                                    grid_labels, grid_indices)
+                                                    grid_labels, grid_indices, self.mcs_channel_ids)
                 self.tab_widget.addTab(self.rasterplot_tab, "Rasterplot")
             elif self.plot_settings.mode == RasterplotSettings.Mode.SC:
                 sc_path = self.file_manager.get_verified_sc_file()
                 sc_base_filepath = self.file_manager.get_verified_sc_base_file()
                 sc_reader = SCDataReader(sc_path, sc_base_filepath)
                 self.rasterplot_tab = RasterplotTab(self, sc_reader, self.plot_settings, sampling_rate, duration,
-                                                    grid_labels, grid_indices)
+                                                    grid_labels, grid_indices, self.mcs_channel_ids)
                 self.tab_widget.addTab(self.rasterplot_tab, "Rasterplot")
 
     @QtCore.pyqtSlot()

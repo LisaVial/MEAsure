@@ -2,6 +2,7 @@ from PyQt5.QtWidgets import QWidget, QGridLayout, QPushButton, QTableWidget, QTa
 from PyQt5 import QtGui
 import PyQt5.QtCore as QtCore
 import PyQt5.QtWidgets as QtWidgets
+import numpy as np
 
 
 button_style = """
@@ -35,6 +36,10 @@ class MeaGrid(QWidget):
         self.grid_table.verticalHeader().setVisible(False)
         self.layout.addWidget(self.grid_table)
 
+        mcs_channel_ids_file = open(r'/home/lisa_ruth/PycharmProjects/Spielwiese/ch_ids.txt', 'r')
+        self.ch_ids = mcs_channel_ids_file.read().split(', ')
+        self.all_channel_indices = np.array([int(v) for v in self.ch_ids if v != ''])
+
         self.labels = []
         self.label_indices_map = dict()
         for col, c in enumerate(['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'R']):
@@ -59,11 +64,11 @@ class MeaGrid(QWidget):
 
                 self.label_indices_map[id] = {}
                 if col == 0:
-                    self.label_indices_map[id]['grid index'] = row - 1
+                    self.label_indices_map[id]['grid index'] = self.all_channel_indices[row - 1]
                 elif col != 0 and col != 15:
-                    self.label_indices_map[id]['grid index'] = row + (col*16) - 2
+                    self.label_indices_map[id]['grid index'] = self.all_channel_indices[row + (col*16) - 2]
                 else:
-                    self.label_indices_map[id]['grid index'] = row + (col*16) - 3
+                    self.label_indices_map[id]['grid index'] = self.all_channel_indices[row + (col*16) - 3]
 
         self.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
         self.customContextMenuRequested.connect(self.on_context_menu)

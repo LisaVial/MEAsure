@@ -67,7 +67,6 @@ class IsiHistogramTab(QtWidgets.QWidget):
             ax.tick_params(labelsize=8, direction='out')
         PlotManager.instance.add_plot(self.plot_widget)
 
-    @staticmethod
     def can_be_closed(self):
         # plot is not running a thread => can be always closed
         return True

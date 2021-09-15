@@ -9,7 +9,7 @@ from IPython import embed
 
 
 class RasterplotTab(QtWidgets.QWidget):
-    def __init__(self, parent, reader, settings, sampling_rate, duration, grid_labels, grid_indices):
+    def __init__(self, parent, reader, settings, sampling_rate, duration, grid_labels, grid_indices, mcs_channel_ids):
         super().__init__(parent)
         self.reader = reader
         print('SC' in str(self.reader))
@@ -18,20 +18,21 @@ class RasterplotTab(QtWidgets.QWidget):
         self.duration = duration
         self.grid_labels = grid_labels
         self.grid_indices = grid_indices
+        self.ch_ids = mcs_channel_ids
         self.colors = ['#749800', '#006d7c']
-        dead_channel_counter = 0
         if 'SC' in str(self.reader):
             self.dead_channels = self.reader.dead_channels
         self.spiketimes = []
         s_idx = 0
-        if len(grid_indices) > len(self.reader.spiketimes) and len(self.dead_channels) > 0:
-            for g_idx in self.grid_indices:
-                if g_idx not in self.dead_channels:
-                    self.spiketimes.append(self.reader.spiketimes[s_idx])
+        if len(self.dead_channels) > 0:
+            for raw_index in self.ch_ids:
+                if raw_index not in self.dead_channels:
+                    if raw_index in self.grid_indices:
+                        self.spiketimes.append(self.reader.spiketimes[s_idx])
                     s_idx += 1
                 else:
-                    self.spiketimes.append(np.array([]))
-
+                    if raw_index in self.grid_indices:
+                        self.spiketimes.append(np.array([]))
         else:
             self.spiketimes = self.reader.spiketimes
             self.spiketimes = [self.spiketimes[g_idx] for g_idx in self.grid_indices]
@@ -50,7 +51,8 @@ class RasterplotTab(QtWidgets.QWidget):
         sns.set()
         fs = self.fs
         ax = fig.add_subplot(111)
-        sts = np.flip(np.array(spike_mat, dtype=object))
+        spike_mat.reverse()
+        sts = np.array(spike_mat, dtype=object)
         ax.eventplot(sts/fs)
         ax.set_yticks(range(0, len(self.grid_labels), 16))
         ax.set_yticklabels(self.grid_labels[251::-16])
@@ -61,7 +63,6 @@ class RasterplotTab(QtWidgets.QWidget):
         ax.tick_params(labelsize=10, direction='out')
         PlotManager.instance.add_plot(self.plot_widget)
 
-    @staticmethod
     def can_be_closed(self):
         # plot is not running a thread => can be always closed
         return True
