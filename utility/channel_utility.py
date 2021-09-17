@@ -74,3 +74,47 @@ class ChannelUtility:
                 neighbours.append(neighbour_label)
 
         return neighbours
+
+    @staticmethod
+    def get_sc_index(mcs_index: int, dead_channels: list):
+
+        if mcs_index in dead_channels:
+            raise Exception("MCS index is a dead channel and has no SC index")
+
+        sc_index = 0
+        for row_index in range(252):
+
+            if row_index == mcs_index:
+                return sc_index
+
+            if row_index not in dead_channels:
+                sc_index += 1
+
+        raise Exception("MCS index not in valid range (0, 251)")
+
+    @staticmethod
+    def get_mcs_index(sc_index: int, dead_channels: list):
+
+        # special case: sc index is 0 and mcs index 0 is not a dead channel
+        if 0 not in dead_channels and sc_index == 0:
+            return 0
+
+        current_sc_index = 0
+        for row_index in range(252):
+            if row_index not in dead_channels:
+                current_sc_index += 1
+                if current_sc_index == sc_index:
+                    return row_index
+
+        raise Exception("SC index not in valid range (0, " + str(251 - len(dead_channels)) + ")")
+
+    @staticmethod
+    def get_label_for_mcs_index(mcs_index: int, ordered_mcs_indices: list, pad_with_zero: bool = False):
+        return ChannelUtility.get_channel_labels(pad_with_zero)[ordered_mcs_indices.index(mcs_index)]
+
+    @staticmethod
+    def get_label_for_sc_index(sc_index: int, dead_channels: list, ordered_mcs_indices: list,
+                               pad_with_zero: bool = False):
+        return ChannelUtility.get_label_for_mcs_index(ChannelUtility.get_mcs_index(sc_index, dead_channels),
+                                                      ordered_mcs_indices, pad_with_zero)
+

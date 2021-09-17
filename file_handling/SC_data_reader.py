@@ -36,7 +36,6 @@ class SCDataReader:
             channel_list_string = match_object.group(1)
             if len(channel_list_string) > 0:
                 self.dead_channels = [int(ch) for ch in channel_list_string.split(',')]
-                print(self.dead_channels)
         else:
             self.dead_channels = []
 

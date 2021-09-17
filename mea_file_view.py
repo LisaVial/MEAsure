@@ -297,7 +297,7 @@ class MeaFileView(QtWidgets.QWidget):
             # overwrite global settings as well
             if self.plot_settings.channel_selection == IsiHistogramSettings.ChannelSelection.ALL:
                 grid_labels = self.reader.labels
-                grid_indices = range(len(self.reader.voltage_traces))
+                grid_indices = self.reader.channel_ids
             elif self.plot_settings.channel_selection == IsiHistogramSettings.ChannelSelection.SELECTION:
                 grid_labels_and_indices = self.mea_grid.get_selected_channels()
                 grid_labels = [values[0] for values in grid_labels_and_indices]
@@ -446,7 +446,7 @@ class MeaFileView(QtWidgets.QWidget):
             # overwrite global settings as well
             if self.plot_settings.channel_selection == RasterplotSettings.ChannelSelection.ALL:
                 grid_labels = self.reader.labels
-                grid_indices = range(len(self.reader.voltage_traces))
+                grid_indices = self.reader.channel_ids
             elif self.plot_settings.channel_selection == RasterplotSettings.ChannelSelection.SELECTION:
                 grid_labels_and_indices = self.mea_grid.get_selected_channels()
                 grid_labels = [values[0] for values in grid_labels_and_indices]
