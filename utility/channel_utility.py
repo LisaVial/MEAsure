@@ -1,5 +1,6 @@
-# utility functions to handle mea channel index and labels
+import numpy as np
 
+# utility functions to handle mea channel index and labels
 class ChannelUtility:
 
     column_characters = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'R']
@@ -27,9 +28,12 @@ class ChannelUtility:
 
         # check if label is padded with zero, e.g. 'R02'
         padded_with_zero = (int(row_number) < 10) and (len(label) == 3)
-
+        label_idx = ChannelUtility.get_channel_labels(padded_with_zero).index(corrected_label)
+        mcs_channel_ids_file = open(r'/home/lisa_ruth/PycharmProjects/Spielwiese/ch_ids.txt', 'r')
+        ch_ids = mcs_channel_ids_file.read().split(', ')
+        all_channel_indices = np.array([int(v) for v in ch_ids if v != ''])
         # find and return index
-        return ChannelUtility.get_channel_labels(padded_with_zero).index(corrected_label)
+        return all_channel_indices[label_idx]
 
     @staticmethod
     def get_label_by_ordered_index(index: int, pad_with_zero=False):

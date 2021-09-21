@@ -18,18 +18,8 @@ class McsDataReader:
         self._ordered_label_list = [ch[4].decode('ascii') for ch in
                                     self.file['Data']['Recording_0']['AnalogStream']['Stream_0']['InfoChannel']]
 
-        try:
-            self.voltage_traces, self.sampling_frequency, self.duration = self.get_data_of_file()
-        except KeyError:
-            self.voltage_traces = self.file['scaled']
-            self.sampling_frequency = 25000.0
-            self.duration = 600.0
-        try:
-            self.channel_ids, self.labels = self.get_channel_ids()
-        except KeyError:
-            self.channel_ids = range(252)
-            channel_utility = ChannelUtility()
-            self.labels = channel_utility.get_channel_labels()
+        self.voltage_traces, self.sampling_frequency, self.duration = self.get_data_of_file()
+        self.channel_ids, self.labels = self.get_channel_ids()
 
     def get_label_for_row_index(self, index: int):
         if index < 0 or index >= len(self._ordered_label_list):
