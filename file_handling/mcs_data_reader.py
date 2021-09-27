@@ -44,7 +44,6 @@ class McsDataReader:
 
         return index
 
-
     def get_channel_id(self, label):
         for ch in self.file['Data']['Recording_0']['AnalogStream']['Stream_0']['InfoChannel']:
             if label == ch[4].decode('utf8'):

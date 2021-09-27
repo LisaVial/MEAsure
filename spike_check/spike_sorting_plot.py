@@ -1,8 +1,8 @@
 from PyQt5 import QtWidgets
 import numpy as np
 import pyqtgraph as pg
+from numba import jit
 
-from plots.plot_widget import PlotWidget
 from utility.channel_utility import ChannelUtility
 
 
@@ -24,22 +24,10 @@ class SpikeSortingPlot(QtWidgets.QWidget):
         self.pen_2 = pg.mkPen(color='r')
 
         self.dead_channels = self.sc_reader.dead_channels
-        self.cluster_to_channel_index = dict()
-        self.channel_to_cluster_index = dict()  # note: dead channels do not have a cluster
 
-        cluster_index = 0
-        for channel_index in range(ChannelUtility.get_label_count()):
-            if len(self.dead_channels) > 0:
-                if channel_index not in self.dead_channels:
-                    self.cluster_to_channel_index[cluster_index] = channel_index
-                    self.channel_to_cluster_index[channel_index] = cluster_index
-                    cluster_index += 1  # increase cluster index
-            else:
-                self.cluster_to_channel_index[cluster_index] = channel_index
-                self.channel_to_cluster_index[channel_index] = cluster_index
-                cluster_index += 1  # increase cluster index
         main_layout.addWidget(self.plot_widget)
 
+    @jit(forceobj=True)
     def plot(self, label, st_index):
         self.plot_widget.clear()
         label_index = ChannelUtility.get_ordered_index(label)

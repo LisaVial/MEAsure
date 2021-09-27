@@ -63,19 +63,20 @@ class SpikeCheckDialog(QtWidgets.QDialog):
         main_layout.setColumnStretch(0, 2)
         main_layout.setColumnStretch(1, 1)
         self.histogram_plot_widget.plot(self.label_index)
-        self.spike_time_plot_widget.plot(self.label_index, self.st_index)
         self.raw_trace_plot_widget.plot(self.label)
-        self.spike_sorting_plot_widget.plot(self.label, self.st_index)
+        if self.label_index not in self.sc_reader.dead_channels:
+            self.spike_time_plot_widget.plot(self.label_index, self.st_index)
+            self.spike_sorting_plot_widget.plot(self.label, self.st_index)
 
     @QtCore.pyqtSlot(str)
     def on_channel_selection_changed(self, label):
         self.label = label
         self.label_index = ChannelUtility.get_ordered_index(self.label)
-
-        self.spike_time_plot_widget.plot(self.label_index, self.st_index)
         self.raw_trace_plot_widget.plot(self.label)
         self.histogram_plot_widget.plot(self.label_index)
-        self.spike_sorting_plot_widget.plot(self.label, self.st_index)
+        if self.label_index not in self.sc_reader.dead_channels:
+            self.spike_time_plot_widget.plot(self.label_index, self.st_index)
+            self.spike_sorting_plot_widget.plot(self.label, self.st_index)
 
     def on_spiketime_index_changed(self, index):
         self.st_index = index

@@ -83,7 +83,8 @@ class ChannelUtility:
     def get_sc_index(mcs_index: int, dead_channels: list):
 
         if mcs_index in dead_channels:
-            raise Exception("MCS index is a dead channel and has no SC index")
+            return mcs_index
+            print("CAUTION: MCS index is a dead channel and has no SC index")
 
         sc_index = 0
         for row_index in range(252):

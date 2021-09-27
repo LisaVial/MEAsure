@@ -28,6 +28,7 @@ class RawTracePlotTab(QtWidgets.QWidget):
 
     def plot(self):
         for idx, label in enumerate(self.grid_labels):
+            print('raw trace plot:', label, '->', idx)
             self.create_plot_tab(label)
             plot_widget = self.get_plot_widget(label)
             sns.set()

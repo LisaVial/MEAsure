@@ -1,6 +1,7 @@
 from PyQt5 import QtWidgets
 import numpy as np
 import pyqtgraph as pg
+from numba import jit
 
 from utility.channel_utility import ChannelUtility
 
@@ -33,20 +34,9 @@ class RawTraceWThresholdPlot(QtWidgets.QWidget):
         self.pen_1 = pg.mkPen(color='#006e7d')
 
         self.dead_channels = self.sc_reader.dead_channels
-        self.cluster_to_channel_index = dict()
-        self.channel_to_cluster_index = dict()  # note: dead channels do not have a cluster
-
-        # ToDo: check if it works in a similar manner as function in channel utility -> probably they do not
-        cluster_index = 0
-        for channel_index in range(ChannelUtility.get_label_count()):
-            if channel_index not in self.dead_channels:
-                ChannelUtility.get_sc_index(channel_index, self.dead_channels)
-                self.cluster_to_channel_index[cluster_index] = channel_index
-                self.channel_to_cluster_index[channel_index] = cluster_index
-                cluster_index += 1  # increase cluster index
-
         main_layout.addWidget(self.plot_widget)
 
+    @jit(forceobj=True)
     def scale_trace(self, trace_to_scale):
         vt = trace_to_scale
         conversion_factor = \
@@ -56,11 +46,11 @@ class RawTraceWThresholdPlot(QtWidgets.QWidget):
         scaled_trace = vt * conversion_factor * np.power(10.0, exponent)
         return scaled_trace
 
+    @jit(forceobj=True)
     def plot(self, label):
         self.plot_widget.clear()
 
         self.label_index = ChannelUtility.get_ordered_index(label)
-        print('raw trace plot:', label, '->', self.label_index)
         fs = self.mcs_reader.sampling_frequency
 
         # CAUTION: Filtering is now done by SC
@@ -76,13 +66,9 @@ class RawTraceWThresholdPlot(QtWidgets.QWidget):
             self.scatter_cluster_amps = []
             for sj in sorted(self.scatter_cluster_indices):
                 scatter_jdx = sj
-                try:
-                    self.scatter_cluster_time.append(self.time[scatter_jdx])
-                    self.scatter_cluster_amps.append(self.base_file_trace[scatter_jdx])
-                except IndexError:
-                    scatter_t_max_jdx = min(scatter_jdx, len(self.time) - 1)
-                    self.scatter_cluster_time.append(self.time[scatter_t_max_jdx])
-                    self.scatter_cluster_amps.append(self.base_file_trace[scatter_t_max_jdx])
+                self.scatter_cluster_time.append(self.time[scatter_jdx])
+                self.scatter_cluster_amps.append(self.base_file_trace[scatter_jdx])
+
         else:
             spike_index = self.channel_to_cluster_index[self.label_index]
             self.scatter_cluster_indices = self.sc_reader.spiketimes[spike_index]
@@ -90,13 +76,8 @@ class RawTraceWThresholdPlot(QtWidgets.QWidget):
             self.scatter_cluster_amps = []
             for sj in sorted(self.scatter_cluster_indices):
                 scatter_jdx = sj
-                try:
-                    self.scatter_cluster_time.append(self.time[scatter_jdx])
-                    self.scatter_cluster_amps.append(self.base_file_trace[scatter_jdx])
-                except IndexError:
-                    scatter_t_max_jdx = min(scatter_jdx, len(self.time) - 1)
-                    self.scatter_cluster_time.append(self.time[scatter_t_max_jdx])
-                    self.scatter_cluster_amps.append(self.base_file_trace[scatter_t_max_jdx])
+                self.scatter_cluster_time.append(self.time[scatter_jdx])
+                self.scatter_cluster_amps.append(self.base_file_trace[scatter_jdx])
 
         if len(self.dead_channels) > 0:
             if self.label_index not in self.dead_channels:
@@ -112,6 +93,7 @@ class RawTraceWThresholdPlot(QtWidgets.QWidget):
             self.plot_widget.plot(x=[self.scatter_cluster_time[0]], y=[self.scatter_cluster_amps[0]],
                                   pen=None, symbol='o', symbolPen=None, symbolSize=12, symbolBrush='r')
 
+    @jit(forceobj=True)
     def on_scatter_plot_updated(self, label_idx, index):
         self.plot_widget.clear()
         self.plot_widget.plot(self.time, self.base_file_trace, pen=self.pen_1)

@@ -1,6 +1,7 @@
 from PyQt5 import QtWidgets
 import pyqtgraph as pg
 import numpy as np
+from numba import jit
 
 from utility.channel_utility import ChannelUtility
 
@@ -22,6 +23,7 @@ class VoltageTraceHistogramPlot(QtWidgets.QWidget):
         self.plot_widget.setLabel('bottom', 'count', **styles)
         main_layout.addWidget(self.plot_widget)
 
+    @jit(forceobj=True)
     def scale_trace(self, trace_to_scale):
         vt = trace_to_scale
         conversion_factor = \
@@ -32,6 +34,7 @@ class VoltageTraceHistogramPlot(QtWidgets.QWidget):
         scaled_trace = vt * conversion_factor * np.power(10.0, exponent)
         return scaled_trace
 
+    @jit(forceobj=True)
     def plot(self, label_index):
         self.plot_widget.clear()
         label = ChannelUtility.get_label_for_mcs_index(label_index, self.mcs_reader.channel_ids)
