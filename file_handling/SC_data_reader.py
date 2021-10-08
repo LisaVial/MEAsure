@@ -5,6 +5,7 @@ import re
 from circus.shared.parser import CircusParser
 
 
+# This class handles the resulting files of the SpyKING CIRCUS (SC) spike detection
 class SCDataReader:
     def __init__(self, path, base_filepath):
         self.folder, self.cluster_filename = os.path.split(path)
@@ -91,7 +92,6 @@ class SCDataReader:
         else:
             return None
 
-    # ToDo: check if indices of spiketimes are consistent with the rest of the indices
     def retrieve_spiketimes(self):
         same_len_keys = []
         for key in list(self.file.keys()):

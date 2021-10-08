@@ -2,9 +2,8 @@ import numpy as np
 import h5py
 import time
 
-from utility.channel_utility import ChannelUtility
 
-
+# This class handles the hdf5 files which are created from our raw recordings (of the MCS setup)
 class McsDataReader:
     def __init__(self, path):
         self.file_path = path

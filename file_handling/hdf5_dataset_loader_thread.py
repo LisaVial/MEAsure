@@ -4,7 +4,13 @@ import time
 from IPython import embed
 
 
+# This worker thread was needed to load hdf5 files into the program by using chunks, which are small parts of the total
+# recording. Since we use the Virtual Machine (VM) this functionality is not needed anymore, since the VM has enough RAM
+
+# First, the class is defined
 class Worker(QtCore.QObject):
+    # the next variables are for GUI things to work so that the user is able to know what happens in the background,
+    # e.g. to have a loading screen the signal step might be used
     # worker_id, step_description: emitted every step through work() loop
     signal_step = QtCore.pyqtSignal(list)
     # worker id: emitted at the end of work()
@@ -12,6 +18,8 @@ class Worker(QtCore.QObject):
     # message to be shown to the user:
     signal_message = QtCore.pyqtSignal(str)
 
+    # Here the class is initialized, variables created in this block with the 'self' in front are stored in the class
+    # and can be called in other scripts of the program (which is not necessary)
     def __init__(self, name, reader):
         super().__init__()
         self.reader = reader
@@ -31,7 +39,8 @@ class Worker(QtCore.QObject):
         """
         thread_name = QtCore.QThread.currentThread().objectName()
         thread_id = int(QtCore.QThread.currentThreadId())  # cast to int() is necessary
-        self.signal_message.emit('Running worker #{} from thread "{}" (#{})'.format(self.__name, thread_name, thread_id))
+        self.signal_message.emit('Running worker #{} from thread "{}" (#{})'.format(self.__name, thread_name,
+                                                                                    thread_id))
 
         # before looping through chunks, create np.empty in the shape of whole voltage trace matrix
         # hopefully s will be shape-like tuple/list, then, the assignment to the np.empty-matrix

@@ -4,6 +4,7 @@ import PyQt5.QtWidgets as QtWidgets
 from filtering.filter_settings_widget import FilterSettingsWidget
 
 
+# This class is to have a filter settings dialog where the user can actually set the settings he/she needs.
 class FilterSettingsDialog(QtWidgets.QDialog):  # Setting up of a new class. In the brackets it is defined which
     # PyQt Widget will be the parent of the class.
     """

@@ -3,6 +3,9 @@ import numpy as np
 import h5py
 
 
+# This class was used to handle .meae files (which are also hdf5 files). These files were created when you filtered and
+# saved the filtered trace to a new hdf5 file. This method could be extended to save all kind of result, but for now it
+# is not directly needed.
 class MeaeDataReader:
     def __init__(self, path):
         self.file_path = path
