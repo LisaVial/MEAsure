@@ -1,9 +1,7 @@
 from PyQt5 import QtCore, QtWidgets
 import numpy as np
 import matplotlib.gridspec as gridspec
-import matplotlib.pyplot as plt
 import seaborn as sns
-from IPython import embed
 
 from plots.plot_widget import PlotWidget
 from plot_manager import PlotManager
@@ -58,12 +56,11 @@ class FrequencyBandsTab(QtWidgets.QWidget):
 
     def initialize_frequency_bands_analysis(self):
         if self.frequency_bands_matrix is None:
-            filtered = self.mea_file_view.results.get_filter_mat()
             self.progress_bar.setValue(0)
             self.progress_label.setText('')
             self.operation_label.setText('Calculating PSD')
             self.frequency_bands_thread = FrequencyBandAnalysisThread(self, self.reader, self.grid_indices,
-                                                                      self.grid_labels, filtered)
+                                                                      self.grid_labels)
             self.frequency_bands_thread.progress_made.connect(self.on_progress_made)
             self.frequency_bands_thread.operation_changed.connect(self.on_operation_changed)
             self.frequency_bands_thread.data_updated.connect(self.on_data_updated)
@@ -142,12 +139,16 @@ class FrequencyBandsTab(QtWidgets.QWidget):
 
     def plot(self):
         sns.set()
+        # How to get rid of rows?
+        # plotting is a bit more complicated, since there are two different plot types in two tabs
         for plot_idx, plot_type_str in enumerate(['Histogram', 'Row comparison']):
+            # the first plot tab shows the bar graph of different frequency bands
             if plot_idx == 0:
                 self.create_plot_tab(plot_type_str)
                 plot_widget = self.get_plot_widget(plot_type_str)
-                sns.set()
                 fig = plot_widget.figure
+                # here it is figured out how many rows the final plot should have
+                # -> problem: maybe there are only single channels selected - how to solve this?
                 rows = int(np.ceil(np.sqrt(len(self.mea_file_view.results.frequency_analysis_results))))
 
                 spec = gridspec.GridSpec(ncols=rows, nrows=rows, figure=fig, hspace=0.1, wspace=0.25)
@@ -187,7 +188,6 @@ class FrequencyBandsTab(QtWidgets.QWidget):
             elif plot_idx == 1:
                 self.create_plot_tab(plot_type_str)
                 plot_widget = self.get_plot_widget(plot_type_str)
-                sns.set()
                 fig = plot_widget.figure
                 key_ints = range(round(len(self.grid_labels) / 16))
                 rows = int(round(len(self.grid_labels) / 16))
@@ -197,8 +197,7 @@ class FrequencyBandsTab(QtWidgets.QWidget):
 
                 if self.settings.analysis_mode == 0:
                     band_names = '< 1 Hz', 'delta', 'theta', 'alpha', 'beta', 'gamma'
-                    xticklabels = [r'$\leq$ 1 Hz', r'$\delta$', r'$\theta$', r'$\alpha$', 'SMR', r'$\beta$',
-                                   r'$\gamma$']
+                    xticklabels = [r'$\leq$ 1 Hz', r'$\delta$', r'$\theta$', r'$\alpha$', r'$\beta$', r'$\gamma$']
                 elif self.settings.analysis_mode == 1:
                     band_names = '50 Hz', '350 Hz'
                     xticklabels = ['50 Hz', '350 Hz']

@@ -357,21 +357,23 @@ class MeaFileView(QtWidgets.QWidget):
         if len(channel_labels_and_indices) > 0:
             allowed_channel_modes.append(FrequencyBandsAnalysisSettings.ChannelSelection.SELECTION)
         settings_dialog = FrequencyBandsAnalysisSettingsDialog(self, allowed_channel_modes,
-                                                          self.frequency_band_analysis_settings)
+                                                               self.frequency_band_analysis_settings)
         if settings_dialog.exec() == 1:
             self.frequency_band_analysis_settings = settings_dialog.get_settings()
             Settings.instance.frequency_band_analysis_settings = self.frequency_band_analysis_settings
-            if self.frequency_band_analysis_settings.channel_selection == FrequencyBandsAnalysisSettings.ChannelSelection.ALL:
+            if self.frequency_band_analysis_settings.channel_selection == \
+                    FrequencyBandsAnalysisSettings.ChannelSelection.ALL:
                 grid_indices = range(len(self.reader.voltage_traces))
                 grid_labels = self.reader.labels
-            elif self.frequency_band_analysis_settings.channel_selection == FrequencyBandsAnalysisSettings.ChannelSelection.SELECTION:
+            elif self.frequency_band_analysis_settings.channel_selection == \
+                    FrequencyBandsAnalysisSettings.ChannelSelection.SELECTION:
                 grid_labels_and_indices = self.mea_grid.get_selected_channels()
                 grid_indices = [values[1] for values in grid_labels_and_indices]
                 grid_labels = [values[0] for values in grid_labels_and_indices]
             self.frequency_bands_analysis_tab = FrequencyBandsTab(self, self.reader, grid_indices, grid_labels,
                                                                   self.frequency_band_analysis_settings)
             # todo: solve plotting of all channels
-            self.tab_widget.addTab(self.frequency_bands_analysis_tab, "Frequency Analysis")
+            self.tab_widget.addTab(self.frequency_bands_analysis_tab, "Frequency Band Analysis")
             self.frequency_bands_analysis_tab.initialize_frequency_bands_analysis()
 
     def open_spectograms_settings_dialog(self, is_pressed):

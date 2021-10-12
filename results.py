@@ -1,11 +1,15 @@
 import csv
+from frequency_bands_analysis.frequency_bands_analysis_settings import FrequencyBandsAnalysisSettings
 
 
 # sub classes for specific results
 class FrequencyAnalysisResult:
     # todo: bring distinction of different analysis in here, for now it'll be hard coded
-    band_names = 'delta', 'theta', 'alpha', 'smr', 'beta', 'gamma'
-    # band_names = '50 Hz', '350 Hz'
+    settings = FrequencyBandsAnalysisSettings()
+    if settings.analysis_mode == 0:
+        band_names = 'delta', 'theta', 'alpha', 'beta', 'gamma'
+    elif settings.analysis_mode == 1:
+        band_names = '50 Hz', '350 Hz'
 
     # static method is called with FrequencyAnalysisResult.get_header
     # it does not need any 'self' data
