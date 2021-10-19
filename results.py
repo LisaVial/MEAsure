@@ -4,7 +4,6 @@ from frequency_bands_analysis.frequency_bands_analysis_settings import Frequency
 
 # sub classes for specific results
 class FrequencyAnalysisResult:
-    # todo: bring distinction of different analysis in here, for now it'll be hard coded
     settings = FrequencyBandsAnalysisSettings()
     if settings.analysis_mode == 0:
         band_names = 'delta', 'theta', 'alpha', 'beta', 'gamma'
@@ -50,6 +49,9 @@ class ResultStoring:
 
     def get_frequency_mat(self):
         return self._frequency_mat
+
+    def clear_frequency_analysis_results(self):
+        self.frequency_analysis_results.clear()
 
     def add_frequency_analysis_result(self, label, band_map):
         self.frequency_analysis_results.append(FrequencyAnalysisResult(label, band_map))

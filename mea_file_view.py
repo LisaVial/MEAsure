@@ -364,7 +364,7 @@ class MeaFileView(QtWidgets.QWidget):
             if self.frequency_band_analysis_settings.channel_selection == \
                     FrequencyBandsAnalysisSettings.ChannelSelection.ALL:
                 grid_indices = range(len(self.reader.voltage_traces))
-                grid_labels = self.reader.labels
+                grid_labels = self.reader.labels.copy()
             elif self.frequency_band_analysis_settings.channel_selection == \
                     FrequencyBandsAnalysisSettings.ChannelSelection.SELECTION:
                 grid_labels_and_indices = self.mea_grid.get_selected_channels()

@@ -28,9 +28,14 @@ class FrequencyBandsAnalysisSettingsDialog(QtWidgets.QDialog):
         group_layout.addWidget(self.all_channels_button)
 
         self.selected_channels_button = QtWidgets.QRadioButton('only selected MEA channels')
-        self.selected_channels_button.setEnabled(FrequencyBandsAnalysisSettings.ChannelSelection.SELECTION in
-                                                 allowed_channel_selection_mode)
+        is_channel_selection_allowed = (FrequencyBandsAnalysisSettings.ChannelSelection.SELECTION in
+                                        allowed_channel_selection_mode)
+        self.selected_channels_button.setEnabled(is_channel_selection_allowed)
         group_layout.addWidget(self.selected_channels_button)
+
+        self.all_channels_button.setChecked(not is_channel_selection_allowed)
+        self.selected_channels_button.setChecked(is_channel_selection_allowed)
+
         main_layout.addWidget(group_box)
 
         analysis_selection_group_box = QtWidgets.QGroupBox(self)
@@ -40,6 +45,7 @@ class FrequencyBandsAnalysisSettingsDialog(QtWidgets.QDialog):
 
         self.ictal_activity_button = QtWidgets.QRadioButton('analyse ictal activity')
         analysis_selection_layout.addWidget(self.ictal_activity_button)
+        self.ictal_activity_button.setChecked(True)
 
         self.csd_activity_button = QtWidgets.QRadioButton('analyse CSD data')
         analysis_selection_layout.addWidget(self.csd_activity_button)

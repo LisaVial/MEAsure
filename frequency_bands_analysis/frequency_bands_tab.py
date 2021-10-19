@@ -2,6 +2,7 @@ from PyQt5 import QtCore, QtWidgets
 import numpy as np
 import matplotlib.gridspec as gridspec
 import seaborn as sns
+from IPython import embed
 
 from plots.plot_widget import PlotWidget
 from plot_manager import PlotManager
@@ -66,6 +67,9 @@ class FrequencyBandsTab(QtWidgets.QWidget):
             self.frequency_bands_thread.data_updated.connect(self.on_data_updated)
             self.frequency_bands_thread.finished.connect(self.on_frequency_bands_thread_finished)
 
+            # clear previous results
+            self.mea_file_view.results.clear_frequency_analysis_results()
+
             debug_mode = False
             if debug_mode:
                 self.frequency_bands_thread.run()
@@ -106,6 +110,7 @@ class FrequencyBandsTab(QtWidgets.QWidget):
         elif self.settings.analysis_mode == 1:
             band_names = '50 Hz', '350 Hz'
 
+        # ToDo: Check these lines, they might cause bugs since the variable names are stored several times
         band_amplitude_map = dict()
         for band_name in band_names:
             band_amplitude_map[band_name] = []
@@ -149,10 +154,10 @@ class FrequencyBandsTab(QtWidgets.QWidget):
                 fig = plot_widget.figure
                 # here it is figured out how many rows the final plot should have
                 # -> problem: maybe there are only single channels selected - how to solve this?
+                # rows = 1
                 rows = int(np.ceil(np.sqrt(len(self.mea_file_view.results.frequency_analysis_results))))
 
                 spec = gridspec.GridSpec(ncols=rows, nrows=rows, figure=fig, hspace=0.1, wspace=0.25)
-
                 # iterate through all channels
                 for idx, result in enumerate(sorted(self.mea_file_view.results.frequency_analysis_results,
                                                     key=lambda r: r.label)):
@@ -163,7 +168,7 @@ class FrequencyBandsTab(QtWidgets.QWidget):
                     elif self.settings.analysis_mode == 1:
                         band_names = '50 Hz', '350 Hz'
                     means = []
-                    for band in band_names:
+                    for band in result.band_map.keys():
                         mean = result.band_map[band]
                         means.append(mean)
 
@@ -175,12 +180,9 @@ class FrequencyBandsTab(QtWidgets.QWidget):
                     ax.bar(range(len(means)), means, align='center')
                     ax.set_xticks(range(len(means)))
                     ax.set_xticklabels(xticklabels)
-                    # ax.set_ylim(0, max)
-
-                # embed()
+                    ax.set_ylim([0, 1.5])   # I hardcoded 1.5 since the highest amplitude usually is below that
                 fig.text(0.5, 0.01, 'frequency bands', ha='center')
                 fig.text(0.01, 0.5, r'mean power [$\mu V^{2}/$Hz]', va='center', rotation='vertical')
-                fig.tight_layout(h_pad=0.2, w_pad=0.4)
                 PlotManager.instance.add_plot(plot_widget)
                 # enable save button only after plotting
                 self.save_button.setEnabled(True)
@@ -189,6 +191,10 @@ class FrequencyBandsTab(QtWidgets.QWidget):
                 self.create_plot_tab(plot_type_str)
                 plot_widget = self.get_plot_widget(plot_type_str)
                 fig = plot_widget.figure
+                ######## not working for general channel selection (what should be the rows)
+                # maybe i make it that for rows this will work
+                continue
+                ##############
                 key_ints = range(round(len(self.grid_labels) / 16))
                 rows = int(round(len(self.grid_labels) / 16))
                 spec = gridspec.GridSpec(ncols=1, nrows=rows, figure=fig, hspace=0.9)
@@ -209,6 +215,7 @@ class FrequencyBandsTab(QtWidgets.QWidget):
                 maxs = []
                 for idx, result in enumerate(sorted(self.mea_file_view.results.frequency_analysis_results,
                                                     key=lambda r: r.label)):
+                    # embed()
                     x_labels.append(result.label)
                     # reorganize dictionary that saves plot information
                     row_index = int(result.label[1:]) - 1 # -1 to map first row to index 0
@@ -244,14 +251,10 @@ class FrequencyBandsTab(QtWidgets.QWidget):
                         maxs.append(np.max(rows[key_idx][band_key]))
                 axs = fig.get_axes()
                 for axi in axs:
-                    axi.set_ylim(0, np.max(maxs)+5)
+                    axi.set_ylim(0, np.max(maxs)+1)
                 fig.text(0.5, 0.01, 'channel', ha='center')
                 fig.text(0.01, 0.5, r'mean power [$\mu V^{2}/$Hz]', va='center', rotation='vertical')
                 fig.legend()
-                # fig.tight_layout(h_pad=0.2, w_pad=0.4)
-
-                # embed()
-                # print(rows)
 
     def on_save_button_clicked(self):
         file_dialog = QtWidgets.QFileDialog(self)
