@@ -28,8 +28,8 @@ class VoltageTraceHistogramPlot(QtWidgets.QWidget):
         vt = trace_to_scale
         conversion_factor = \
             self.mcs_reader.file['Data']['Recording_0']['AnalogStream']['Stream_0']['InfoChannel'][0]['ConversionFactor']
-        exponent = self.mcs_reader.file['Data']['Recording_0']['AnalogStream']['Stream_0']['InfoChannel'][0]['Exponent'] \
-                   + 6
+        exponent = \
+            self.mcs_reader.file['Data']['Recording_0']['AnalogStream']['Stream_0']['InfoChannel'][0]['Exponent'] + 6
         # 6 = pV -> uV
         scaled_trace = vt * conversion_factor * np.power(10.0, exponent)
         return scaled_trace

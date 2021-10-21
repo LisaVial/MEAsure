@@ -33,7 +33,6 @@ class HeatmapTab(QtWidgets.QWidget):
         self.plot(self.figure, self.spiketimes)
 
     def plot(self, fig, spike_mat):
-        fs = self.reader.sampling_frequency
         ax = fig.add_subplot(111)
         self.single_heatmap = []
         old_heatmap = self.settings.heatmap_for_normalizing

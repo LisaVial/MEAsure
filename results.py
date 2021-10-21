@@ -3,6 +3,21 @@ from frequency_bands_analysis.frequency_bands_analysis_settings import Frequency
 
 
 # sub classes for specific results
+
+class SpikeTimesData:
+    def __init__(self, label, spiketimes):
+        self.label = label
+        self.spiketimes = spiketimes
+
+    @staticmethod
+    def get_header():
+        return ['label', 'spiketimes']
+
+    def get_as_row(self):
+        row = [self.label, self.spiketimes]
+        return row
+
+
 class FrequencyAnalysisResult:
     settings = FrequencyBandsAnalysisSettings()
     if settings.analysis_mode == 0:
@@ -36,6 +51,9 @@ class ResultStoring:
         # frequency analysis
         self.frequency_analysis_results = []
 
+        # spiketimes
+        self.spiketimes_data = []
+
     def set_filter_mat(self, filter_mat):
         self._filter_mat = filter_mat
         print(self._filter_mat)
@@ -68,5 +86,19 @@ class ResultStoring:
 
             for frequency_result in self.frequency_analysis_results:
                 writer.writerow(frequency_result.get_as_row())
+
+    def get_spiketimes_from_rasterplot(self, label, spiketimes):
+        self.spiketimes_data.append(SpikeTimesData(label, spiketimes))
+
+    def clear_spiketimes(self):
+        self.spiketimes_data.clear()
+
+    def save_rasterplot_data_to(self, file_path):
+        sorted(self.spiketimes_data, key=lambda result: result.label)
+        with open(file_path, 'w', newline='') as csvfile:
+            w = csv.writer(csvfile)
+            w.writerow(SpikeTimesData.get_header())
+            for spiketime_data in self.spiketimes_data:
+                w.writerow(spiketime_data.get_as_row())
 
 

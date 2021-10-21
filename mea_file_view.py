@@ -2,7 +2,6 @@ from PyQt5 import QtWidgets, QtGui, QtCore
 
 # all the following imports are script of the MEAsure application
 from file_handling.mcs_data_reader import McsDataReader
-from file_handling.meae_data_reader import MeaeDataReader
 from file_handling.SC_data_reader import SCDataReader
 
 from results import ResultStoring
@@ -110,6 +109,8 @@ class MeaFileView(QtWidgets.QWidget):
 
         self.mcs_channel_ids = None
 
+    # the initialisation of this class is divided in two parts, i am not completely happy with it, but it was
+    # necessary to get the loading screen animation (dancing neuron) in there
     def continue_initialisation(self):
         self.file_manager = FileManager(self, self.reader.filename)  # this widget handles tasks in respect to
         # filepaths, with it the user is able to chose the .meae filepath (just .h5 data after analysis) or the
@@ -279,6 +280,39 @@ class MeaFileView(QtWidgets.QWidget):
                                                  grid_indices, sampling_rate)
             self.tab_widget.addTab(self.raw_trace_tab, 'Raw trace plot')
 
+    @QtCore.pyqtSlot()
+    def open_filter_dialog(self):
+        channel_labels_and_indices = self.mea_grid.get_selected_channels()
+        mea_file_exists = False
+        meae_path = None
+        if self.file_manager.get_verified_meae_file() is not None:
+            mea_file_exists = True
+            meae_path = self.file_manager.get_verified_meae_file()
+        allowed_modes = [FilterSettings.ChannelSelection.ALL]
+        if len(channel_labels_and_indices) > 0:
+            allowed_modes.append(FilterSettings.ChannelSelection.SELECTION)
+        settings_dialog = FilterSettingsDialog(self, allowed_modes, mea_file_exists, meae_path, self.filter_settings)
+        if settings_dialog.exec() == 1:  # 'Execute' clicked
+            self.filter_settings = settings_dialog.get_settings()
+            meae_filename = settings_dialog.meae_filename
+            if self.filter_settings.channel_selection == FilterSettings.ChannelSelection.ALL:
+                grid_indices = range(len(self.reader.voltage_traces))
+                grid_labels = self.reader.labels
+            elif self.filter_settings.channel_selection == FilterSettings.ChannelSelection.SELECTION:
+                grid_labels_and_indices = self.mea_grid.get_selected_channels()
+                grid_indices = [values[1] for values in grid_labels_and_indices]
+                grid_labels = [values[0] for values in grid_labels_and_indices]
+            # overwrite global settings as well
+            Settings.instance.filter_settings = self.filter_settings
+
+            # initialise filtering
+            # give FilterThread indices (all is default and if selected, thread has to receive special indices
+            # -> via filter tab?)
+            self.filter_tab = FilterTab(self, meae_filename, self.reader, grid_indices, grid_labels,
+                                        settings_dialog.append_to_existing_file, self.filter_settings)
+            self.tab_widget.addTab(self.filter_tab, "Filtering")
+            self.filter_tab.initialize_filtering()
+
     def open_isi_histogram_settings_dialog(self, is_pressed):
         channel_labels_and_indices = self.mea_grid.get_selected_channels()
         allowed_channel_modes = [IsiHistogramSettings.ChannelSelection.ALL]
@@ -313,8 +347,7 @@ class MeaFileView(QtWidgets.QWidget):
                 self.tab_widget.addTab(self.isi_histogram_tab, "ISI Histogram")
             elif self.plot_settings.mode == IsiHistogramSettings.Mode.MEAE:
                 meae_path = self.file_manager.get_verified_meae_file()
-                meae_reader = MeaeDataReader(meae_path)
-                self.isi_histogram_tab = IsiHistogramTab(self, meae_reader, self.plot_settings, sampling_rate,
+                self.isi_histogram_tab = IsiHistogramTab(self, self.reader, self.plot_settings, sampling_rate,
                                                          grid_labels, grid_indices)
                 self.tab_widget.addTab(self.isi_histogram_tab, "ISI Histogram")
             elif self.plot_settings.mode == IsiHistogramSettings.Mode.SC:
@@ -346,7 +379,7 @@ class MeaFileView(QtWidgets.QWidget):
                 grid_labels = [values[0] for values in grid_labels_and_indices]
             self.frequency_analysis_tab = FrequencyAnalysisTab(self, self.reader, grid_indices, grid_labels,
                                                                self.frequency_analysis_settings)
-            # todo: solve plotting of all channels
+            # todo: solve plotting of all channels -> test it
             self.tab_widget.addTab(self.frequency_analysis_tab, "Frequency Analysis")
             self.frequency_analysis_tab.initialize_frequency_analysis()
 
@@ -420,8 +453,7 @@ class MeaFileView(QtWidgets.QWidget):
                 self.tab_widget.addTab(self.heatmap_tab, "Heatmap")
             elif self.heatmap_settings.mode == HeatmapSettings.Mode.MEAE:
                 meae_path = self.file_manager.get_verified_meae_file()
-                meae_reader = MeaeDataReader(meae_path)
-                self.heatmap_tab = HeatmapTab(self, meae_reader, self.mcs_channel_ids, self.heatmap_settings)
+                self.heatmap_tab = HeatmapTab(self, self.reader, self.mcs_channel_ids, self.heatmap_settings)
                 self.tab_widget.addTab(self.heatmap_tab, "Heatmap")
             elif self.heatmap_settings.mode == HeatmapSettings.Mode.SC:
                 sc_path = self.file_manager.get_verified_sc_file()
@@ -465,8 +497,7 @@ class MeaFileView(QtWidgets.QWidget):
                 self.tab_widget.addTab(self.rasterplot_tab, "Rasterplot")
             elif self.plot_settings.mode == RasterplotSettings.Mode.MEAE:
                 meae_path = self.file_manager.get_verified_meae_file()
-                meae_reader = MeaeDataReader(meae_path)
-                self.rasterplot_tab = RasterplotTab(self, meae_reader, self.plot_settings, sampling_rate, duration,
+                self.rasterplot_tab = RasterplotTab(self, self.reader, self.plot_settings, sampling_rate, duration,
                                                     grid_labels, grid_indices, self.mcs_channel_ids)
                 self.tab_widget.addTab(self.rasterplot_tab, "Rasterplot")
             elif self.plot_settings.mode == RasterplotSettings.Mode.SC:
@@ -474,7 +505,7 @@ class MeaFileView(QtWidgets.QWidget):
                 sc_base_filepath = self.file_manager.get_verified_sc_base_file()
                 sc_reader = SCDataReader(sc_path, sc_base_filepath)
                 self.rasterplot_tab = RasterplotTab(self, sc_reader, self.plot_settings, sampling_rate, duration,
-                                                    grid_labels, grid_indices, self.mcs_channel_ids)
+                                                    grid_labels, grid_indices)
                 self.tab_widget.addTab(self.rasterplot_tab, "Rasterplot")
 
     @QtCore.pyqtSlot()
@@ -522,39 +553,6 @@ class MeaFileView(QtWidgets.QWidget):
                                                              self.spike_detection_settings)
                 self.tab_widget.addTab(self.spike_detection_tab, "Spike detection")
                 self.spike_detection_tab.initialize_spike_detection()
-
-    @QtCore.pyqtSlot()
-    def open_filter_dialog(self):
-        channel_labels_and_indices = self.mea_grid.get_selected_channels()
-        mea_file_exists = False
-        meae_path = None
-        if self.file_manager.get_verified_meae_file() is not None:
-            mea_file_exists = True
-            meae_path = self.file_manager.get_verified_meae_file()
-        allowed_modes = [FilterSettings.ChannelSelection.ALL]
-        if len(channel_labels_and_indices) > 0:
-            allowed_modes.append(FilterSettings.ChannelSelection.SELECTION)
-        settings_dialog = FilterSettingsDialog(self, allowed_modes, mea_file_exists, meae_path, self.filter_settings)
-        if settings_dialog.exec() == 1:  # 'Execute' clicked
-            self.filter_settings = settings_dialog.get_settings()
-            meae_filename = settings_dialog.meae_filename
-            if self.filter_settings.channel_selection == FilterSettings.ChannelSelection.ALL:
-                grid_indices = range(len(self.reader.voltage_traces))
-                grid_labels = self.reader.labels
-            elif self.filter_settings.channel_selection == FilterSettings.ChannelSelection.SELECTION:
-                grid_labels_and_indices = self.mea_grid.get_selected_channels()
-                grid_indices = [values[1] for values in grid_labels_and_indices]
-                grid_labels = [values[0] for values in grid_labels_and_indices]
-            # overwrite global settings as well
-            Settings.instance.filter_settings = self.filter_settings
-
-            # initialise filtering
-            # give FilterThread indices (all is default and if selected, thread has to receive special indices
-            # -> via filter tab?)
-            self.filter_tab = FilterTab(self, meae_filename, self.reader, grid_indices, grid_labels,
-                                        settings_dialog.append_to_existing_file, self.filter_settings)
-            self.tab_widget.addTab(self.filter_tab, "Filtering")
-            self.filter_tab.initialize_filtering()
 
     @QtCore.pyqtSlot()
     def add_csd_plot_to_tabs(self):
