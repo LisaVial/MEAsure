@@ -82,8 +82,10 @@ class RasterplotTab(QtWidgets.QWidget):
         fs = self.fs
         ax = fig.add_subplot(111)
         # spike_mat.reverse()
-        sts = np.flip(spike_mat)
-        ax.eventplot(sts/fs)
+        sts = [spike_mat[i][~np.isnan(spike_mat[i])] for i in range(len(spike_mat))]
+        sts = np.flip(sts)
+        print(type(sts))
+        ax.eventplot(np.array(sts)/fs)
         if len(self.grid_labels) == 1:
             ax.set_yticks([1.0])
             ax.set_yticklabels([self.grid_labels[0]])

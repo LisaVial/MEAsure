@@ -34,6 +34,7 @@ class HeatmapTab(QtWidgets.QWidget):
 
     def plot(self, fig, spike_mat):
         ax = fig.add_subplot(111)
+        fs = 25000
         self.single_heatmap = []
         old_heatmap = self.settings.heatmap_for_normalizing
         for raw_index in self.ch_ids:
@@ -63,15 +64,15 @@ class HeatmapTab(QtWidgets.QWidget):
         x_labels = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'R']
         xticks = np.arange(0.5, 16.5, 1)
         if old_heatmap is not None:
-            sns.heatmap(self.single_heatmap, cmap='hot_r', vmin=0, vmax=np.max(old_heatmap), ax=ax,
-                         cbar_kws={'label': 'spike count'})
-            # sns.heatmap(self.single_heatmap, cmap='PuBuGn', vmin=0, vmax=np.max(old_heatmap), ax=ax,
-            #           cbar_kws={'label': 'spike count'})
-        else:
-            sns.heatmap(self.single_heatmap, cmap='hot_r', vmin=0, vmax=np.max(self.single_heatmap), ax=ax,
+            # sns.heatmap(self.single_heatmap, cmap='hot_r', vmin=0, vmax=np.max(old_heatmap), ax=ax,
+            #              cbar_kws={'label': 'spike count'})
+            sns.heatmap(self.single_heatmap, cmap='PuBuGn', vmin=0, vmax=np.max(old_heatmap), ax=ax,
                         cbar_kws={'label': 'spike count'})
-            # sns.heatmap(self.single_heatmap, cmap='PuBuGn', vmin=0, vmax=np.max(self.single_heatmap), ax=ax,
+        else:
+            # sns.heatmap(self.single_heatmap, cmap='hot_r', vmin=0, vmax=np.max(self.single_heatmap), ax=ax,
             #             cbar_kws={'label': 'spike count'})
+            sns.heatmap(self.single_heatmap, cmap='PuBuGn', vmin=0, vmax=np.max(self.single_heatmap),
+                        ax=ax, cbar_kws={'label': 'spike count'})
         yticks = np.arange(0.5, 16.5, 1)
         ax.set_xticks(xticks)
         ax.set_yticks(yticks)
