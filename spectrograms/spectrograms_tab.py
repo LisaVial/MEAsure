@@ -5,6 +5,7 @@ import matplotlib.cm
 from IPython import embed
 
 from plots.plot_widget import PlotWidget
+# To Do: add plot manager to this tab
 from plot_manager import PlotManager
 from spectrograms.spectograms_thread import SpectrogramsThread
 
@@ -97,7 +98,7 @@ class SpectrogramsTab(QtWidgets.QWidget):
             im = ax1.pcolormesh(self.time[idx], self.frequencies[idx], spec_values, shading='nearest', vmin=-60,
                                 vmax=0)
             # ax1.plot(self.time[idx], overall_power)
-            ax1.set_ylim(0, 100)
+            # ax1.set_ylim(0, 100)
             ax1.set_ylabel('frequency [Hz]')
             ax1.set_xlabel('time [sec]')
             cbar = fig.colorbar(im, ax=ax1)

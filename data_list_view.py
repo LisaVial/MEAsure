@@ -5,8 +5,6 @@ import os.path
 from IPython import embed
 import numpy as np
 
-from file_handling.meae_data_reader import MeaeDataReader
-
 
 # This widget scans for files in different folders via os.path and adds them to a list of which the user can
 # open his/her desired .h5 file

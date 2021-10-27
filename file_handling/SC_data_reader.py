@@ -1,9 +1,11 @@
 import os
 import numpy as np
 import h5py
+import re
 from circus.shared.parser import CircusParser
 
 
+# This class handles the resulting files of the SpyKING CIRCUS (SC) spike detection
 class SCDataReader:
     def __init__(self, path, base_filepath):
         self.folder, self.cluster_filename = os.path.split(path)
@@ -16,15 +18,25 @@ class SCDataReader:
         self.base_file = h5py.File(base_filepath, 'r')
         self.base_file_voltage_traces = self.base_file['Data']['Recording_0']['AnalogStream']['Stream_0']['ChannelData']
         self.sampling_frequency = 1000000 / \
-                             self.base_file['Data']['Recording_0']['AnalogStream']['Stream_0']['InfoChannel']['Tick'][0]
-        duration_index = self.base_file['Data']['Recording_0']['AnalogStream']['Stream_0']['ChannelDataTimeStamps'][0][2]
-        self.duration = self.sampling_frequency/duration_index
+                                  self.base_file['Data']['Recording_0']['AnalogStream']['Stream_0']['InfoChannel'][
+                                      'Tick'][0]
+        duration_index = self.base_file['Data']['Recording_0']['AnalogStream']['Stream_0']['ChannelDataTimeStamps'][0][
+            2]
+        self.duration = self.sampling_frequency / duration_index
         self.spiketimes = self.retrieve_spiketimes()
         self.mua_spikes = self.retrieve_mua_spikes()
+
+        regular_expression = '{\s*1\s*:\s*\[(.*?)?\]\s*\}'
+        pattern = re.compile(regular_expression)
+
         params = CircusParser(base_filepath)
-        self.dead_channels = params.get('detection', 'dead_channels')
-        if len(self.dead_channels) > 1:
-            self.dead_channels = [int(s) for s in self.dead_channels[5:-2].split(',')]
+        self.dead_channels = None
+        self.dead_channels_string = params.get('detection', 'dead_channels')
+        match_object = pattern.match(self.dead_channels_string)
+        if match_object:
+            channel_list_string = match_object.group(1)
+            if len(channel_list_string) > 0:
+                self.dead_channels = [int(ch) for ch in channel_list_string.split(',')]
         else:
             self.dead_channels = []
 

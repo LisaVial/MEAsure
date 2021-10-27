@@ -68,6 +68,7 @@ class FilterThread(QtCore.QThread):
         # selected_ids = [ids[g_idx] for g_idx in self.grid_indices]
 
         for idx, label in enumerate(self.grid_labels):
+            print('filtering:', label, '->', idx)
             # Right now, all the channels should be loaded and filtered, since the way storing of .meae files is set
             # up it will get very confusing fast.
             # So basically grid_indices should be a list with the length of all channel indices
@@ -85,7 +86,7 @@ class FilterThread(QtCore.QThread):
             # original signal is sent, to be able to plot the signals, since there are for once not enough pixels on
             # screen to plot all data points correctly and also, for massive data loads also the pyqtgraph plot widget
             # starts lagging.
-            data = [list(scaled_signal[::312]), list(filtered[::312]), str(labels[self.grid_indices[idx]])]
+            data = [list(scaled_signal[::312]), list(filtered[::312]), str(label)]
             self.data_updated.emit(data)    # Here, the signal is sent to the FilterTav
 
             # Here, the progress signal is calculated and then sent to the FilterTab

@@ -1,5 +1,6 @@
-# utility functions to handle mea channel index and labels
+import numpy as np
 
+# utility functions to handle mea channel index and labels
 class ChannelUtility:
 
     column_characters = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'R']
@@ -27,9 +28,12 @@ class ChannelUtility:
 
         # check if label is padded with zero, e.g. 'R02'
         padded_with_zero = (int(row_number) < 10) and (len(label) == 3)
-
+        label_idx = ChannelUtility.get_channel_labels(padded_with_zero).index(corrected_label)
+        mcs_channel_ids_file = open(r'/home/lisa_ruth/PycharmProjects/Spielwiese/ch_ids.txt', 'r')
+        ch_ids = mcs_channel_ids_file.read().split(', ')
+        all_channel_indices = np.array([int(v) for v in ch_ids if v != ''])
         # find and return index
-        return ChannelUtility.get_channel_labels(padded_with_zero).index(corrected_label)
+        return all_channel_indices[label_idx]
 
     @staticmethod
     def get_label_by_ordered_index(index: int, pad_with_zero=False):
@@ -74,3 +78,48 @@ class ChannelUtility:
                 neighbours.append(neighbour_label)
 
         return neighbours
+
+    @staticmethod
+    def get_sc_index(mcs_index: int, dead_channels: list):
+
+        if mcs_index in dead_channels:
+            return mcs_index
+            print("CAUTION: MCS index is a dead channel and has no SC index")
+
+        sc_index = 0
+        for row_index in range(252):
+
+            if row_index == mcs_index:
+                return sc_index
+
+            if row_index not in dead_channels:
+                sc_index += 1
+
+        raise Exception("MCS index not in valid range (0, 251)")
+
+    @staticmethod
+    def get_mcs_index(sc_index: int, dead_channels: list):
+
+        # special case: sc index is 0 and mcs index 0 is not a dead channel
+        if 0 not in dead_channels and sc_index == 0:
+            return 0
+
+        current_sc_index = 0
+        for row_index in range(252):
+            if row_index not in dead_channels:
+                current_sc_index += 1
+                if current_sc_index == sc_index:
+                    return row_index
+
+        raise Exception("SC index not in valid range (0, " + str(251 - len(dead_channels)) + ")")
+
+    @staticmethod
+    def get_label_for_mcs_index(mcs_index: int, ordered_mcs_indices: list, pad_with_zero: bool = False):
+        return ChannelUtility.get_channel_labels(pad_with_zero)[ordered_mcs_indices.index(mcs_index)]
+
+    @staticmethod
+    def get_label_for_sc_index(sc_index: int, dead_channels: list, ordered_mcs_indices: list,
+                               pad_with_zero: bool = False):
+        return ChannelUtility.get_label_for_mcs_index(ChannelUtility.get_mcs_index(sc_index, dead_channels),
+                                                      ordered_mcs_indices, pad_with_zero)
+

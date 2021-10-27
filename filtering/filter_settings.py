@@ -1,3 +1,4 @@
+# This class handles the settings for filtering. The same structure is used for all methods implemented in MEAsure.
 class FilterSettings:
     """
     The FilterSettings object is used to store chosen user settings for filtering

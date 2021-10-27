@@ -5,6 +5,10 @@ import PyQt5.QtWidgets as QtWidgets
 from .filter_settings import FilterSettings
 
 
+# This class represents a QWidget, they are used to be embedded in other widgets or in the MainWindow. In this case this
+# widget is embedded in the filter settings dialog and therefore handles the variables which can be set by the user when
+# opening the filter settings dialog (so the filter settings dialog holds all information for the graphical user inter-
+# face while the values that can be set are actually stored in this class.
 class FilterSettingsWidget(QtWidgets.QGroupBox):
     """
     The FilterSettingsWidget object is a QGroupBox, which allows you to show single widgets in multiple rows and

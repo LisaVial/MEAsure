@@ -35,8 +35,8 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.data_file_list_dock_widget = QtWidgets.QDockWidget(self)
         self.data_file_list_dock_widget.setWidget(self.file_list_view)
-
         self.file_list_view.file_list.itemDoubleClicked.connect(self.on_file_double_clicked)
+
         self.data_file_list_dock_widget.setFeatures(QtWidgets.QDockWidget.NoDockWidgetFeatures)
         self.data_file_list_dock_widget.setWindowTitle("Folder selection")
         self.data_file_list_dock_widget.setObjectName("folder-selection")
@@ -57,13 +57,14 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.load_settings()
 
+        # the toolbar is a nice way to implement various buttons
         self.toolbar = QtWidgets.QToolBar(self)
         self.show_file_selection = QtWidgets.QAction("File selection", self)
         file_selection_icon = QtGui.QIcon("./icons/file_selection_icon.png")
         self.show_file_selection.setIcon(file_selection_icon)
         self.show_file_selection.triggered.connect(self.on_show_file_selection)
         self.show_file_selection.setCheckable(True)  # kann an/aus sein
-        self.show_file_selection.setChecked(False)
+        self.show_file_selection.setChecked(True)
         self.toolbar.addAction(self.show_file_selection)
         # self.show_file_selection.setChecked(False)
         self.show_plot_manager = QtWidgets.QAction("Save Plots", self)
@@ -99,9 +100,6 @@ class MainWindow(QtWidgets.QMainWindow):
     @QtCore.pyqtSlot()
     def on_close_button_pressed(self):
         self.accept()
-
-    # def open_mfa_dialog(self, is_pressed):
-    #
 
     def on_show_plot_manager(self, is_pressed):
         self.plot_list_dock_widget.setVisible(is_pressed)

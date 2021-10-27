@@ -2,9 +2,8 @@ import numpy as np
 import h5py
 import time
 
-from utility.channel_utility import ChannelUtility
 
-
+# This class handles the hdf5 files which are created from our raw recordings (of the MCS setup)
 class McsDataReader:
     def __init__(self, path):
         self.file_path = path
@@ -12,18 +11,37 @@ class McsDataReader:
         t0 = time.time()
         self.file = self.open_mea_file()
         t1 = time.time() - t0
-        try:
-            self.voltage_traces, self.sampling_frequency, self.duration = self.get_data_of_file()
-        except KeyError:
-            self.voltage_traces = self.file['scaled']
-            self.sampling_frequency = 25000.0
-            self.duration = 600.0
-        try:
-            self.channel_ids, self.labels = self.get_channel_ids()
-        except KeyError:
-            self.channel_ids = range(252)
-            channel_utility = ChannelUtility()
-            self.labels = channel_utility.get_channel_labels()
+
+        # create list of labels (e.g. 'A3', 'G13', etc)
+        # in the order they appear in the h5 file
+        self._ordered_label_list = [ch[4].decode('ascii') for ch in
+                                    self.file['Data']['Recording_0']['AnalogStream']['Stream_0']['InfoChannel']]
+
+        self.voltage_traces, self.sampling_frequency, self.duration = self.get_data_of_file()
+        self.channel_ids, self.labels = self.get_channel_ids()
+
+    def get_label_for_row_index(self, index: int):
+        if index < 0 or index >= len(self._ordered_label_list):
+            raise Exception('Invalid index "' + str(index) + '" given.')
+
+        return self._ordered_label_list[index]
+
+    def get_row_index_for_label(self, label: str):
+        if len(label) < 2:
+            raise Exception('Invalid label "' + label + '" given.')
+
+        # make sure the first letter is upper case
+        corrected_label = label[0].upper() + label[1:]
+
+        # remove zero padding
+        if corrected_label[1] == '0':
+            corrected_label = corrected_label[0] + corrected_label[2:]
+
+        index = self._ordered_label_list.index(corrected_label)
+        if index < 0:
+            raise Exception('Could not find label "' + label + '"')
+
+        return index
 
     def get_channel_id(self, label):
         for ch in self.file['Data']['Recording_0']['AnalogStream']['Stream_0']['InfoChannel']:

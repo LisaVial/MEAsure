@@ -1,7 +1,9 @@
 from PyQt5 import QtWidgets
-import seaborn as sns
+import pyqtgraph as pg
+import numpy as np
+from numba import jit
 
-from plots.plot_widget import PlotWidget
+from utility.channel_utility import ChannelUtility
 
 
 class VoltageTraceHistogramPlot(QtWidgets.QWidget):
@@ -14,23 +16,35 @@ class VoltageTraceHistogramPlot(QtWidgets.QWidget):
 
         main_layout = QtWidgets.QVBoxLayout(self)
 
-        plot_name = 'VT_Histogram_' + self.mcs_reader.filename + '_' + self.label
-        plot_widget = PlotWidget(self, plot_name)
-        self.figure = plot_widget.figure
-        self.ax = self.figure.add_subplot(111)
-        self.ax.spines['right'].set_visible(False)
-        self.ax.spines['top'].set_visible(False)
-        self.ax.get_xaxis().tick_bottom()
-        self.ax.get_yaxis().tick_left()
-        self.ax.tick_params(labelsize=10, direction='out')
-        self.ax.set_xlabel(r'amplitude [$\mu$ V]')
-        self.ax.set_ylabel('prevelance')
-        main_layout.addWidget(plot_widget)
-        sns.set()
+        self.plot_widget = pg.PlotWidget()
+        self.plot_widget.setBackground('w')
+        styles = {'color': 'k', 'font-size': '10px'}
+        # self.plot_widget.setLabel('left', 'amplitude [pA]', **styles)
+        self.plot_widget.setLabel('bottom', 'count', **styles)
+        main_layout.addWidget(self.plot_widget)
 
+    @jit(forceobj=True)
+    def scale_trace(self, trace_to_scale):
+        vt = trace_to_scale
+        conversion_factor = \
+            self.mcs_reader.file['Data']['Recording_0']['AnalogStream']['Stream_0']['InfoChannel'][0]['ConversionFactor']
+        exponent = \
+            self.mcs_reader.file['Data']['Recording_0']['AnalogStream']['Stream_0']['InfoChannel'][0]['Exponent'] + 6
+        # 6 = pV -> uV
+        scaled_trace = vt * conversion_factor * np.power(10.0, exponent)
+        return scaled_trace
+
+    @jit(forceobj=True)
     def plot(self, label_index):
-        self.label_index = label_index
+        self.plot_widget.clear()
+        label = ChannelUtility.get_label_for_mcs_index(label_index, self.mcs_reader.channel_ids)
+        self.label_index = ChannelUtility.get_sc_index(label_index, self.sc_reader.dead_channels)
+        print('histogram plot:', label, '->', label_index)
+
         trace = self.sc_reader.base_file_voltage_traces[self.label_index]
-        self.ax.cla()
-        self.ax.hist(trace, density=True, bins=1000)
-        self.figure.canvas.draw_idle()
+        trace = self.scale_trace(trace)
+        y, x = np.histogram(trace, bins=np.linspace(np.min(trace), np.max(trace), 80))
+        bincenters = x[:-1] + np.diff(x)/2
+        self.plot_widget.plot(y, bincenters[:-1], stepMode=True, fillLevel=0, fillOutline=True, brush='#006e7d')
+        # hist.getViewBox().invertY(True)
+
