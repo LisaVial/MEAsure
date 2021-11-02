@@ -41,9 +41,9 @@ class FilterSettingsDialog(QtWidgets.QDialog):  # Setting up of a new class. In 
         self.setWindowFlag(QtCore.Qt.WindowMaximizeButtonHint, True)
         self.setWindowFlag(QtCore.Qt.WindowMinimizeButtonHint, True)
         # Here, the size of the window is set.
-        self.width = 400
-        self.height = 400
-        self.setFixedSize(self.width, self.height)
+        width = 400
+        height = 400
+        self.setFixedSize(width, height)
 
         # For widgets in PyQt there have to be layouts to which the widgets are added. The layout defines where things
         # will be put inside your widget or dialog.

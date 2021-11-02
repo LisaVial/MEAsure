@@ -1,10 +1,9 @@
 import numpy as np
 
+
 # utility functions to handle mea channel index and labels
 class ChannelUtility:
-
     column_characters = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'R']
-
     @staticmethod
     def get_channel_labels(pad_with_zero=False):
         labels = []

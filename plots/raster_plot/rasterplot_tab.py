@@ -84,14 +84,13 @@ class RasterplotTab(QtWidgets.QWidget):
         # spike_mat.reverse()
         sts = [spike_mat[i][~np.isnan(spike_mat[i])] for i in range(len(spike_mat))]
         sts = np.flip(sts)
-        print(type(sts))
         ax.eventplot(np.array(sts)/fs)
         if len(self.grid_labels) == 1:
             ax.set_yticks([1.0])
             ax.set_yticklabels([self.grid_labels[0]])
         else:
             ax.set_yticks(np.arange(0, len(self.grid_labels), label_step_size))
-            ax.set_yticklabels(self.grid_labels[(len(self.grid_labels) -1)::-label_step_size])
+            ax.set_yticklabels(self.grid_labels[(len(self.grid_labels) - 1)::-label_step_size])
         ax.set_ylabel('MEA channels')
         ax.set_xlabel('time [s]')
         ax.get_xaxis().tick_bottom()
