@@ -250,6 +250,7 @@ class MeaFileView(QtWidgets.QWidget):
         self.mea_grid.setVisible(self.show_mea_grid.isChecked())
 
         self.mcs_channel_ids = self.reader.channel_ids
+        self.mcs_channel_labels = self.reader.labels
 
     def initialize_reader(self):
         self.reader = McsDataReader(self.mea_file)
@@ -459,7 +460,8 @@ class MeaFileView(QtWidgets.QWidget):
                 sc_path = self.file_manager.get_verified_sc_file()
                 sc_base_filepath = self.file_manager.get_verified_sc_base_file()
                 sc_reader = SCDataReader(sc_path, sc_base_filepath)
-                self.heatmap_tab = HeatmapTab(self, sc_reader, self.mcs_channel_ids, self.heatmap_settings)
+                self.heatmap_tab = HeatmapTab(self, sc_reader, self.mcs_channel_labels, self.mcs_channel_ids,
+                                              self.heatmap_settings)
                 self.tab_widget.addTab(self.heatmap_tab, "Heatmap")
 
     def open_rasterplot_settings_dialog(self, is_pressed):

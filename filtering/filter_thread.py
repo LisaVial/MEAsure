@@ -68,7 +68,6 @@ class FilterThread(QtCore.QThread):
         # selected_ids = [ids[g_idx] for g_idx in self.grid_indices]
 
         for idx, label in enumerate(self.grid_labels):
-            print('filtering:', label, '->', idx)
             # Right now, all the channels should be loaded and filtered, since the way storing of .meae files is set
             # up it will get very confusing fast.
             # So basically grid_indices should be a list with the length of all channel indices

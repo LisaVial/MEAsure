@@ -3,6 +3,22 @@ from frequency_bands_analysis.frequency_bands_analysis_settings import Frequency
 
 
 # sub classes for specific results
+class SpikeCountData:
+    def __init__(self, label, spikecounts):
+        if len(label) == 3:
+            self.label = label
+        else:
+            self.label = label[0] + '0' + label[1:]
+        self.spike_counts = spikecounts
+
+    @staticmethod
+    def get_header():
+        return ['label', 'spike counts']
+
+    def get_as_row(self):
+        row = [self.label, self.spike_counts]
+        return row
+
 
 class SpikeTimesData:
     def __init__(self, label, spiketimes):
@@ -54,6 +70,9 @@ class ResultStoring:
         # spiketimes
         self.spiketimes_data = []
 
+        # spike counts
+        self.spikecount_data = []
+
     def set_filter_mat(self, filter_mat):
         self._filter_mat = filter_mat
         print(self._filter_mat)
@@ -76,7 +95,7 @@ class ResultStoring:
 
     def save_frequency_analysis_results_to(self, file_path):
         # sort list of results by label
-        sorted(self.frequency_analysis_results, key=lambda result: result.label)
+        self.frequency_analysis_results = sorted(self.frequency_analysis_results, key=lambda result: result.label)
 
         with open(file_path, 'w', newline='') as csvfile:
             writer = csv.writer(csvfile)
@@ -94,11 +113,24 @@ class ResultStoring:
         self.spiketimes_data.clear()
 
     def save_rasterplot_data_to(self, file_path):
-        sorted(self.spiketimes_data, key=lambda result: result.label)
+        self.spiketimes_data = sorted(self.spiketimes_data, key=lambda result: result.label)
         with open(file_path, 'w', newline='') as csvfile:
             w = csv.writer(csvfile)
             w.writerow(SpikeTimesData.get_header())
             for spiketime_data in self.spiketimes_data:
                 w.writerow(spiketime_data.get_as_row())
 
+    def get_spike_counts_from_heatmap(self, label, spikecounts):
+        self.spikecount_data.append(SpikeCountData(label, spikecounts))
+
+    def clear_spikecounts(self):
+        self.spikecount_data.clear()
+
+    def save_spikecount_data_to(self, file_path):
+        self.spikecount_data = sorted(self.spikecount_data, key=lambda result: result.label)
+        with open(file_path, 'w', newline='') as csvfile:
+            w = csv.writer(csvfile)
+            w.writerow(SpikeCountData.get_header())
+            for spikecount_data in self.spikecount_data:
+                w.writerow(spikecount_data.get_as_row())
 
