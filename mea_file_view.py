@@ -10,9 +10,9 @@ from mea_grid import MeaGrid
 from settings import Settings
 from file_manager import FileManager
 
-from spike_detection.spike_detection_settings_dialog import SpikeDetectionSettingsDialog
-from spike_detection.spike_detection_settings import SpikeDetectionSettings
-from spike_detection.spike_detection_tab import SpikeDetectionTab
+from hilbert_transform.hilbert_transform_tab import HilbertTransformTab
+from hilbert_transform.hilbert_transform_settings import HilbertTransformSettings
+from hilbert_transform.hilbert_transform_settings_dialog import HilbertTransformSettingsDialog
 
 from filtering.filter_settings_dialog import FilterSettingsDialog
 from filtering.filter_settings import FilterSettings
@@ -27,7 +27,6 @@ from frequency_bands_analysis.frequency_bands_analysis_settings import Frequency
 from frequency_bands_analysis.frequency_bands_tab import FrequencyBandsTab
 
 from plots.raw_trace_plot.raw_trace_plot_tab import RawTracePlotTab
-from plots.csd_plot.csd_plot_tab import CsdPlotTab
 from plots.raster_plot.rasterplot_tab import RasterplotTab
 from plots.heatmap.heatmap_tab import HeatmapTab
 from plots.ISI.isi_histogram_tab import IsiHistogramTab
@@ -36,8 +35,6 @@ from plots.raw_trace_plot.raw_trace_settings import RawTraceSettings
 from plots.raw_trace_plot.raw_trace_settings_dialog import RawTraceSettingsDialog
 from plots.ISI.isi_histogram_settings import IsiHistogramSettings
 from plots.ISI.isi_histogram_settings_dialog import IsiHistogramSettingsDialog
-from plots.csd_plot.csd_plot_settings import CsdPlotSettings
-from plots.csd_plot.csd_plot_settings_dialog import CsdPlotSettingsDialog
 from plots.raster_plot.rasterplot_settings_dialog import RasterplotSettingsDialog
 from plots.raster_plot.rasterplot_settings import RasterplotSettings
 from plots.heatmap.heatmap_settings_dialog import HeatmapSettingsDialog
@@ -66,6 +63,7 @@ class MeaFileView(QtWidgets.QWidget):
         # start animation
         QtWidgets.QApplication.instance().main_window.animation_overlay.start()
         self.file_manager = None
+        self.hilbert_transform_settings = None
         self.frequency_analysis_settings = None
         self.frequency_band_analysis_settings = None
         self.filter_settings = None
@@ -82,6 +80,7 @@ class MeaFileView(QtWidgets.QWidget):
         self.show_file_manager = None
         self.show_mea_grid = None
         self.show_raw_trace_plot_dialog = None
+        self.show_hilbert_transform_tab = None
         self.show_filter_dialog = None
         self.show_spike_detection_dialog = None
         self.add_frequency_analysis_tab = None
@@ -96,10 +95,9 @@ class MeaFileView(QtWidgets.QWidget):
         self.tab_widget = None
 
         self.raw_trace_tab = None
+        self.hilbert_transform_tab = None
         self.filter_tab = None
-        self.spike_detection_tab = None
 
-        self.csd_plot_tab = None
         self.heatmap_tab = None
         self.rasterplot_tab = None
         self.frequency_analysis_tab = None
@@ -108,8 +106,9 @@ class MeaFileView(QtWidgets.QWidget):
         self.spectrograms_tab = None
 
         self.mcs_channel_ids = None
+        self.mcs_channel_labels = None
 
-    # the initialisation of this class is divided in two parts, i am not completely happy with it, but it was
+        # the initialisation of this class is divided in two parts, i am not completely happy with it, but it was
     # necessary to get the loading screen animation (dancing neuron) in there
     def continue_initialisation(self):
         self.file_manager = FileManager(self, self.reader.filename)  # this widget handles tasks in respect to
@@ -117,12 +116,11 @@ class MeaFileView(QtWidgets.QWidget):
         # filepath of results of spyking circus
 
         # here, settings for different tasks which can be carried out by the user are defined
+        self.hilbert_transform_settings = Settings.instance.hilbert_transform_settings
         self.frequency_analysis_settings = Settings.instance.frequency_analysis_settings
         self.frequency_band_analysis_settings = Settings.instance.frequency_bands_analysis_settings
         self.filter_settings = Settings.instance.filter_settings
         self.rasterplot_settings = Settings.instance.rasterplot_settings
-        self.spike_detection_settings = Settings.instance.spike_detection_settings
-        self.csd_plot_settings = Settings.instance.csd_plot_settings
         self.heatmap_settings = Settings.instance.heatmap_settings
         self.isi_histogram_settings = Settings.instance.isi_histogram_settings
         self.spectrograms_settings = Settings.instance.spectrograms_settings
@@ -163,17 +161,17 @@ class MeaFileView(QtWidgets.QWidget):
         self.show_raw_trace_plot_dialog.setIcon(raw_trace_plot_icon)
         self.toolbar.addAction(self.show_raw_trace_plot_dialog)
 
+        self.show_hilbert_transform_tab = QtWidgets.QAction('Hilbert Transform', self)
+        self.show_hilbert_transform_tab.triggered.connect(self.open_hilber_transform_tab)
+        hilbert_transform_icon = QtGui.QIcon('./icons/hilbert_transform_icon.png')
+        self.show_hilbert_transform_tab.setIcon(hilbert_transform_icon)
+        self.toolbar.addAction(self.show_hilbert_transform_tab)
+
         self.show_filter_dialog = QtWidgets.QAction("Filtering", self)
         self.show_filter_dialog.triggered.connect(self.open_filter_dialog)
         filter_icon = QtGui.QIcon("./icons/filter_icon.png")
         self.show_filter_dialog.setIcon(filter_icon)
         self.toolbar.addAction(self.show_filter_dialog)
-
-        self.show_spike_detection_dialog = QtWidgets.QAction('Spike Detection', self)
-        self.show_spike_detection_dialog.triggered.connect(self.open_sd_dialog)
-        spike_detection_icon = QtGui.QIcon("./icons/spike_detection_icon.png")
-        self.show_spike_detection_dialog.setIcon(spike_detection_icon)
-        self.toolbar.addAction(self.show_spike_detection_dialog)
 
         self.add_frequency_analysis_tab = QtWidgets.QAction('Frequency analysis', self)
         frequency_analysis_icon = QtGui.QIcon("./icons/frequency_analysis_icon.png")
@@ -192,12 +190,6 @@ class MeaFileView(QtWidgets.QWidget):
         self.add_spectrogram_tab.setIcon(spectrograms_icon)
         self.add_spectrogram_tab.triggered.connect(self.open_spectograms_settings_dialog)
         self.toolbar.addAction(self.add_spectrogram_tab)
-
-        self.add_csd_plot_tab = QtWidgets.QAction('CSD plot', self)
-        csd_plot_icon = QtGui.QIcon("./icons/csd_plot_icon.png")
-        self.add_csd_plot_tab.setIcon(csd_plot_icon)
-        self.add_csd_plot_tab.triggered.connect(self.add_csd_plot_to_tabs)
-        self.toolbar.addAction(self.add_csd_plot_tab)
 
         self.add_rasterplot_tab = QtWidgets.QAction('Rasterplot', self)
         rasterplot_plot_icon = QtGui.QIcon("./icons/rasterplot_icon.png")
@@ -260,7 +252,25 @@ class MeaFileView(QtWidgets.QWidget):
         QtWidgets.QApplication.instance().main_window.animation_overlay.stop()
         self.continue_initialisation()
 
-    def open_raw_trace_plot_dialog(self, is_pressed):
+    def open_hilber_transform_tab(self):
+        channel_labels_and_indices = self.mea_grid.get_selected_channels()
+        allowed_channel_modes = [HilbertTransformSettings.ChannelSelection.ALL]
+        if len(channel_labels_and_indices) > 0:
+            allowed_channel_modes.append(HilbertTransformSettings.ChannelSelection.SELECTION)
+        settings_dialog = HilbertTransformSettingsDialog(self, allowed_channel_modes, self.hilbert_transform_settings)
+        if settings_dialog.exec() == 1:
+            self.hilbert_transform_settings = settings_dialog.get_settings()
+            if self.hilbert_transform_settings.channel_selection == HilbertTransformSettings.ChannelSelection.ALL:
+                grid_labels = self.reader.get_channel_ids()[1]
+            elif self.hilbert_transform_settings.channel_selection == HilbertTransformSettings.ChannelSelection.SELECTION:
+                grid_labels_and_indices = self.mea_grid.get_selected_channels()
+                grid_labels = [values[0] for values in grid_labels_and_indices]
+            Settings.instance.hilbert_transform_settings = self.hilbert_transform_settings
+            self.hilbert_transform_tab = HilbertTransformTab(self, self.reader, grid_labels,
+                                                             self.hilbert_transform_settings)
+            self.tab_widget.addTab(self.hilbert_transform_tab, 'Hilbert Transform Tab')
+
+    def open_raw_trace_plot_dialog(self):
         channel_labels_and_indices = self.mea_grid.get_selected_channels()
         allowed_channel_modes = [RawTraceSettings.ChannelSelection.ALL]
         if len(channel_labels_and_indices) > 0:
@@ -270,6 +280,7 @@ class MeaFileView(QtWidgets.QWidget):
             self.raw_trace_plot_settings = settings_dialog.get_settings()
             if self.raw_trace_plot_settings.channel_selection == RawTraceSettings.ChannelSelection.ALL:
                 grid_labels = self.reader.labels
+                # probably this is wrong and also should be the ordered ids
                 grid_indices = range(len(self.reader.voltage_traces))
             elif self.raw_trace_plot_settings.channel_selection == RawTraceSettings.ChannelSelection.SELECTION:
                 grid_labels_and_indices = self.mea_grid.get_selected_channels()
@@ -284,15 +295,10 @@ class MeaFileView(QtWidgets.QWidget):
     @QtCore.pyqtSlot()
     def open_filter_dialog(self):
         channel_labels_and_indices = self.mea_grid.get_selected_channels()
-        mea_file_exists = False
-        meae_path = None
-        if self.file_manager.get_verified_meae_file() is not None:
-            mea_file_exists = True
-            meae_path = self.file_manager.get_verified_meae_file()
         allowed_modes = [FilterSettings.ChannelSelection.ALL]
         if len(channel_labels_and_indices) > 0:
             allowed_modes.append(FilterSettings.ChannelSelection.SELECTION)
-        settings_dialog = FilterSettingsDialog(self, allowed_modes, mea_file_exists, meae_path, self.filter_settings)
+        settings_dialog = FilterSettingsDialog(self, allowed_modes, self.filter_settings)
         if settings_dialog.exec() == 1:  # 'Execute' clicked
             self.filter_settings = settings_dialog.get_settings()
             meae_filename = settings_dialog.meae_filename
@@ -509,77 +515,6 @@ class MeaFileView(QtWidgets.QWidget):
                 self.rasterplot_tab = RasterplotTab(self, sc_reader, self.plot_settings, sampling_rate, duration,
                                                     grid_labels, grid_indices)
                 self.tab_widget.addTab(self.rasterplot_tab, "Rasterplot")
-
-    @QtCore.pyqtSlot()
-    def open_sd_dialog(self):
-        channel_labels_and_indices = self.mea_grid.get_selected_channels()
-        allowed_file_modes = [SpikeDetectionSettings.FileMode.MCS]
-        mea_file_exists = False
-        meae_path = None
-        if self.file_manager.get_verified_meae_file() is not None:
-            mea_file_exists = True
-            meae_path = self.file_manager.get_verified_meae_file()
-        if self.file_manager.get_verified_meae_file() is not None:
-            allowed_file_modes.append(SpikeDetectionSettings.FileMode.MEAE)
-        allowed_modes = [SpikeDetectionSettings.ChannelSelection.ALL]
-        if len(channel_labels_and_indices) > 0:
-            allowed_modes.append(SpikeDetectionSettings.ChannelSelection.SELECTION)
-        settings_dialog = SpikeDetectionSettingsDialog(self, allowed_file_modes,
-                                                       allowed_modes, mea_file_exists, meae_path,
-                                                       self.spike_detection_settings)
-        if settings_dialog.exec() == 1:  # 'Execute' clicked
-            self.spike_detection_settings = settings_dialog.get_settings()
-            meae_filename = settings_dialog.meae_filename
-            if self.spike_detection_settings.channel_selection == SpikeDetectionSettings.ChannelSelection.ALL:
-                grid_indices = range(len(self.reader.voltage_traces))
-                grid_labels = self.reader.labels
-            elif self.spike_detection_settings.channel_selection == SpikeDetectionSettings.ChannelSelection.SELECTION:
-                grid_labels_and_indices = self.mea_grid.get_selected_channels()
-                grid_indices = [values[1] for values in grid_labels_and_indices]
-                grid_labels = [values[0] for values in grid_labels_and_indices]
-            # overwrite global settings as well
-            Settings.instance.spike_detection_settings = self.spike_detection_settings
-
-            # initialise spike detection
-            if self.spike_detection_settings.file_mode == SpikeDetectionSettings.FileMode.MCS:
-                self.spike_detection_tab = SpikeDetectionTab(self, meae_filename, self.reader, grid_indices,
-                                                             grid_labels,
-                                                             self.spike_detection_settings)
-                self.tab_widget.addTab(self.spike_detection_tab, "Spike detection")
-                self.spike_detection_tab.initialize_spike_detection()
-            elif self.spike_detection_settings.file_mode == SpikeDetectionSettings.FileMode.MEAE:
-                meae_path = self.file_manager.get_verified_meae_file()
-                meae_reader = MeaeDataReader(meae_path)
-                self.spike_detection_tab = SpikeDetectionTab(self, meae_filename, meae_reader, grid_indices,
-                                                             grid_labels,
-                                                             self.spike_detection_settings)
-                self.tab_widget.addTab(self.spike_detection_tab, "Spike detection")
-                self.spike_detection_tab.initialize_spike_detection()
-
-    @QtCore.pyqtSlot()
-    def add_csd_plot_to_tabs(self):
-        channel_labels_and_indices = self.mea_grid.get_selected_channels()
-        allowed_channel_modes = [CsdPlotSettings.ChannelSelection.ALL]
-        if len(channel_labels_and_indices) > 0:
-            allowed_channel_modes.append(CsdPlotSettings.ChannelSelection.SELECTION)
-        settings_dialog = CsdPlotSettingsDialog(self, allowed_channel_modes)
-        if settings_dialog.exec() == 1:  # 'Execute' clicked
-            self.csd_plot_settings = settings_dialog.get_settings()
-            # overwrite global settings as well
-            if self.csd_plot_settings.channel_selection == CsdPlotSettings.ChannelSelection.ALL:
-                grid_indices = range(self.reader.voltage_traces_dataset.shape[0])
-                grid_labels = self.reader.labels
-            elif self.csd_plot_settings.channel_selection == CsdPlotSettings.ChannelSelection.SELECTION:
-                grid_labels_and_indices = self.mea_grid.get_selected_channels()
-                grid_indices = [values[1] for values in grid_labels_and_indices]
-                grid_labels = [values[0] for values in grid_labels_and_indices]
-
-            Settings.instance.csd_plot_settings = self.csd_plot_settings
-            fs = self.reader.sampling_frequency
-
-            self.csd_plot_tab = CsdPlotTab(self, self.reader, grid_indices, grid_labels, fs,
-                                           self.csd_plot_settings)
-            self.tab_widget.addTab(self.csd_plot_tab, "CSD Plot")
 
     def open_spike_check_dialog(self, is_pressed):
         sc_filepath = self.file_manager.get_verified_sc_file()

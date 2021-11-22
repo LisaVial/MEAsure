@@ -3,6 +3,22 @@ from frequency_bands_analysis.frequency_bands_analysis_settings import Frequency
 
 
 # sub classes for specific results
+class HilbertTransformData:
+    def __init__(self, label, start_time, end_time):
+        self.label = label
+        self.start_time = start_time
+        self.end_time = end_time
+        self.duration = self.end_time - self.start_time
+
+    @staticmethod
+    def get_header():
+        return ['label', 'start time', 'end time', 'duration']
+
+    def get_as_row(self):
+        row = [self.label, self.start_time, self.end_time, self.duration]
+        return row
+
+
 class SpikeCountData:
     def __init__(self, label, spikecounts):
         if len(label) == 3:
@@ -133,4 +149,6 @@ class ResultStoring:
             w.writerow(SpikeCountData.get_header())
             for spikecount_data in self.spikecount_data:
                 w.writerow(spikecount_data.get_as_row())
+
+
 

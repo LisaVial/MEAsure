@@ -15,15 +15,13 @@ class FilterSettingsWidget(QtWidgets.QGroupBox):
     columns. This object sets up most of the widgets, which are shown in the FilterSettingsDialog.
     """
     # Like before, first we set up the class and tell it, which other class is its parent.
-    def __init__(self, parent, allowed_modes, mea_file_exists, meae_path, settings=None):
+    def __init__(self, parent, allowed_modes, settings=None):
         super().__init__(parent)
 
         # Now, we set up the title of the widget and its layout.
         self.setTitle("Settings")
         group_box_layout = QtWidgets.QGridLayout(self)
 
-        self.mea_file_exists = mea_file_exists
-        self.meae_path = meae_path
 
         # Since the user will be allowed to write something, we have to tell which type of input is allowed.
         valid_number_pattern = "[0-9]*\.{0,1][0-9]*"
@@ -87,6 +85,7 @@ class FilterSettingsWidget(QtWidgets.QGroupBox):
         self.second_cutoff_textbox.setVisible(False)
         self.second_textbox_label.setVisible(False)
 
+        # To Do: get rid of that
         # This last widget handles the information whether or not the filtered traces should be stored to a new
         # .h5 at the end of the filtering process.
         self.save_filtered_traces_box = QtWidgets.QCheckBox('Save filtered traces')
