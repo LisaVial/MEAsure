@@ -9,12 +9,12 @@ from plot_manager import PlotManager
 
 
 class HilbertTransformTab(QtWidgets.QWidget):
-    def __init__(self, parent, reader, grid_indices, settings):
+    def __init__(self, parent, reader, grid_labels, settings):
         super().__init__(parent)
         self.mea_file_view = parent
 
         self.reader = reader
-        self.grid_indices = grid_indices
+        self.grid_labels = grid_labels
         self.settings = settings
         self.threshold_factor = self.settings.threshold_factor
         self.min_peaks_per_seizure = self.settings.min_peaks_per_seizure
@@ -38,7 +38,13 @@ class HilbertTransformTab(QtWidgets.QWidget):
         operation_layout.addWidget(self.progress_bar)
         main_layout.addLayout(operation_layout)
 
-        plot_name = 'HilbertTransform_' + self.reader.filename
+        tool_button_layout = QtWidgets.QVBoxLayout()
+        self.save_button = QtWidgets.QPushButton("Save results...")
+        self.save_button.clicked.connect(self.on_save_button_clicked)
+        self.save_button.setEnabled(False)  # will be enabled after plotting
+        tool_button_layout.addWidget(self.save_button)
+
+        main_layout.addLayout(tool_button_layout)
 
         self.plot_widget = pg.PlotWidget()
         self.plot_widget.setBackground('w')
@@ -62,17 +68,17 @@ class HilbertTransformTab(QtWidgets.QWidget):
 
         self.hilbert_transform_thread = None
 
-        self.epileptic_indices = None
+        self.epileptic_indices = []
 
         self.initialize_hilbert_transform()
 
     def initialize_hilbert_transform(self):
-        if self.hilbert_transform_thread is None and self.epileptic_indices is None:
+        if self.hilbert_transform_thread is None:
             self.progress_bar.setValue(0)
             self.progress_label.setText('')
             self.operation_label.setText('Calculating Hilbert Transform')
             # To Do: check inputs to the thread class
-            self.hilbert_transform_thread = HilbertTransformThread(self, self.reader, self.grid_indices,
+            self.hilbert_transform_thread = HilbertTransformThread(self, self.reader, self.grid_labels,
                                                                    self.threshold_factor, self.min_peaks_per_seizure)
             self.hilbert_transform_thread.progress_made.connect(self.on_progress_made)
             self.hilbert_transform_thread.operation_changed.connect(self.on_operation_changed)
@@ -90,19 +96,20 @@ class HilbertTransformTab(QtWidgets.QWidget):
         self.binned_time = np.array(data[0])
         self.binned_values = np.array(data[1])
         self.threshold = data[2]
-        self.epileptic_indices = data[3]
+        self.epileptic_indices.append(data[3])
+        epileptic_indices_channel = data[3]
 
         unepileptic_times = [self.binned_time[idx] for idx in range(len(self.binned_time))
-                             if idx not in self.epileptic_indices]
+                             if idx not in epileptic_indices_channel]
         unepileptic_values = [self.binned_values[idx] for idx in range(len(self.binned_values))
-                             if idx not in self.epileptic_indices]
+                              if idx not in epileptic_indices_channel]
 
         self.line = pg.InfiniteLine(pos=self.threshold, angle=0, pen=self.dashed_line_pen, movable=False)
         self.plot_widget.clear()
         self.bar_graph = pg.BarGraphItem(x=unepileptic_times[:-1], height=unepileptic_values, width=1,
                                          pen=pg.mkPen('b', width=1))
-        self.red_bars_graph = pg.BarGraphItem(x=self.binned_time[self.epileptic_indices],
-                                              height=self.binned_values[self.epileptic_indices], width=1,
+        self.red_bars_graph = pg.BarGraphItem(x=self.binned_time[epileptic_indices_channel],
+                                              height=self.binned_values[epileptic_indices_channel], width=1,
                                               pen=pg.mkPen('r', width=1))
         self.plot_widget.addItem(self.bar_graph)
         self.plot_widget.addItem(self.red_bars_graph)
@@ -120,11 +127,24 @@ class HilbertTransformTab(QtWidgets.QWidget):
     @QtCore.pyqtSlot()
     def on_hilbert_transform_thread_finished(self):
         self.progress_label.setText('Finished. :)')
+
         if self.hilbert_transform_thread.epileptic_indices:
             self.epileptic_indices = self.hilbert_transform_thread.epileptic_indices.copy()
-            # ToDo: do I only get the indices to the result and change it there or should i change indices to start and
-            # ToDo: end time before i submit it to the results?
-            self.mea_file_view.results.set_hilbert_transform_times(self.hilbert_transform_thread.
-                                                                   epileptic_indices)
+            self.mea_file_view.results.set_hilbert_transform_data(self.epileptic_indices)
+
         self.hilbert_transform_thread = None
+        self.save_button.setEnabled(True)
+
+    @QtCore.pyqtSlot()
+    def on_save_button_clicked(self):
+        file_dialog = QtWidgets.QFileDialog(self)
+        file_dialog.setFileMode(QtWidgets.QFileDialog.AnyFile)
+        file_dialog.setAcceptMode(QtWidgets.QFileDialog.AcceptSave)
+        file_dialog.setNameFilter("CSV files (*.csv)")
+        file_dialog.setDefaultSuffix(".csv")
+        file_dialog_result = file_dialog.exec()
+        if file_dialog_result:
+            # user selected file:
+            selected_file = file_dialog.selectedFiles()[0]
+            self.mea_file_view.results.save_hilbert_transform_data_to(selected_file)
 

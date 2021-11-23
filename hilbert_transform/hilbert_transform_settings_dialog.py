@@ -7,6 +7,8 @@ from hilbert_transform.hilbert_transform_settings import HilbertTransformSetting
 class HilbertTransformSettingsDialog(QtWidgets.QDialog):
     def __init__(self, parent, allowed_channel_modes, initial_settings=None):
         super().__init__(parent)
+        self.allowed_channel_modes = allowed_channel_modes
+        self.settings = initial_settings
 
         title = 'Hilbert Transform'
         self.setWindowTitle(title)
@@ -59,11 +61,30 @@ class HilbertTransformSettingsDialog(QtWidgets.QDialog):
         self.cancel_button.clicked.connect(self.on_cancel_clicked)
         main_layout.addWidget(self.cancel_button)
 
-    # To Do: check if this stays static or if I want to get the threshold factor in there
+        self.apply_settings()
+
+    def apply_settings(self):
+        if self.settings is not None:
+            if HilbertTransformSettings.ChannelSelection.SELECTION in self.allowed_channel_modes:
+                self.selected_channels_button.setChecked(True)
+            else:
+                self.all_channels_button.setChecked(True)
+
+            self.threshhold_factor_textbox.setText(str(self.settings.threshold_factor))
+            self.min_peaks_per_seizure_textbox.setText(str(self.settings.min_peaks_per_seizure))
+
     def get_settings(self):
-        settings = HilbertTransformSettings()
-        settings.channel_selection = self.selected_channels_button.isChecked()
-        return settings
+        if self.settings is None:
+            self.settings = HilbertTransformSettings()
+
+        if self.selected_channels_button.isChecked():
+            self.settings.channel_selection = HilbertTransformSettings.ChannelSelection.SELECTION
+        else:
+            self.settings.channel_selection = HilbertTransformSettings.ChannelSelection.ALL
+
+        self.settings.threshold_factor = int(self.threshhold_factor_textbox.text())
+        self.settings.min_peaks_per_seizure = int(self.min_peaks_per_seizure_textbox.text())
+        return self.settings
 
     def on_okay_clicked(self):
         self.accept()

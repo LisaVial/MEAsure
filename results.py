@@ -89,13 +89,14 @@ class ResultStoring:
         # spike counts
         self.spikecount_data = []
 
+        # hilbert transform result
+        self.hilbert_transforms = None
+
     def set_filter_mat(self, filter_mat):
         self._filter_mat = filter_mat
-        print(self._filter_mat)
 
     def set_frequency_mat(self, frequency_mat):
         self._frequency_mat = frequency_mat
-        print(self._frequency_mat)
 
     def get_filter_mat(self):
         return self._filter_mat
@@ -150,5 +151,24 @@ class ResultStoring:
             for spikecount_data in self.spikecount_data:
                 w.writerow(spikecount_data.get_as_row())
 
+    def set_hilbert_transform_data(self, epileptic_indices_dict):
+        if self.hilbert_transforms is None:
+            self.hilbert_transforms = []
 
+        for key in epileptic_indices_dict.keys():
+            for epileptic_indices_list in epileptic_indices_dict[key]:
+                label = key
+                start_time = min(epileptic_indices_list)
+                end_time = max(epileptic_indices_list)
+                self.hilbert_transforms.append(HilbertTransformData(label, start_time, end_time))
 
+    def clear_hilbert_transform_data(self):
+        self.hilbert_transforms.clear()
+
+    def save_hilbert_transform_data_to(self, file_path):
+        sorted_hilbert_transforms = sorted(self.hilbert_transforms, key=lambda result: result.label)
+        with open(file_path, 'w', newline='') as csvfile:
+            w = csv.writer(csvfile)
+            w.writerow(HilbertTransformData.get_header())
+            for hilbert_transform_data in sorted_hilbert_transforms:
+                w.writerow(hilbert_transform_data.get_as_row())
