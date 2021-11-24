@@ -22,7 +22,6 @@ class FilterSettingsWidget(QtWidgets.QGroupBox):
         self.setTitle("Settings")
         group_box_layout = QtWidgets.QGridLayout(self)
 
-
         # Since the user will be allowed to write something, we have to tell which type of input is allowed.
         valid_number_pattern = "[0-9]*\.{0,1][0-9]*"
         valid_number_regex = QtCore.QRegExp(valid_number_pattern)
@@ -85,27 +84,6 @@ class FilterSettingsWidget(QtWidgets.QGroupBox):
         self.second_cutoff_textbox.setVisible(False)
         self.second_textbox_label.setVisible(False)
 
-        # To Do: get rid of that
-        # This last widget handles the information whether or not the filtered traces should be stored to a new
-        # .h5 at the end of the filtering process.
-        self.save_filtered_traces_box = QtWidgets.QCheckBox('Save filtered traces')
-        self.save_filtered_traces_label = QtWidgets.QLabel('')
-        group_box_layout.addWidget(self.save_filtered_traces_box)
-        self.get_existing_file_box = QtWidgets.QCheckBox('Append to existing file')
-        self.append_to_existing_file = False
-        self.get_existing_file_box.setVisible(False)
-        self.get_existing_file_box.stateChanged.connect(self.get_existing_file_box_changed)
-        group_box_layout.addWidget(self.get_existing_file_box)
-        self.filename_entry_label = QtWidgets.QLabel(self)
-        self.filename_entry_label.setVisible(False)
-        self.filename_entry_label.setText('Enter filename without extension:')
-        self.filename_entry = QtWidgets.QLineEdit(self)
-        self.filename_entry.setVisible(False)
-        group_box_layout.addWidget(self.filename_entry_label)
-        group_box_layout.addWidget(self.filename_entry)
-        self.save_filtered_traces_box.stateChanged.connect(self.save_filtered_traces_changed)
-        group_box_layout.addWidget(self.save_filtered_traces_label)
-
         # if there are no changes in the settings the default settings are used
         if not settings:
             # create default settings
@@ -113,23 +91,6 @@ class FilterSettingsWidget(QtWidgets.QGroupBox):
 
         # Here, the widgets are initialized with settings
         self.set_settings(settings)
-        # This function updates the label (info about saving or not saving traces).
-        self.save_filtered_traces_changed()
-
-    def get_meae_filename(self):
-        return self.filename_entry.text().strip()
-
-    def get_existing_file_box_changed(self):
-        if self.get_existing_file_box.isChecked():
-            self.append_to_existing_file = True
-            self.filename_entry_label.setVisible(False)
-            self.filename_entry.setVisible(False)
-
-    def check_appending(self):
-        if self.append_to_existing_file:
-            return self.meae_path
-        else:
-            return None
 
     def set_settings(self, settings):
         """
@@ -141,8 +102,6 @@ class FilterSettingsWidget(QtWidgets.QGroupBox):
         # Set text of cutoff line edits according to cutoffs from settings
         self.single_cutoff_textbox.setText(str(settings.lower_cutoff))
         self.second_cutoff_textbox.setText(str(settings.upper_cutoff))
-        # Set checked state of check box for saving filtered traces from settings.
-        self.save_filtered_traces_box.setChecked(settings.save_filtered_traces)
         # Set if all or only a few channels will be filtered from settings.
         if settings.channel_selection == FilterSettings.ChannelSelection.ALL:
             self.all_channels_button.setChecked(True)
@@ -188,27 +147,5 @@ class FilterSettingsWidget(QtWidgets.QGroupBox):
             # not a float
             pass
 
-        settings.save_filtered_traces = self.save_filtered_traces_box.isChecked()
         settings.channel_selection = self.selected_channels_button.isChecked()
         return settings
-
-    def save_filtered_traces_changed(self):
-        """
-        This function handles the label of the checkbox which handles saving of filtered traces. In the dialog it is
-        only needed to change the label, the consequences are handled by the settings.
-        :return:
-        """
-        if self.save_filtered_traces_box.isChecked():
-            self.get_existing_file_box.setVisible(True)
-            if self.mea_file_exists:
-                self.get_existing_file_box.setCheckable(True)
-            else:
-                self.get_existing_file_box.setCheckable(False)
-            self.filename_entry_label.setVisible(True)
-            self.filename_entry.setVisible(True)
-            self.save_filtered_traces_label.setText("Saving filtered traces to .meae file at end of filtering")
-        else:
-            self.get_existing_file_box.setVisible(False)
-            self.filename_entry_label.setVisible(False)
-            self.filename_entry.setVisible(False)
-            self.save_filtered_traces_label.setText("Don\'t save filtered traces")

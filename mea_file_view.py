@@ -162,7 +162,7 @@ class MeaFileView(QtWidgets.QWidget):
         self.toolbar.addAction(self.show_raw_trace_plot_dialog)
 
         self.show_hilbert_transform_tab = QtWidgets.QAction('Hilbert Transform', self)
-        self.show_hilbert_transform_tab.triggered.connect(self.open_hilber_transform_tab)
+        self.show_hilbert_transform_tab.triggered.connect(self.open_hilbert_transform_tab)
         hilbert_transform_icon = QtGui.QIcon('./icons/hilbert_transform_icon.png')
         self.show_hilbert_transform_tab.setIcon(hilbert_transform_icon)
         self.toolbar.addAction(self.show_hilbert_transform_tab)
@@ -252,7 +252,7 @@ class MeaFileView(QtWidgets.QWidget):
         QtWidgets.QApplication.instance().main_window.animation_overlay.stop()
         self.continue_initialisation()
 
-    def open_hilber_transform_tab(self):
+    def open_hilbert_transform_tab(self):
         channel_labels_and_indices = self.mea_grid.get_selected_channels()
         allowed_channel_modes = [HilbertTransformSettings.ChannelSelection.ALL]
         if len(channel_labels_and_indices) > 0:
@@ -275,7 +275,8 @@ class MeaFileView(QtWidgets.QWidget):
         allowed_channel_modes = [RawTraceSettings.ChannelSelection.ALL]
         if len(channel_labels_and_indices) > 0:
             allowed_channel_modes.append(RawTraceSettings.ChannelSelection.SELECTION)
-        settings_dialog = RawTraceSettingsDialog(self, allowed_channel_modes, self.raw_trace_plot_settings)
+        settings_dialog = RawTraceSettingsDialog(self, allowed_channel_modes, self.reader.duration,
+                                                 self.raw_trace_plot_settings)
         if settings_dialog.exec() == 1:
             self.raw_trace_plot_settings = settings_dialog.get_settings()
             if self.raw_trace_plot_settings.channel_selection == RawTraceSettings.ChannelSelection.ALL:
@@ -301,7 +302,6 @@ class MeaFileView(QtWidgets.QWidget):
         settings_dialog = FilterSettingsDialog(self, allowed_modes, self.filter_settings)
         if settings_dialog.exec() == 1:  # 'Execute' clicked
             self.filter_settings = settings_dialog.get_settings()
-            meae_filename = settings_dialog.meae_filename
             if self.filter_settings.channel_selection == FilterSettings.ChannelSelection.ALL:
                 grid_indices = range(len(self.reader.voltage_traces))
                 grid_labels = self.reader.labels
@@ -315,8 +315,7 @@ class MeaFileView(QtWidgets.QWidget):
             # initialise filtering
             # give FilterThread indices (all is default and if selected, thread has to receive special indices
             # -> via filter tab?)
-            self.filter_tab = FilterTab(self, meae_filename, self.reader, grid_indices, grid_labels,
-                                        settings_dialog.append_to_existing_file, self.filter_settings)
+            self.filter_tab = FilterTab(self, self.reader, grid_indices, grid_labels, self.filter_settings)
             self.tab_widget.addTab(self.filter_tab, "Filtering")
             self.filter_tab.initialize_filtering()
 
@@ -412,7 +411,6 @@ class MeaFileView(QtWidgets.QWidget):
                 grid_labels = [values[0] for values in grid_labels_and_indices]
             self.frequency_bands_analysis_tab = FrequencyBandsTab(self, self.reader, grid_indices, grid_labels,
                                                                   self.frequency_band_analysis_settings)
-            # todo: solve plotting of all channels
             self.tab_widget.addTab(self.frequency_bands_analysis_tab, "Frequency Band Analysis")
             self.frequency_bands_analysis_tab.initialize_frequency_bands_analysis()
 

@@ -13,7 +13,7 @@ class FilterSettingsDialog(QtWidgets.QDialog):  # Setting up of a new class. In 
     filtering method (new filtered trace vs old unfiltered trace). Also, in the background a QThread is created, which
     enables the GUI to be still responsive, while there are longer computations running in the background
     """
-    def __init__(self, parent, allowed_channel_modes, mea_file_exists, meae_path, inital_settings=None):
+    def __init__(self, parent, allowed_channel_modes, inital_settings=None):
         # With this function you initialize a class.
         """
         :param parent: This parameter is needed for PyQt -> it tells the program in which other Widget the current
@@ -57,12 +57,8 @@ class FilterSettingsDialog(QtWidgets.QDialog):  # Setting up of a new class. In 
         # In this case, the widget for the buttons is in an extra script, but if there are not many settings, sometimes
         # the widget will be defined in the script of the dialog itself. If a widget is defined outside the current
         # script, it has to be called like a function and imported on the top of the current script.
-        self.filter_settings_widget = FilterSettingsWidget(self, allowed_channel_modes, mea_file_exists, meae_path,
-                                                           inital_settings)
+        self.filter_settings_widget = FilterSettingsWidget(self, allowed_channel_modes, inital_settings)
         main_layout.addWidget(self.filter_settings_widget)
-
-        self.meae_filename = None
-        self.append_to_existing_file = False
 
         # Here two small widgets are defined inside of this script. They are a okay and cancel button to execute or
         # abort filtering.

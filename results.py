@@ -90,7 +90,7 @@ class ResultStoring:
         self.spikecount_data = []
 
         # hilbert transform result
-        self.hilbert_transforms = None
+        self.hilbert_transforms = []
 
     def set_filter_mat(self, filter_mat):
         self._filter_mat = filter_mat
@@ -152,15 +152,41 @@ class ResultStoring:
                 w.writerow(spikecount_data.get_as_row())
 
     def set_hilbert_transform_data(self, epileptic_indices_dict):
-        if self.hilbert_transforms is None:
-            self.hilbert_transforms = []
-
         for key in epileptic_indices_dict.keys():
             for epileptic_indices_list in epileptic_indices_dict[key]:
                 label = key
                 start_time = min(epileptic_indices_list)
                 end_time = max(epileptic_indices_list)
-                self.hilbert_transforms.append(HilbertTransformData(label, start_time, end_time))
+
+                variations = self.get_hilbert_transform_data_variations(label)
+                is_duplicate = False
+                for variation in variations:
+                    if variation == (start_time, end_time):
+                        is_duplicate = True
+                        break
+
+                if not is_duplicate:
+                    self.hilbert_transforms.append(HilbertTransformData(label, start_time, end_time))
+
+    def has_hilbert_transform_data(self):
+        return len(self.hilbert_transforms) > 0
+
+    def get_hilbert_transform_data_variations(self, label):
+        hilbert_transform_dict = self.get_hilbert_transform_data_dict()
+        if label in hilbert_transform_dict:
+            return hilbert_transform_dict[label]
+        else:
+            return []
+
+    def get_hilbert_transform_data_dict(self):
+        hilbert_transform_dict = dict()
+        for hilbert_transform_data in self.hilbert_transforms:
+            label = hilbert_transform_data.label
+            if label not in hilbert_transform_dict.keys():
+                hilbert_transform_dict[label] = []
+            hilbert_transform_dict[label].append((hilbert_transform_data.start_time, hilbert_transform_data.end_time))
+
+        return hilbert_transform_dict.copy()
 
     def clear_hilbert_transform_data(self):
         self.hilbert_transforms.clear()
