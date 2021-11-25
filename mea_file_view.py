@@ -385,7 +385,6 @@ class MeaFileView(QtWidgets.QWidget):
                 grid_labels = [values[0] for values in grid_labels_and_indices]
             self.frequency_analysis_tab = FrequencyAnalysisTab(self, self.reader, grid_indices, grid_labels,
                                                                self.frequency_analysis_settings)
-            # todo: solve plotting of all channels -> test it
             self.tab_widget.addTab(self.frequency_analysis_tab, "Frequency Analysis")
             self.frequency_analysis_tab.initialize_frequency_analysis()
 

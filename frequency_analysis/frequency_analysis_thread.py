@@ -8,14 +8,13 @@ class FrequencyAnalysisThread(QtCore.QThread):
     progress_made = QtCore.pyqtSignal(float)
     finished = QtCore.pyqtSignal()
 
-    def __init__(self, parent, reader, grid_indices, filtered, settings):
+    def __init__(self, parent, reader, grid_indices, grid_labels, settings):
         super().__init__(parent)
         self.settings = settings
         self.reader = reader
         self.fs = self.reader.sampling_frequency
-        self.labels = self.reader.labels
+        self.grid_labels = grid_labels
         self.grid_indices = grid_indices
-        self.filtered = filtered
 
         self.frequencies = None
 
@@ -28,7 +27,7 @@ class FrequencyAnalysisThread(QtCore.QThread):
         ids = reader.channel_ids
         selected_ids = [ids[g_idx] for g_idx in self.grid_indices]
         for idx, ch_id in enumerate(selected_ids):
-            label = ChannelUtility.get_label_by_ordered_index(ch_id)
+            label = self.grid_labels[idx]
             if label in self.settings.channel_time_selection.keys():
                 start_index, end_index = self.settings.channel_time_selection[label]
                 start_time = int(start_index * self.fs)
@@ -36,7 +35,6 @@ class FrequencyAnalysisThread(QtCore.QThread):
             else:
                 start_time = int(0)
                 end_time = int(self.reader.duration * self.fs)
-            print('start time:', start_time, '\n', 'end time:', end_time)
             signal = self.reader.get_scaled_channel(label)
             trimmed_signal = signal[start_time:end_time]
             # call function to scale signal -> question is, if the effects will then be so soft as with the CSD video
