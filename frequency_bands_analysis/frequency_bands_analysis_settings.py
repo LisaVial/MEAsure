@@ -11,6 +11,7 @@ class FrequencyBandsAnalysisSettings:
     def __init__(self):
         self.channel_selection = FrequencyBandsAnalysisSettings.ChannelSelection.ALL
         self.analysis_mode = FrequencyBandsAnalysisSettings.AnalysisMode.ICTAL
+        self.channel_time_selection = dict()
 
     def to_dict(self):
         result = dict()

@@ -90,6 +90,7 @@ class MeaFileView(QtWidgets.QWidget):
         self.add_rasterplot_tab = None
         self.add_isi_histogram_tab = None
         self.add_heatmap_tab = None
+        self.open_burst_detection_tab = None
         self.open_spike_check = None
         self.mea_grid = None
         self.tab_widget = None
@@ -155,11 +156,11 @@ class MeaFileView(QtWidgets.QWidget):
         self.show_mea_grid.setChecked(True)
         self.toolbar.addAction(self.show_mea_grid)
 
-        self.show_raw_trace_plot_dialog = QtWidgets.QAction('Raw trace plot', self)
-        self.show_raw_trace_plot_dialog.triggered.connect(self.open_raw_trace_plot_dialog)
-        raw_trace_plot_icon = QtGui.QIcon('./icons/raw_trace_icon.png')
-        self.show_raw_trace_plot_dialog.setIcon(raw_trace_plot_icon)
-        self.toolbar.addAction(self.show_raw_trace_plot_dialog)
+        self.show_filter_dialog = QtWidgets.QAction("Filtering", self)
+        self.show_filter_dialog.triggered.connect(self.open_filter_dialog)
+        filter_icon = QtGui.QIcon("./icons/filter_icon.png")
+        self.show_filter_dialog.setIcon(filter_icon)
+        self.toolbar.addAction(self.show_filter_dialog)
 
         self.show_hilbert_transform_tab = QtWidgets.QAction('Hilbert Transform', self)
         self.show_hilbert_transform_tab.triggered.connect(self.open_hilbert_transform_tab)
@@ -167,11 +168,11 @@ class MeaFileView(QtWidgets.QWidget):
         self.show_hilbert_transform_tab.setIcon(hilbert_transform_icon)
         self.toolbar.addAction(self.show_hilbert_transform_tab)
 
-        self.show_filter_dialog = QtWidgets.QAction("Filtering", self)
-        self.show_filter_dialog.triggered.connect(self.open_filter_dialog)
-        filter_icon = QtGui.QIcon("./icons/filter_icon.png")
-        self.show_filter_dialog.setIcon(filter_icon)
-        self.toolbar.addAction(self.show_filter_dialog)
+        self.show_raw_trace_plot_dialog = QtWidgets.QAction('Raw trace plot', self)
+        self.show_raw_trace_plot_dialog.triggered.connect(self.open_raw_trace_plot_dialog)
+        raw_trace_plot_icon = QtGui.QIcon('./icons/raw_trace_icon.png')
+        self.show_raw_trace_plot_dialog.setIcon(raw_trace_plot_icon)
+        self.toolbar.addAction(self.show_raw_trace_plot_dialog)
 
         self.add_frequency_analysis_tab = QtWidgets.QAction('Frequency analysis', self)
         frequency_analysis_icon = QtGui.QIcon("./icons/frequency_analysis_icon.png")
@@ -208,6 +209,12 @@ class MeaFileView(QtWidgets.QWidget):
         self.add_heatmap_tab.setIcon(heatmap_icon)
         self.add_heatmap_tab.triggered.connect(self.open_heatmap_settings_dialog)
         self.toolbar.addAction(self.add_heatmap_tab)
+
+        self.open_burst_detection_tab = QtWidgets.QAction('Burst Detection', self)
+        burst_detection_icon = QtGui.QIcon("./icons/burst_detection_icon.png")
+        self.open_burst_detection_tab.setIcon(burst_detection_icon)
+        self.open_burst_detection_tab.triggered.connect(self.open_burst_detection_settings_dialog)
+        self.toolbar.addAction(self.open_burst_detection_tab)
 
         self.open_spike_check = QtWidgets.QAction('Spike Verfication', self)
         spike_verification_icon = QtGui.QIcon("./icons/spike_verification_icon.png")
@@ -512,6 +519,9 @@ class MeaFileView(QtWidgets.QWidget):
                 self.rasterplot_tab = RasterplotTab(self, sc_reader, self.plot_settings, sampling_rate, duration,
                                                     grid_labels, grid_indices)
                 self.tab_widget.addTab(self.rasterplot_tab, "Rasterplot")
+
+    def open_burst_detection_settings_dialog(self):
+        pass
 
     def open_spike_check_dialog(self, is_pressed):
         sc_filepath = self.file_manager.get_verified_sc_file()
