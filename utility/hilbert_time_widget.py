@@ -46,6 +46,9 @@ class HilbertTimeWidget(QtWidgets.QGroupBox):
             self.channel_time_selection = dialog.get_channel_time_selection()
 
     def get_channel_time_selection(self):
-        return self.channel_time_selection.copy()
+        if self.isChecked():
+            return self.channel_time_selection.copy()
+        else:
+            return dict()
 
 

@@ -32,11 +32,11 @@ class RawTracePlotTab(QtWidgets.QWidget):
             ## test
             if label in self.settings.channel_time_selection.keys():
                 start_index, end_index = self.settings.channel_time_selection[label]
-                start_time = int(start_index * self.fs)
-                end_time = int(end_index * self.fs)
+                start_time = int(start_index)
+                end_time = int(end_index)
             else:
-                start_time = int(self.settings.start_time * self.fs)
-                end_time = int(self.settings.end_time * self.fs)
+                start_time = int(self.settings.start_time)
+                end_time = int(self.settings.end_time)
             #######
 
             print('raw trace plot:', label, '->', idx)
@@ -48,7 +48,7 @@ class RawTracePlotTab(QtWidgets.QWidget):
 
             plot_time = np.arange(start_time, end_time, 1/self.fs)
             scaled_trace = self.reader.get_scaled_channel(label)
-            ax.plot(plot_time, scaled_trace[start_time:end_time])
+            ax.plot(plot_time, scaled_trace[int(start_time*self.fs):int(end_time*self.fs)])
             ax.set_xlim([plot_time[0], plot_time[-1]])
             ax.set_ylabel(r'amplitude [$\mu$ V]')
             ax.set_xlabel(r'time [s]')
