@@ -6,7 +6,7 @@ class HilbertTransformSettings:
 
     def __init__(self):
         self.channel_selection = HilbertTransformSettings.ChannelSelection.ALL
-        self.threshold_factor = 6
+        self.threshold_factor = 2
         self.min_peaks_per_seizure = 4
 
     def to_dict(self):
