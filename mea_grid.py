@@ -39,7 +39,6 @@ class MeaGrid(QWidget):
         mcs_channel_ids_file = open(r'/home/lisa_ruth/PycharmProjects/Spielwiese/ch_ids.txt', 'r')
         self.ch_ids = mcs_channel_ids_file.read().split(', ')
         self.all_channel_indices = np.array([int(v) for v in self.ch_ids if v != ''])
-
         self.labels = []
         self.label_indices_map = dict()
         for col, c in enumerate(['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'R']):
