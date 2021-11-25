@@ -48,36 +48,9 @@ class DataListView(QtWidgets.QWidget):
         data_files, meae_indices = self.get_data()
         for idx, file in enumerate(data_files):
             self.file_list.addItem(file)
-            tool_tip = "No .meae file found."
-            self.file_list.item(idx).setToolTip(tool_tip)
             if idx in meae_indices:
                 self.file_list.item(idx).setBackground(QtGui.QColor(0, 134, 153))
                 self.file_list.item(idx).setForeground(QtGui.QColor("white"))
-                self.file_list.item(idx).setToolTip(tool_tip)
-                file_without_extension = ".".join(file.split('.')[:-1])
-                mea_file = self.current_folder + file_without_extension + ".meae"
-                if os.path.exists(mea_file):
-                    reader = MeaeDataReader(mea_file)
-                    keys = list(reader.file.keys())
-                    spiketimes_indices_key_indices = [int(i) for i, key in enumerate(keys) if 'spiketimes_indices' in
-                                                      key]
-                    spiketimes_indices_keys = [keys[idx] for idx in spiketimes_indices_key_indices]
-                    spiketimes_key_indices = np.asarray(spiketimes_indices_key_indices) - 2
-                    spiketimes_keys = [keys[idx] for idx in spiketimes_key_indices]
-                    if len(spiketimes_keys) > 1:
-                        for k_idx, key in enumerate(keys):
-                            if key in spiketimes_keys or key in spiketimes_indices_keys and k_idx == 0:
-                                num_of_spiketimes = len(spiketimes_keys)
-                                tool_tip_keys = [key for key in keys if 'spiketimes' not in key]
-                                tool_tip_keys.append(str(int(num_of_spiketimes)) +
-                                                     ' spiketimes and spike indices found')
-                                tool_tip = "Keys: " + ", ".join(tool_tip_keys)
-                                self.file_list.item(idx).setToolTip(tool_tip)
-                            else:
-                                continue
-                    else:
-                        tool_tip = "Keys: " + ", ".join(keys)
-                        self.file_list.item(idx).setToolTip(tool_tip)
 
     # function that scans absolute and relative paths of data
     def get_data(self):
