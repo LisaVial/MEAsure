@@ -8,6 +8,9 @@ class RawTraceSettings:
         self.channel_selection = RawTraceSettings.ChannelSelection.ALL
         self.start_time = 0
         self.end_time = 1
+        self.is_end_time_initialised = False
+
+        self.channel_time_selection = dict()
 
     def to_dict(self):
         result = dict()

@@ -6,6 +6,7 @@ class FrequencyAnalysisSettings:
 
     def __init__(self):
         self.channel_selection = FrequencyAnalysisSettings.ChannelSelection.ALL
+        self.channel_time_selection = dict()
 
     def to_dict(self):
         result = dict()

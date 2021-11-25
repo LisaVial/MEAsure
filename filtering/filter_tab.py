@@ -17,15 +17,13 @@ class FilterTab(QtWidgets.QWidget):
     # The FilterTab class receives the MeaFileView as a parent (where it will be embedded), the McsDataReader (another
     # class, which handles the reading of the h5 files of the recordings), the grid  (either all or a selection of grid
     # channels) and the filter settings.
-    def __init__(self, parent, meae_filename, reader, grid_indices, grid_labels, append, settings):
+    def __init__(self, parent, reader, grid_indices, grid_labels, settings):
         super().__init__(parent)
         # By setting variables to class variables (done with the 'self.' in front of them) it enables you to use them
         # outside this __init__() function. For example in functions you created yourself further down in the script.
-        self.meae_filename = meae_filename
         self.reader = reader
         self.grid_indices = grid_indices
         self.grid_labels = grid_labels
-        self.append_existing_file = append
         self.settings = settings
         self.mea_file_view = parent
 
@@ -179,76 +177,10 @@ class FilterTab(QtWidgets.QWidget):
             self.mea_file_view.results.set_filter_mat(self.filtering_thread.filtered_mat)
         self.filtering_thread = None
 
-        if self.settings.save_filtered_traces:
-            path = os.path.split(self.reader.file_path)[0]
-            if self.meae_filename is None:
-                self.meae_filename = os.path.split(self.reader.file_path)[-1][:-3] + '.meae'
-            self.save_filter_mat(self.filtered_mat, os.path.join(path, self.meae_filename), self.reader)
-
-    def save_filter_mat(self, filter_mat, filename, reader):
-        """
-        This function saves the filtered_mat once the filtering thread is finished
-        :param filter_mat: list of arrays of filtered traces
-        :param filename: filename under which .meae file will be stored
-        :param reader: McsReader, currently used to get filename
-        :return:
-        """
-        if self.append_existing_file:
-            self.operation_label.setText('Saving filtered traces im .meae file...')
-            with h5py.File(filename, 'a') as hf:
-                if 'filter' in hf.keys():
-                    hf['filter'].resize((hf['filter'].shape[0] + filter_mat.shape[0]), axis=0)
-                    hf['filter'][-filter_mat.shape[0]:] = filter_mat
-                self.operation_label.setText('Filtered traces saved in: ' + filename)
-        else:
-            self.operation_label.setText('Saving filtered traces im .meae file...')
-            if reader.sampling_frequency and reader.channel_ids and reader.labels:
-                with h5py.File(filename, 'w') as hf:
-                    dset_1 = hf.create_dataset('filter', data=filter_mat)
-                    dset_2 = hf.create_dataset('fs', data=reader.sampling_frequency)
-                    # dset_3 = hf.create_dataset('channel_ids', data=reader.channel_ids)
-                    # save_labels = [label.encode('utf-8') for label in reader.labels]
-                    # dset_3 = hf.create_dataset('channel_labels', data=save_labels)
-            self.operation_label.setText('Filtered traces saved in: ' + filename)
-
-    def open_filter_file(self, filepath):
-        """
-        This function loads the filtered traces matrix, if it already exists
-        :param filepath: filepath of the .meae file
-        :return: filter_mat, a .h5 file which holds already filtered traces
-        """
-        # todo: check if this function is still functional
-        hf = h5py.File(filepath, 'r')
-        key = list(hf.keys())[0]
-        filer_mat = hf[key]
-        return filer_mat
-
-    def check_for_filtered_traces(self):
-        # scan path of current file, if the desired .meae file exists
-        # todo: check if it still works
-        filtered = self.mea_file[:-3] + '.meae'
-        if os.path.exists(filtered):
-            # if this file already exists, set it as filter_mat
-            filter_mat = self.open_filter_file(filtered)
-            # show user an answer that informs him/her about the file and asks, if the user wants to filter channels
-            # again anyways
-            answer = QtWidgets.QMessageBox.information(self, 'Filtered channels already found',
-                                                       'Filter channels again?',
-                                                       QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No,
-                                                       QtWidgets.QMessageBox.No)
-            # depending on the answer of the user, set the found file as filter_mat or set filter_mat to none
-            if answer == QtWidgets.QMessageBox.Yes:
-                return None
-            else:
-                return filter_mat
-        # in case there is no filter file found, the filter_mat stays none
-        else:
-            return None
-
-    # todo: make tab closeable
     def is_busy_filtering(self):
         return self.filtering_thread is not None
 
     def can_be_closed(self):
         # only allow closing if not busy
         return not self.is_busy_filtering()
+

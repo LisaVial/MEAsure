@@ -1,11 +1,10 @@
 import PyQt5.QtCore as QtCore
 import json
 
+from hilbert_transform.hilbert_transform_settings import HilbertTransformSettings
 from frequency_analysis.frequency_analysis_settings import FrequencyAnalysisSettings
 from frequency_bands_analysis.frequency_bands_analysis_settings import FrequencyBandsAnalysisSettings
-from spike_detection.spike_detection_settings import SpikeDetectionSettings
 from filtering.filter_settings import FilterSettings
-from plots.csd_plot.csd_plot_settings import CsdPlotSettings
 from plots.heatmap.heatmap_settings import HeatmapSettings
 from plots.ISI.isi_histogram_settings import IsiHistogramSettings
 from plots.raster_plot.rasterplot_settings import RasterplotSettings
@@ -21,10 +20,9 @@ class Settings:
         self.last_folder = ""
         self.main_window_geometry = bytearray()
         self.main_window_state = bytearray()
-        self.spike_detection_settings = SpikeDetectionSettings()
         self.filter_settings = FilterSettings()
+        self.hilbert_transform_settings = HilbertTransformSettings()
         self.rasterplot_settings = RasterplotSettings()
-        self.csd_plot_settings = CsdPlotSettings()
         self.heatmap_settings = HeatmapSettings()
         self.frequency_analysis_settings = FrequencyAnalysisSettings()
         self.frequency_bands_analysis_settings = FrequencyBandsAnalysisSettings()
@@ -42,14 +40,12 @@ class Settings:
                 self.main_window_geometry = QtCore.QByteArray(bytearray(d["main_window_geometry"], "ascii"))
             if "main_window_state" in d.keys():
                 self.main_window_state = QtCore.QByteArray(bytearray(d["main_window_state"], "ascii"))
-            if "spike_detection_settings" in d.keys():
-                self.spike_detection_settings.from_dict(d["spike_detection_settings"])
+            if "hilbert_transform_settings" in d.keys():
+                self.hilbert_transform_settings.from_dict(d["hilbert_transform_settings"])
             if "filter_settings" in d.keys():
                 self.filter_settings.from_dict(d["filter_settings"])
             if "rasterplot_settings" in d.keys():
                 self.rasterplot_settings.from_dict(d["rasterplot_settings"])
-            if 'csd_plot_settings' in d.keys():
-                self.csd_plot_settings.from_dict(d['csd_plot_settings'])
             if 'heatmap_settings' in d.keys():
                 self.heatmap_settings.from_dict(d['heatmap_settings'])
             if 'frequency_analysis_settings' in d.keys():
@@ -70,10 +66,9 @@ class Settings:
         d["last_folder"] = self.last_folder
         d["main_window_geometry"] = bytearray(self.main_window_geometry).decode("ascii")
         d["main_window_state"] = bytearray(self.main_window_state).decode("ascii")
-        d["spike_detection_settings"] = self.spike_detection_settings.to_dict()
+        d["hilbert_transform_settings"] = self.hilbert_transform_settings.to_dict()
         d["filter_settings"] = self.filter_settings.to_dict()
         d["rasterplot_settings"] = self.rasterplot_settings.to_dict()
-        d["csd_plot_settings"] = self.csd_plot_settings.to_dict()
         d["heatmap_settings"] = self.heatmap_settings.to_dict()
         d["frequency_analysis_settings"] = self.frequency_analysis_settings.to_dict()
         d["frequency_bands_analysis_settings"] = self.frequency_bands_analysis_settings.to_dict()

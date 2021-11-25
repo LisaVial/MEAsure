@@ -3,6 +3,22 @@ from frequency_bands_analysis.frequency_bands_analysis_settings import Frequency
 
 
 # sub classes for specific results
+class HilbertTransformData:
+    def __init__(self, label, start_time, end_time):
+        self.label = label
+        self.start_time = start_time
+        self.end_time = end_time
+        self.duration = self.end_time - self.start_time
+
+    @staticmethod
+    def get_header():
+        return ['label', 'start time', 'end time', 'duration']
+
+    def get_as_row(self):
+        row = [self.label, self.start_time, self.end_time, self.duration]
+        return row
+
+
 class SpikeCountData:
     def __init__(self, label, spikecounts):
         if len(label) == 3:
@@ -73,13 +89,14 @@ class ResultStoring:
         # spike counts
         self.spikecount_data = []
 
+        # hilbert transform result
+        self.hilbert_transforms = []
+
     def set_filter_mat(self, filter_mat):
         self._filter_mat = filter_mat
-        print(self._filter_mat)
 
     def set_frequency_mat(self, frequency_mat):
         self._frequency_mat = frequency_mat
-        print(self._frequency_mat)
 
     def get_filter_mat(self):
         return self._filter_mat
@@ -134,3 +151,50 @@ class ResultStoring:
             for spikecount_data in self.spikecount_data:
                 w.writerow(spikecount_data.get_as_row())
 
+    def set_hilbert_transform_data(self, epileptic_indices_dict):
+        for key in epileptic_indices_dict.keys():
+            for epileptic_indices_list in epileptic_indices_dict[key]:
+                label = key
+                start_time = min(epileptic_indices_list)
+                end_time = max(epileptic_indices_list)
+
+                variations = self.get_hilbert_transform_data_variations(label)
+                is_duplicate = False
+                for variation in variations:
+                    if variation == (start_time, end_time):
+                        is_duplicate = True
+                        break
+
+                if not is_duplicate:
+                    self.hilbert_transforms.append(HilbertTransformData(label, start_time, end_time))
+
+    def has_hilbert_transform_data(self):
+        return len(self.hilbert_transforms) > 0
+
+    def get_hilbert_transform_data_variations(self, label):
+        hilbert_transform_dict = self.get_hilbert_transform_data_dict()
+        if label in hilbert_transform_dict:
+            return hilbert_transform_dict[label]
+        else:
+            return []
+
+    def get_hilbert_transform_data_dict(self):
+        hilbert_transform_dict = dict()
+        for hilbert_transform_data in self.hilbert_transforms:
+            label = hilbert_transform_data.label
+            if label not in hilbert_transform_dict.keys():
+                hilbert_transform_dict[label] = []
+            hilbert_transform_dict[label].append((hilbert_transform_data.start_time, hilbert_transform_data.end_time))
+
+        return hilbert_transform_dict.copy()
+
+    def clear_hilbert_transform_data(self):
+        self.hilbert_transforms.clear()
+
+    def save_hilbert_transform_data_to(self, file_path):
+        sorted_hilbert_transforms = sorted(self.hilbert_transforms, key=lambda result: result.label)
+        with open(file_path, 'w', newline='') as csvfile:
+            w = csv.writer(csvfile)
+            w.writerow(HilbertTransformData.get_header())
+            for hilbert_transform_data in sorted_hilbert_transforms:
+                w.writerow(hilbert_transform_data.get_as_row())

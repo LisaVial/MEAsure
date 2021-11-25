@@ -36,6 +36,7 @@ class PlotListView(QtWidgets.QWidget):
             plots_to_save = self.get_checked_plots()
             for plot in plots_to_save:
                 filename = os.path.join(selected_folder, plot.plot_name + '.png')
+                plot.figure.set_size_inches(12, 9)
                 plot.figure.savefig(filename)
         self.save_button.setEnabled(True)
 

@@ -1,11 +1,14 @@
 from PyQt5 import QtCore, QtWidgets
 
 from plots.raw_trace_plot.raw_trace_settings import RawTraceSettings
+from utility.hilbert_time_widget import HilbertTimeWidget
 
 
 class RawTraceSettingsDialog(QtWidgets.QDialog):
-    def __init__(self, parent, allowed_channel_selection_mode, settings=None):
+    def __init__(self, parent, allowed_channel_selection_mode, duration, settings=None):
         super().__init__(parent)
+        self.mea_file_view = parent
+        self.duration = duration
 
         title = 'Raw traces'
 
@@ -44,6 +47,13 @@ class RawTraceSettingsDialog(QtWidgets.QDialog):
         main_layout.addWidget(self.time_one_textbox)
         main_layout.addWidget(self.time_one_textbox_label)
 
+        channel_time_selection = dict()
+        if settings is not None:
+            channel_time_selection = settings.channel_time_selection
+
+        self.hilbert_time_widget = HilbertTimeWidget(self, self.mea_file_view.results, channel_time_selection)
+        main_layout.addWidget(self.hilbert_time_widget)
+
         self.okay_button = QtWidgets.QPushButton(self)
         self.okay_button.setText('Execute')
         self.okay_button.clicked.connect(self.on_okay_clicked)
@@ -58,6 +68,10 @@ class RawTraceSettingsDialog(QtWidgets.QDialog):
 
         if not settings:
             settings = RawTraceSettings()
+
+        if not settings.is_end_time_initialised:
+            settings.end_time = int(self.duration)
+            settings.is_end_time_initialised = True
 
         self.set_settings(settings)
 
@@ -74,6 +88,7 @@ class RawTraceSettingsDialog(QtWidgets.QDialog):
         settings.channel_selection = self.selected_channels_button.isChecked()
         settings.start_time = int(self.time_zero_textbox.text())
         settings.end_time = int(self.time_one_textbox.text())
+        settings.channel_time_selection = self.hilbert_time_widget.get_channel_time_selection()
         return settings
 
     def on_okay_clicked(self):
