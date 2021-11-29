@@ -50,7 +50,7 @@ class BurstDetectionTab(QtWidgets.QWidget):
     def initialize_burst_detection(self):
         if self.burst_detection_thread is None:
             self.progress_bar.setValue(0)
-            self.progress_label.setText('Initializing burst detection.')
+            self.operation_label.setText('Initializing burst detection.')
             self.burst_detection_thread = BurstDetectionThread(self, self.sc_reader.spiketimes, self.grid_labels,
                                                                self.settings)
             self.burst_detection_thread.progress_made.connect(self.on_progress_made)

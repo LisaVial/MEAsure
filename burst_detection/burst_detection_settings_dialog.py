@@ -64,7 +64,7 @@ class BurstDetectionSettingsDialog(QtWidgets.QDialog):
         self.apply_settings(settings)
 
     def apply_settings(self, settings):
-        if self.settings is not None:
+        if settings is not None:
             if BurstDetectionSettings.ChannelSelection.SELECTION in self.allowed_channel_modes:
                 self.selected_channels_button.setChecked(True)
             else:
@@ -74,7 +74,7 @@ class BurstDetectionSettingsDialog(QtWidgets.QDialog):
 
     def get_settings(self):
         if self.settings is None:
-            settings = BurstDetectionSettings()
+            self.settings = BurstDetectionSettings()
         if self.selected_channels_button.isChecked():
             self.settings.channel_selection = BurstDetectionSettings.ChannelSelection.SELECTION
         else:

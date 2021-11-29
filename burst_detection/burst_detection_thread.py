@@ -14,12 +14,13 @@ class BurstDetectionThread(QtCore.QThread):
         self.grid_labels = grid_labels
         self.settings = settings
 
-        self.all_bursts = []
+        self.all_bursts = None
 
     def work(self):
         # in order to determine which spikes belonged to bursts, we have to go through all the spike times of all
         # channels
         # skip channels that had less spikes than necessary
+        self.all_bursts = []
         self.operation_changed.emit('Detecting bursts.')
         for idx, channel_spiketimes in enumerate(self.spiketimes):                                   # spike times are stored as indices
             channel_spiketimes = np.array(channel_spiketimes, dtype='int64')
@@ -65,7 +66,6 @@ class BurstDetectionThread(QtCore.QThread):
             return self.all_bursts
 
     def run(self):
-        self.all_bursts.clear()
         self.all_bursts = self.work()
         self.finished.emit()
 

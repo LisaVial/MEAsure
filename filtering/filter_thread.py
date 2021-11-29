@@ -59,9 +59,6 @@ class FilterThread(QtCore.QThread):
         # Set up filter_mat to store filtered traces in and get all necessary variables
         filter_mat = []
         reader = mea_data_reader
-        signals = reader.voltage_traces
-        ids = reader.channel_ids
-        labels = reader.labels
         fs = reader.sampling_frequency
         # With this one liner (list comprehension) only selected channel ids are selected according to chosen
         # grid_indices
