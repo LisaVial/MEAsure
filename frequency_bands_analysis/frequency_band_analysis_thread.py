@@ -8,11 +8,13 @@ class FrequencyBandAnalysisThread(QtCore.QThread):
     finished = QtCore.pyqtSignal()
     data_updated = QtCore.pyqtSignal(list)
 
-    def __init__(self, parent, reader, grid_indices, grid_labels):
+    def __init__(self, parent, reader, grid_indices, grid_labels, settings):
         super().__init__(parent)
         self.reader = reader
+        self.fs = self.reader.sampling_frequency
         self.grid_indices = grid_indices
         self.grid_labels = grid_labels
+        self.settings = settings
         self.frequencies, self.power = None, None
 
     def analyzing_frequency_bands(self):
@@ -25,10 +27,18 @@ class FrequencyBandAnalysisThread(QtCore.QThread):
         #     label = reader.labels[ch_id]
         for idx in range(len(self.grid_indices)):
             label = self.grid_labels[idx]
+            if label in self.settings.channel_time_selection.keys():
+                start_index, end_index = self.settings.channel_time_selection[label]
+                start_time = int(start_index * self.fs)
+                end_time = int(end_index * self.fs)
+            else:
+                start_time = int(0)
+                end_time = int(self.reader.duration)
             # the tab now gets the raw signal instead of the filtered one
             scaled_signal = self.reader.get_scaled_channel(label)
+            trimmed_signal = scaled_signal[start_time:end_time]
             # filtered_trace = self.filtered[idx]
-            freqs, Pxx = signal.welch(scaled_signal, self.reader.sampling_frequency, nperseg=2**14)
+            freqs, Pxx = signal.welch(trimmed_signal, self.fs, nperseg=2**14)
             # freqs, Pxx = signal.welch(filtered_trace, self.reader.sampling_frequency, nperseg=2**14)
             frequencies.append(freqs)
             powers.append(Pxx)

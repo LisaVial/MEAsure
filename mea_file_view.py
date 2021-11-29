@@ -10,13 +10,17 @@ from mea_grid import MeaGrid
 from settings import Settings
 from file_manager import FileManager
 
+from filtering.filter_settings_dialog import FilterSettingsDialog
+from filtering.filter_settings import FilterSettings
+from filtering.filter_tab import FilterTab
+
 from hilbert_transform.hilbert_transform_tab import HilbertTransformTab
 from hilbert_transform.hilbert_transform_settings import HilbertTransformSettings
 from hilbert_transform.hilbert_transform_settings_dialog import HilbertTransformSettingsDialog
 
-from filtering.filter_settings_dialog import FilterSettingsDialog
-from filtering.filter_settings import FilterSettings
-from filtering.filter_tab import FilterTab
+from plots.raw_trace_plot.raw_trace_settings import RawTraceSettings
+from plots.raw_trace_plot.raw_trace_plot_tab import RawTracePlotTab
+from plots.raw_trace_plot.raw_trace_settings_dialog import RawTraceSettingsDialog
 
 from frequency_analysis.frequency_analysis_settings_dialog import FrequencyAnalysisSettingsDialog
 from frequency_analysis.frequency_analysis_settings import FrequencyAnalysisSettings
@@ -26,23 +30,25 @@ from frequency_bands_analysis.frequency_bands_analysis_settings_dialog import Fr
 from frequency_bands_analysis.frequency_bands_analysis_settings import FrequencyBandsAnalysisSettings
 from frequency_bands_analysis.frequency_bands_tab import FrequencyBandsTab
 
-from plots.raw_trace_plot.raw_trace_plot_tab import RawTracePlotTab
-from plots.raster_plot.rasterplot_tab import RasterplotTab
-from plots.heatmap.heatmap_tab import HeatmapTab
-from plots.ISI.isi_histogram_tab import IsiHistogramTab
-
-from plots.raw_trace_plot.raw_trace_settings import RawTraceSettings
-from plots.raw_trace_plot.raw_trace_settings_dialog import RawTraceSettingsDialog
-from plots.ISI.isi_histogram_settings import IsiHistogramSettings
-from plots.ISI.isi_histogram_settings_dialog import IsiHistogramSettingsDialog
-from plots.raster_plot.rasterplot_settings_dialog import RasterplotSettingsDialog
-from plots.raster_plot.rasterplot_settings import RasterplotSettings
-from plots.heatmap.heatmap_settings_dialog import HeatmapSettingsDialog
-from plots.heatmap.heatmap_settings import HeatmapSettings
-
 from spectrograms.spectrograms_tab import SpectrogramsTab
 from spectrograms.spectrograms_settings import SpectrogramsSettings
 from spectrograms.spectrograms_settings_dialog import SpectrogramsSettingsDialog
+
+from burst_detection.burst_detection_tab import BurstDetectionTab
+from burst_detection.burst_detection_settings import BurstDetectionSettings
+from burst_detection.burst_detection_settings_dialog import BurstDetectionSettingsDialog
+
+from plots.raster_plot.rasterplot_tab import RasterplotTab
+from plots.raster_plot.rasterplot_settings_dialog import RasterplotSettingsDialog
+from plots.raster_plot.rasterplot_settings import RasterplotSettings
+
+from plots.heatmap.heatmap_tab import HeatmapTab
+from plots.heatmap.heatmap_settings_dialog import HeatmapSettingsDialog
+from plots.heatmap.heatmap_settings import HeatmapSettings
+
+from plots.ISI.isi_histogram_tab import IsiHistogramTab
+from plots.ISI.isi_histogram_settings import IsiHistogramSettings
+from plots.ISI.isi_histogram_settings_dialog import IsiHistogramSettingsDialog
 
 from spike_check.spike_check_dialog import SpikeCheckDialog
 
@@ -74,6 +80,7 @@ class MeaFileView(QtWidgets.QWidget):
         self.isi_histogram_settings = None
         self.spectrograms_settings = None
         self.raw_trace_plot_settings = None
+        self.burst_detection_settings = None
 
         self.toolbar = None
 
@@ -90,25 +97,26 @@ class MeaFileView(QtWidgets.QWidget):
         self.add_rasterplot_tab = None
         self.add_isi_histogram_tab = None
         self.add_heatmap_tab = None
+        self.open_burst_detection_tab = None
         self.open_spike_check = None
         self.mea_grid = None
         self.tab_widget = None
 
-        self.raw_trace_tab = None
-        self.hilbert_transform_tab = None
         self.filter_tab = None
-
-        self.heatmap_tab = None
-        self.rasterplot_tab = None
+        self.hilbert_transform_tab = None
+        self.raw_trace_tab = None
         self.frequency_analysis_tab = None
         self.frequency_bands_analysis_tab = None
-        self.isi_histogram_tab = None
         self.spectrograms_tab = None
+        self.burst_detection_tab = None
+        self.isi_histogram_tab = None
+        self.heatmap_tab = None
+        self.rasterplot_tab = None
 
         self.mcs_channel_ids = None
         self.mcs_channel_labels = None
 
-        # the initialisation of this class is divided in two parts, i am not completely happy with it, but it was
+    # the initialisation of this class is divided in two parts, i am not completely happy with it, but it was
     # necessary to get the loading screen animation (dancing neuron) in there
     def continue_initialisation(self):
         self.file_manager = FileManager(self, self.reader.filename)  # this widget handles tasks in respect to
@@ -125,6 +133,7 @@ class MeaFileView(QtWidgets.QWidget):
         self.isi_histogram_settings = Settings.instance.isi_histogram_settings
         self.spectrograms_settings = Settings.instance.spectrograms_settings
         self.raw_trace_plot_settings = Settings.instance.raw_trace_plot_settings
+        self.burst_detection_settings = Settings.instance.burst_detection_settings
 
         # setting up the main layout
         main_layout = QtWidgets.QVBoxLayout(self)
@@ -155,11 +164,11 @@ class MeaFileView(QtWidgets.QWidget):
         self.show_mea_grid.setChecked(True)
         self.toolbar.addAction(self.show_mea_grid)
 
-        self.show_raw_trace_plot_dialog = QtWidgets.QAction('Raw trace plot', self)
-        self.show_raw_trace_plot_dialog.triggered.connect(self.open_raw_trace_plot_dialog)
-        raw_trace_plot_icon = QtGui.QIcon('./icons/raw_trace_icon.png')
-        self.show_raw_trace_plot_dialog.setIcon(raw_trace_plot_icon)
-        self.toolbar.addAction(self.show_raw_trace_plot_dialog)
+        self.show_filter_dialog = QtWidgets.QAction("Filtering", self)
+        self.show_filter_dialog.triggered.connect(self.open_filter_dialog)
+        filter_icon = QtGui.QIcon("./icons/filter_icon.png")
+        self.show_filter_dialog.setIcon(filter_icon)
+        self.toolbar.addAction(self.show_filter_dialog)
 
         self.show_hilbert_transform_tab = QtWidgets.QAction('Hilbert Transform', self)
         self.show_hilbert_transform_tab.triggered.connect(self.open_hilbert_transform_tab)
@@ -167,11 +176,11 @@ class MeaFileView(QtWidgets.QWidget):
         self.show_hilbert_transform_tab.setIcon(hilbert_transform_icon)
         self.toolbar.addAction(self.show_hilbert_transform_tab)
 
-        self.show_filter_dialog = QtWidgets.QAction("Filtering", self)
-        self.show_filter_dialog.triggered.connect(self.open_filter_dialog)
-        filter_icon = QtGui.QIcon("./icons/filter_icon.png")
-        self.show_filter_dialog.setIcon(filter_icon)
-        self.toolbar.addAction(self.show_filter_dialog)
+        self.show_raw_trace_plot_dialog = QtWidgets.QAction('Raw trace plot', self)
+        self.show_raw_trace_plot_dialog.triggered.connect(self.open_raw_trace_plot_dialog)
+        raw_trace_plot_icon = QtGui.QIcon('./icons/raw_trace_icon.png')
+        self.show_raw_trace_plot_dialog.setIcon(raw_trace_plot_icon)
+        self.toolbar.addAction(self.show_raw_trace_plot_dialog)
 
         self.add_frequency_analysis_tab = QtWidgets.QAction('Frequency analysis', self)
         frequency_analysis_icon = QtGui.QIcon("./icons/frequency_analysis_icon.png")
@@ -208,6 +217,12 @@ class MeaFileView(QtWidgets.QWidget):
         self.add_heatmap_tab.setIcon(heatmap_icon)
         self.add_heatmap_tab.triggered.connect(self.open_heatmap_settings_dialog)
         self.toolbar.addAction(self.add_heatmap_tab)
+
+        self.open_burst_detection_tab = QtWidgets.QAction('Burst Detection', self)
+        burst_detection_icon = QtGui.QIcon("./icons/burst_detection_icon.png")
+        self.open_burst_detection_tab.setIcon(burst_detection_icon)
+        self.open_burst_detection_tab.triggered.connect(self.open_burst_detection_settings_dialog)
+        self.toolbar.addAction(self.open_burst_detection_tab)
 
         self.open_spike_check = QtWidgets.QAction('Spike Verfication', self)
         spike_verification_icon = QtGui.QIcon("./icons/spike_verification_icon.png")
@@ -512,6 +527,33 @@ class MeaFileView(QtWidgets.QWidget):
                 self.rasterplot_tab = RasterplotTab(self, sc_reader, self.plot_settings, sampling_rate, duration,
                                                     grid_labels, grid_indices)
                 self.tab_widget.addTab(self.rasterplot_tab, "Rasterplot")
+
+    def open_burst_detection_settings_dialog(self):
+        channel_labels_and_indices = self.mea_grid.get_selected_channels()
+        allowed_channel_modes = [BurstDetectionSettings.ChannelSelection.ALL]
+        if len(channel_labels_and_indices) > 0:
+            allowed_channel_modes.append(BurstDetectionSettings.ChannelSelection.SELECTION)
+
+        # instead of giving the user the allowed modes, i will only consider spyking circus spiketimes
+        settings_dialog = BurstDetectionSettingsDialog(self, allowed_channel_modes, self.burst_detection_settings)
+        if settings_dialog.exec() == 1:
+            self.burst_detection_settings = settings_dialog.get_settings()
+            if self.burst_detection_settings.channel_selection == BurstDetectionSettings.ChannelSelection.ALL:
+                grid_labels = self.reader.labels
+                grid_indices = self.reader.channel_ids
+            elif self.burst_detection_settings.channel_selection == BurstDetectionSettings.ChannelSelection.SELECTION:
+                grid_labels_and_indices = self.mea_grid.get_selected_channels()
+                grid_labels = [values[0] for values in grid_labels_and_indices]
+                grid_indices = [values[1] for values in grid_labels_and_indices]
+
+            Settings.instance.burst_detection_settings = self.burst_detection_settings
+            sc_path = self.file_manager.get_verified_sc_file()
+            sc_base_filepath = self.file_manager.get_verified_sc_base_file()
+            sc_reader = SCDataReader(sc_path, sc_base_filepath)
+            self.burst_detection_tab = BurstDetectionTab(self, self.reader, sc_reader, grid_labels, grid_indices,
+                                                         self.burst_detection_settings)
+            self.tab_widget.addTab(self.burst_detection_tab, 'Burst Detection')
+            self.burst_detection_tab.initialize_burst_detection()
 
     def open_spike_check_dialog(self, is_pressed):
         sc_filepath = self.file_manager.get_verified_sc_file()

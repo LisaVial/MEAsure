@@ -2,13 +2,13 @@ from PyQt5 import QtCore, QtWidgets
 
 from frequency_bands_analysis.frequency_bands_analysis_settings import FrequencyBandsAnalysisSettings
 
-from IPython import embed
+from utility.hilbert_time_widget import HilbertTimeWidget
 
 
 class FrequencyBandsAnalysisSettingsDialog(QtWidgets.QDialog):
-    def __init__(self, parent, allowed_channel_selection_mode, initial_settings=None):
+    def __init__(self, parent, allowed_channel_selection_mode, settings=None):
         super().__init__(parent)
-
+        self.mea_file_view = parent
         title = 'Frequency bands analysis'
 
         self.setWindowFlag(QtCore.Qt.CustomizeWindowHint, True)
@@ -52,6 +52,13 @@ class FrequencyBandsAnalysisSettingsDialog(QtWidgets.QDialog):
 
         main_layout.addWidget(analysis_selection_group_box)
 
+        channel_time_selection = dict()
+        if settings is not None:
+            channel_time_selection = settings.channel_time_selection
+
+        self.hilbert_time_widget = HilbertTimeWidget(self, self.mea_file_view.results, channel_time_selection)
+        main_layout.addWidget(self.hilbert_time_widget)
+
         self.okay_button = QtWidgets.QPushButton(self)
         self.okay_button.setText('Execute')
         self.okay_button.clicked.connect(self.on_okay_clicked)
@@ -64,6 +71,17 @@ class FrequencyBandsAnalysisSettingsDialog(QtWidgets.QDialog):
 
         self.setWindowTitle(title)
 
+        if not settings:
+            settings = FrequencyBandsAnalysisSettings()
+
+        self.set_settings(settings)
+
+    def set_settings(self, settings):
+        if settings.channel_selection == FrequencyBandsAnalysisSettings.ChannelSelection.ALL:
+            self.all_channels_button.setChecked(True)
+        elif settings.channel_selection == FrequencyBandsAnalysisSettings.ChannelSelection.SELECTION:
+            self.selected_channels_button.setChecked(True)
+
     def get_settings(self):
         settings = FrequencyBandsAnalysisSettings()
         settings.channel_selection = self.selected_channels_button.isChecked()
@@ -71,6 +89,7 @@ class FrequencyBandsAnalysisSettingsDialog(QtWidgets.QDialog):
             settings.analysis_mode = 0
         elif self.csd_activity_button.isChecked():
             settings.analysis_mode = 1
+        settings.channel_time_selection = self.hilbert_time_widget.get_channel_time_selection()
         return settings
 
     def on_okay_clicked(self):

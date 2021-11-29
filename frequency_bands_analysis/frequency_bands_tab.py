@@ -59,7 +59,7 @@ class FrequencyBandsTab(QtWidgets.QWidget):
             self.progress_label.setText('')
             self.operation_label.setText('Calculating PSD')
             self.frequency_bands_thread = FrequencyBandAnalysisThread(self, self.reader, self.grid_indices,
-                                                                      self.grid_labels)
+                                                                      self.grid_labels, self.settings)
             self.frequency_bands_thread.progress_made.connect(self.on_progress_made)
             self.frequency_bands_thread.operation_changed.connect(self.on_operation_changed)
             self.frequency_bands_thread.data_updated.connect(self.on_data_updated)
@@ -107,7 +107,6 @@ class FrequencyBandsTab(QtWidgets.QWidget):
         elif self.settings.analysis_mode == 1:
             band_names = '50 Hz', '350 Hz'
 
-        # ToDo: Check these lines, they might cause bugs since the variable names are stored several times
         band_amplitude_map = dict()
         for band_name in band_names:
             band_amplitude_map[band_name] = []
@@ -145,8 +144,10 @@ class FrequencyBandsTab(QtWidgets.QWidget):
         # here it is figured out how many rows the final plot should have
         rows = int(np.ceil(np.sqrt(len(self.mea_file_view.results.frequency_analysis_results))))
 
-        spec = gridspec.GridSpec(ncols=rows, nrows=rows, figure=self.figure, hspace=0.1, wspace=0.25)
+        spec = gridspec.GridSpec(ncols=rows, nrows=rows, figure=self.figure, hspace=0.2, wspace=0.2)
         # iterate through all channels
+        all_means = []
+        axes = []
         for idx, result in enumerate(sorted(self.mea_file_view.results.frequency_analysis_results,
                                             key=lambda r: r.label)):
             ax = self.figure.add_subplot(spec[idx])
@@ -159,6 +160,7 @@ class FrequencyBandsTab(QtWidgets.QWidget):
             for band in result.band_map.keys():
                 mean = result.band_map[band]
                 means.append(mean)
+                all_means.append(mean)
 
             # calculate sum of amplitudes
             if self.settings.analysis_mode == 0:
@@ -168,9 +170,13 @@ class FrequencyBandsTab(QtWidgets.QWidget):
             ax.bar(range(len(means)), means, align='center')
             ax.set_xticks(range(len(means)))
             ax.set_xticklabels(xticklabels)
-            ax.set_ylim([0, 1.5])   # I hardcoded 1.5 since the highest amplitude usually is below that
+            ax.tick_params(axis='both', which='major', labelsize=10)
+            ax.tick_params(axis='both', which='minor', labelsize=8)
+            axes.append(ax)
+        [ax.set_ylim([0, (max(all_means) + 1)]) for ax in axes]   # I hardcoded 1.5 since the highest amplitude usually is below that
         self.figure.text(0.5, 0.01, 'frequency bands', ha='center')
         self.figure.text(0.01, 0.5, r'mean power [$\mu V^{2}/$Hz]', va='center', rotation='vertical')
+        spec.tight_layout(self.figure)
         PlotManager.instance.add_plot(self.plot_widget)
         # enable save button only after plotting
         self.save_button.setEnabled(True)
