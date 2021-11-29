@@ -1,15 +1,18 @@
 import PyQt5.QtCore as QtCore
 import json
 
+from filtering.filter_settings import FilterSettings
+
 from hilbert_transform.hilbert_transform_settings import HilbertTransformSettings
+from plots.raw_trace_plot.raw_trace_settings import RawTraceSettings
 from frequency_analysis.frequency_analysis_settings import FrequencyAnalysisSettings
 from frequency_bands_analysis.frequency_bands_analysis_settings import FrequencyBandsAnalysisSettings
-from filtering.filter_settings import FilterSettings
+from spectrograms.spectrograms_settings import SpectrogramsSettings
+
 from plots.heatmap.heatmap_settings import HeatmapSettings
 from plots.ISI.isi_histogram_settings import IsiHistogramSettings
 from plots.raster_plot.rasterplot_settings import RasterplotSettings
-from plots.raw_trace_plot.raw_trace_settings import RawTraceSettings
-from spectrograms.spectrograms_settings import SpectrogramsSettings
+from burst_detection.burst_detection_settings import BurstDetectionSettings
 
 
 class Settings:
@@ -22,13 +25,15 @@ class Settings:
         self.main_window_state = bytearray()
         self.filter_settings = FilterSettings()
         self.hilbert_transform_settings = HilbertTransformSettings()
-        self.rasterplot_settings = RasterplotSettings()
-        self.heatmap_settings = HeatmapSettings()
+        self.raw_trace_plot_settings = RawTraceSettings()
         self.frequency_analysis_settings = FrequencyAnalysisSettings()
         self.frequency_bands_analysis_settings = FrequencyBandsAnalysisSettings()
-        self.isi_histogram_settings = IsiHistogramSettings()
         self.spectrograms_settings = SpectrogramsSettings()
-        self.raw_trace_plot_settings = RawTraceSettings()
+        self.rasterplot_settings = RasterplotSettings()
+        self.heatmap_settings = HeatmapSettings()
+        self.burst_detection_settings = BurstDetectionSettings()
+        self.isi_histogram_settings = IsiHistogramSettings()
+
         Settings.instance = self
 
     def load_settings_from_file(self, path):
@@ -58,6 +63,8 @@ class Settings:
                 self.spectrograms_settings.from_dict(d['spectrograms_settings'])
             if 'raw_trace_plot_settings' in d.keys():
                 self.raw_trace_plot_settings.from_dict(d['raw_trace_plot_settings'])
+            if 'burst_detection_settings' in d.keys():
+                self.burst_detection_settings.from_dict(d['burst_detection_settings'])
         except:
             pass
 
@@ -75,6 +82,7 @@ class Settings:
         d["isi_histogram_settings"] = self.isi_histogram_settings.to_dict()
         d["spectrograms_settings"] = self.spectrograms_settings.to_dict()
         d["raw_trace_plot_settings"] = self.raw_trace_plot_settings.to_dict()
+        d["burst_detection_settings"] = self.burst_detection_settings.to_dict()
         return d
 
     def save(self, path):
