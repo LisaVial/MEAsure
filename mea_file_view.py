@@ -334,7 +334,7 @@ class MeaFileView(QtWidgets.QWidget):
             self.tab_widget.addTab(self.filter_tab, "Filtering")
             self.filter_tab.initialize_filtering()
 
-    def open_isi_histogram_settings_dialog(self, is_pressed):
+    def open_isi_histogram_settings_dialog(self):
         channel_labels_and_indices = self.mea_grid.get_selected_channels()
         allowed_channel_modes = [IsiHistogramSettings.ChannelSelection.ALL]
         if len(channel_labels_and_indices) > 0:
@@ -379,7 +379,7 @@ class MeaFileView(QtWidgets.QWidget):
                                                          grid_labels, grid_indices)
                 self.tab_widget.addTab(self.isi_histogram_tab, "ISI Histogram")
 
-    def open_frequency_analysis_settings(self, is_pressed):
+    def open_frequency_analysis_settings(self):
         # for portrayal reasons, there should be a maximum of 16 channels (one column) per plot
         # if more channels are selected, the wisest thing would be to open several plots simultaneously
         # maybe this approach could also be used for rasterplots and isi histograms
@@ -403,7 +403,7 @@ class MeaFileView(QtWidgets.QWidget):
             self.tab_widget.addTab(self.frequency_analysis_tab, "Frequency Analysis")
             self.frequency_analysis_tab.initialize_frequency_analysis()
 
-    def open_frequency_bands_analysis_tab_settings(self, is_pressed):
+    def open_frequency_bands_analysis_tab_settings(self):
         channel_labels_and_indices = self.mea_grid.get_selected_channels()
         allowed_channel_modes = [FrequencyBandsAnalysisSettings.ChannelSelection.ALL]
 
@@ -428,7 +428,7 @@ class MeaFileView(QtWidgets.QWidget):
             self.tab_widget.addTab(self.frequency_bands_analysis_tab, "Frequency Band Analysis")
             self.frequency_bands_analysis_tab.initialize_frequency_bands_analysis()
 
-    def open_spectograms_settings_dialog(self, is_pressed):
+    def open_spectograms_settings_dialog(self):
         channel_labels_and_indices = self.mea_grid.get_selected_channels()
         allowed_channel_modes = [SpectrogramsSettings.ChannelSelection.ALL]
 
@@ -451,7 +451,7 @@ class MeaFileView(QtWidgets.QWidget):
         self.spectrograms_tab.initialize_spectrogram_calculation()
         self.tab_widget.addTab(self.spectrograms_tab, "Spectrograms")
 
-    def open_heatmap_settings_dialog(self, is_pressed):
+    def open_heatmap_settings_dialog(self):
         # get main window from application (set in start_gui.py)
         main_window = QtWidgets.QApplication.instance().main_window
 
@@ -482,7 +482,7 @@ class MeaFileView(QtWidgets.QWidget):
                                               self.heatmap_settings)
                 self.tab_widget.addTab(self.heatmap_tab, "Heatmap")
 
-    def open_rasterplot_settings_dialog(self, is_pressed):
+    def open_rasterplot_settings_dialog(self):
         channel_labels_and_indices = self.mea_grid.get_selected_channels()
         allowed_channel_modes = [RasterplotSettings.ChannelSelection.ALL]
         if len(channel_labels_and_indices) > 0:
@@ -534,7 +534,7 @@ class MeaFileView(QtWidgets.QWidget):
         if len(channel_labels_and_indices) > 0:
             allowed_channel_modes.append(BurstDetectionSettings.ChannelSelection.SELECTION)
 
-        # instead of giving the user the allowed modes, i will only consider spyking circus spiketimes
+        # instead of giving the user the allowed file modes, i will only consider spyking circus spiketimes
         settings_dialog = BurstDetectionSettingsDialog(self, allowed_channel_modes, self.burst_detection_settings)
         if settings_dialog.exec() == 1:
             self.burst_detection_settings = settings_dialog.get_settings()
@@ -555,7 +555,7 @@ class MeaFileView(QtWidgets.QWidget):
             self.tab_widget.addTab(self.burst_detection_tab, 'Burst Detection')
             self.burst_detection_tab.initialize_burst_detection()
 
-    def open_spike_check_dialog(self, is_pressed):
+    def open_spike_check_dialog(self):
         sc_filepath = self.file_manager.get_verified_sc_file()
         sc_base_filepath = self.file_manager.get_verified_sc_base_file()
         if sc_filepath and sc_base_filepath:

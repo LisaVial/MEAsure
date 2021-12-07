@@ -61,7 +61,7 @@ class HilbertTransformThread(QtCore.QThread):
             amplitudes = np.abs(analytic_signal)
 
             # take the median without the first two seconds, which probably include the puffing artefact
-            puffing_indices = int(self.reader.sampling_frequency * 2)
+            puffing_indices = int(self.reader.sampling_frequency * 3.5)
             threshold = self.threshold_factor * np.median(np.absolute(filtered_channel[puffing_indices:])) / 0.6745
 
             binned_time = np.linspace(0, int(np.ceil(self.duration)), int(np.ceil(self.duration)))

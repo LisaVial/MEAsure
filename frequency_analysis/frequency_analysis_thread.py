@@ -22,11 +22,11 @@ class FrequencyAnalysisThread(QtCore.QThread):
         # idea behind this function is to go through MEA channels and compute the fast fourier transform to this channel
         # and afterwards, additionally the hann window is computed, so the FT is done on hann*signal to prevent leakage
         # effects
-
         frequencies = []
         ids = reader.channel_ids
         selected_ids = [ids[g_idx] for g_idx in self.grid_indices]
         for idx, ch_id in enumerate(selected_ids):
+            self.operation_changed.emit('Analyzing ' + str(idx+1) + ' channel')
             label = self.grid_labels[idx]
             if label in self.settings.channel_time_selection.keys():
                 start_index, end_index = self.settings.channel_time_selection[label]
